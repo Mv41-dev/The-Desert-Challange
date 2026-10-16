@@ -1,0 +1,124 @@
+## Represents a Supabase identity.
+##
+## This includes the Supabase role (anonymous, authenticated, service_role) and the user ID
+## if the client is authenticated with Supabase.
+extends RefCounted
+class_name W4Identity
+
+## The API key.
+var apikey := ""
+## The access token.
+var access_token := ""
+## The refresher token.
+var refresh_token := ""
+## The role (anonymous, authenticated or service_role).
+var role := ""
+## When the current access token expires in UNIX time (seconds since the epoch).
+var expire := 0
+## The UUID representing the current user in the database (if authenticated).
+var uid := StringName()
+## The JWT payload from Supabase.
+var data := {}
+
+## Emitted when the current identity has changed (logging in, logging out, etc).
+signal identity_changed()
+
+func _init(p_apikey: String):
+	apikey = p_apikey
+	reset_access_token()
+
+
+func _clear():
+	access_token = ""
+	refresh_token = ""
+	role = ""
+	expire = 0
+	uid = StringName()
+	data.clear()
+
+
+## Resets the access token to the API key.
+func reset_access_token():
+	set_access_token(apikey)
+
+
+## Sets the access token to the given JWT string.
+func set_access_token(p_token : String, p_refresh_token := ""):
+	if p_token == access_token:
+		refresh_token = p_refresh_token
+		return
+	_clear()
+	if p_token.begins_with("sb_publishable_") or p_token.begins_with("sb_secret_"):
+		access_token = p_token
+		apikey = p_token
+		role = "anon" if p_token.begins_with("sb_publishable_") else "service_role"
+		identity_changed.emit()
+		return
+	var parsed = {} if p_token.is_empty() else W4Utils.parse_jwt(p_token)
+	if parsed.is_empty():
+		identity_changed.emit()
+		return
+	access_token = p_token
+	refresh_token = p_refresh_token
+	var header = parsed["header"]
+	var payload = parsed["payload"]
+	role = payload["role"] if "role" in payload else ""
+	expire = payload["exp"] if "exp" in payload else 0
+	uid = StringName(payload["sub"]) if "sub" in payload else StringName()
+	data = payload.duplicate()
+	identity_changed.emit()
+
+
+## Gets the acccess token.
+func get_access_token() -> String:
+	return access_token
+
+
+## Gets the API key.
+func get_api_key() -> String:
+	return apikey
+
+
+## Returns true if the access token is expired; otherwise, false.
+func is_expired() -> bool:
+	return expire != 0 and Time.get_unix_time_from_system() > expire
+
+
+## Returns true if the access token for the current identty can be refreshed; otherwise false.
+func can_refresh() -> bool:
+	return not refresh_token.is_empty()
+
+
+## Returns the time left in seconds before this session expires
+func get_time_left() -> float:
+	return expire - Time.get_unix_time_from_system()
+
+
+## Returns true if the identity is valid; otherwise, false.
+func is_valid() -> bool:
+	return role.length() > 0
+
+
+## Returns true the identity is valid and represents an anonymous user; otherwise, false.
+func is_anon() -> bool:
+	return role == "anon"
+
+
+## Returns true the identity is valid and represents the service role; otherwise, false.
+func is_service() -> bool:
+	return role == "service_role"
+
+
+## Returns true the identity is valid and represents an authenticated user; otherwise, false.
+func is_authenticated() -> bool:
+	return role == "authenticated"
+
+
+## Gets the UUID of the current user in the database (if logged in).
+func get_uid() -> StringName:
+	return uid
+
+
+## Gets the email address of the current user (if logged in).
+func get_email() -> String:
+	return data.get("email", "")
