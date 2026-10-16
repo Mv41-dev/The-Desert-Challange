@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://placa_controles.png" id="1_placa"]
+
+[node name="PlacaControles" type="Node2D"]
+z_index = 5
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+texture = ExtResource("1_placa")
+
+[node name="TextoControles" type="Label" parent="."]
+offset_left = -76.0
+offset_top = -40.0
+offset_right = 77.0
+offset_bottom = 30.0
+theme_override_colors/font_color = Color(0.17, 0.09, 0.04, 1)
+theme_override_font_sizes/font_size = 10
+text = "CONTROLES\nA / D OU SETAS: MOVER\nW / ESPACO: PULAR\nJ: CORTE RAPIDO\nK: GOLPE FORTE"
+horizontal_alignment = 1

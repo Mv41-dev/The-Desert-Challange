@@ -1,0 +1,63 @@
+[gd_scene format=3 uid="uid://v8rb4xgds7e5"]
+
+[ext_resource type="Texture2D" uid="uid://co4cs4gdph8i5" path="res://NightDesert/DesertNight_0.png" id="1_obkwk"]
+[ext_resource type="Texture2D" uid="uid://dgwtop85g8v4e" path="res://NightDesert/DesertNight_1.png" id="2_16urf"]
+[ext_resource type="Texture2D" uid="uid://b8hnr5egx1lfo" path="res://NightDesert/DesertNight_2.png" id="3_xl7kx"]
+[ext_resource type="Texture2D" uid="uid://dup4bqxwp7oxc" path="res://NightDesert/DesertNight_3.png" id="4_38i0v"]
+[ext_resource type="Texture2D" uid="uid://dcc5ouy1o7ywr" path="res://NightDesert/DesertNight_4.png" id="5_ng68j"]
+[ext_resource type="Texture2D" uid="uid://bx2nvs485svrm" path="res://NightDesert/DesertNight_5.png" id="6_dihut"]
+
+[node name="Night parallax" type="ParallaxBackground" unique_id=1496345904]
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="." unique_id=1375601427]
+motion_scale = Vector2(0.3, 0.3)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer" unique_id=2107571348]
+position = Vector2(1328, 221.00002)
+scale = Vector2(8.306249, 4.477778)
+texture = ExtResource("1_obkwk")
+
+[node name="ParallaxLayer2" type="ParallaxLayer" parent="." unique_id=1664336569]
+motion_scale = Vector2(0.4, 0.4)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer2" unique_id=1926074736]
+position = Vector2(1328, 218.00002)
+scale = Vector2(8.290625, 4.4388885)
+texture = ExtResource("2_16urf")
+
+[node name="ParallaxLayer3" type="ParallaxLayer" parent="." unique_id=1827114392]
+motion_scale = Vector2(0.5, 0.5)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer3" unique_id=466750944]
+position = Vector2(1325.8751, 214.99976)
+scale = Vector2(8.294531, 4.494445)
+texture = ExtResource("3_xl7kx")
+
+[node name="ParallaxLayer4" type="ParallaxLayer" parent="." unique_id=206966955]
+motion_scale = Vector2(0.6, 0.6)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer4" unique_id=678240274]
+position = Vector2(1328.0001, 221.50002)
+scale = Vector2(8.275, 4.4055552)
+texture = ExtResource("4_38i0v")
+
+[node name="ParallaxLayer5" type="ParallaxLayer" parent="." unique_id=2145492687]
+motion_scale = Vector2(0.7, 0.7)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer5" unique_id=1466406775]
+position = Vector2(1328, 227.99988)
+scale = Vector2(8.29375, 4.522222)
+texture = ExtResource("5_ng68j")
+
+[node name="ParallaxLayer6" type="ParallaxLayer" parent="." unique_id=1900638666]
+motion_scale = Vector2(0.8, 0.8)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer6" unique_id=983403170]
+position = Vector2(1330, 217.75002)
+scale = Vector2(8.290625, 4.491667)
+texture = ExtResource("6_dihut")
+
+[node name="Sprite2D2" type="Sprite2D" parent="ParallaxLayer6" unique_id=909292904]
+position = Vector2(1330, 217.75002)
+scale = Vector2(8.290625, 4.491667)
+texture = ExtResource("6_dihut")

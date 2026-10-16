@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://kj24q6a6ya32"]
+
+[ext_resource type="Script" uid="uid://p3d55ww0nv71" path="res://loading.gd" id="1_gov4d"]
+
+[node name="loading" type="Node2D" unique_id=1033760268]
+script = ExtResource("1_gov4d")
+
+[node name="ProgressBar" type="ProgressBar" parent="." unique_id=1488081344]
+custom_minimum_size = Vector2(500, 27)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 340.0
+offset_top = 542.0
+offset_right = 840.0
+offset_bottom = 569.0
+grow_horizontal = 2
+grow_vertical = 2

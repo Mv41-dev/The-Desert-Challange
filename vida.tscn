@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://c8hbrn4fu23cb"]
+
+[ext_resource type="Texture2D" uid="uid://ch4bfmvp2tya7" path="res://Player e inimigo/2 Hyena/Hearts/Hearts/Heart_Full_64.png" id="1_k2dfs"]
+[ext_resource type="Texture2D" uid="uid://cw57gtx6brqo4" path="res://Player e inimigo/2 Hyena/Hearts/Hearts/Heart_Empty_64.png" id="2_scc70"]
+[ext_resource type="Script" uid="uid://gvyoki0o55q5" path="res://vida.gd" id="3_4y50p"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uhsij"]
+atlas = ExtResource("1_k2dfs")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w68a3"]
+atlas = ExtResource("2_scc70")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ebum8"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uhsij")
+}],
+"loop": 1,
+"name": &"cheio",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w68a3")
+}],
+"loop": 1,
+"name": &"vazio",
+"speed": 5.0
+}]
+
+[node name="vida" type="AnimatedSprite2D" unique_id=1299930463]
+sprite_frames = SubResource("SpriteFrames_ebum8")
+animation = &"vazio"
+script = ExtResource("3_4y50p")

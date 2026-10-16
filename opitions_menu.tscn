@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://gvc5ppiyeke6"]
+
+[ext_resource type="Script" uid="uid://ocopo48nayfx" path="res://opitions_menu.gd" id="1_ihs7b"]
+[ext_resource type="Texture2D" uid="uid://nqlitg5vb2uh" path="res://DayDesert/Desert Parallax by Cryptogene/Desert.png" id="1_vwfht"]
+[ext_resource type="Texture2D" uid="uid://fkd82ka5jpbi" path="res://Menu Buttons/Large Buttons/Large Buttons/Continue Button.png" id="3_rr6ne"]
+[ext_resource type="Texture2D" uid="uid://c7j8bx37dqb8o" path="res://Menu Buttons/Large Buttons/Large Buttons/Menu Button.png" id="4_0hiy3"]
+[ext_resource type="FontFile" uid="uid://b6n40y4qpprrn" path="res://Lamano.ttf" id="5_0hiy3"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_b0wa0"]
+font = ExtResource("5_0hiy3")
+font_size = 48
+font_color = Color(0.5865264, 0.5865261, 5.7756904e-07, 1)
+outline_size = 16
+outline_color = Color(0, 0, 0, 1)
+
+[node name="OpitionsMenu" type="Control" unique_id=1614765022]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_ihs7b")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1946798368]
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+scale = Vector2(0.60000074, 0.5999998)
+texture = ExtResource("1_vwfht")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1605903674]
+layout_mode = 0
+offset_left = 443.0
+offset_top = 253.00002
+offset_right = 1051.0
+offset_bottom = 673.0
+scale = Vector2(0.40000063, 0.44000006)
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer" unique_id=119246772]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/PanelContainer" unique_id=1673920244]
+layout_mode = 2
+
+[node name="BtnContinue" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1995351741]
+layout_mode = 2
+icon = ExtResource("3_rr6ne")
+
+[node name="BtnBack" type="Button" parent="MarginContainer/PanelContainer/VBoxContainer" unique_id=1594176107]
+layout_mode = 2
+icon = ExtResource("4_0hiy3")
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="." unique_id=1404929070]
+layout_mode = 0
+offset_left = 247.0
+offset_top = 66.0
+offset_right = 901.0
+offset_bottom = 486.0
+
+[node name="Label" type="Label" parent="VBoxContainer2" unique_id=1899599197]
+layout_mode = 2
+text = "GAME PAUSED"
+label_settings = SubResource("LabelSettings_b0wa0")
+
+[connection signal="pressed" from="MarginContainer/PanelContainer/VBoxContainer/BtnBack" to="." method="_on_btn_back_pressed"]

@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://cysc3tsv3nje0"]
+
+[ext_resource type="Script" uid="uid://ltuc3vyrt03g" path="res://main_menu.gd" id="1_06t4h"]
+[ext_resource type="Texture2D" uid="uid://nqlitg5vb2uh" path="res://DayDesert/Desert Parallax by Cryptogene/Desert.png" id="2_7vrkn"]
+[ext_resource type="Texture2D" uid="uid://p72wwm6kyd8k" path="res://Menu Buttons/Large Buttons/Large Buttons/Start Button.png" id="3_jix8l"]
+[ext_resource type="Texture2D" uid="uid://bv723ixg38er" path="res://Menu Buttons/Large Buttons/Large Buttons/Quit Button.png" id="4_glbon"]
+[ext_resource type="FontFile" uid="uid://b6n40y4qpprrn" path="res://Lamano.ttf" id="5_glbon"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ebum8"]
+font = ExtResource("5_glbon")
+font_size = 48
+font_color = Color(0.6117647, 0.6117647, 0, 1)
+outline_size = 16
+outline_color = Color(0, 0, 0, 1)
+
+[node name="MainMenu" type="Control" unique_id=41679261]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_06t4h")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1809642169]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 28.685001
+anchor_bottom = 16.320002
+offset_left = 3.0000305
+offset_top = 1.0
+offset_right = 775.6
+offset_bottom = 428.19995
+scale = Vector2(0.599998, 0.5999993)
+texture = ExtResource("2_7vrkn")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1929429426]
+layout_mode = 0
+offset_left = 445.99997
+offset_top = 277.00006
+offset_right = 1098.0
+offset_bottom = 724.00006
+scale = Vector2(0.39311805, 0.275397)
+
+[node name="BtnJogar" type="Button" parent="VBoxContainer" unique_id=1491733790]
+layout_mode = 2
+icon = ExtResource("3_jix8l")
+
+[node name="BtnSair" type="Button" parent="VBoxContainer" unique_id=1487956074]
+layout_mode = 2
+icon = ExtResource("4_glbon")
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="." unique_id=2032900940]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 28.767002
+anchor_bottom = 16.081001
+offset_left = 21.999998
+offset_top = 98.00001
+offset_right = 423.31995
+offset_bottom = -409.24005
+scale = Vector2(0.96466684, 0.91714597)
+
+[node name="Label" type="Label" parent="VBoxContainer2" unique_id=1716260745]
+layout_mode = 2
+text = "THE DESERT CHALLENGE"
+label_settings = SubResource("LabelSettings_ebum8")
+
+[connection signal="pressed" from="VBoxContainer/BtnJogar" to="." method="_on_btn_jogar_pressed"]
+[connection signal="pressed" from="VBoxContainer/BtnSair" to="." method="_on_btn_sair_pressed"]

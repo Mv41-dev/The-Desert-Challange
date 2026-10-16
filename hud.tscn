@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://bmbfgr7lg7awu"]
+
+[ext_resource type="Script" uid="uid://217opdaile8t" path="res://hud.gd" id="1_hud"]
+[ext_resource type="PackedScene" uid="uid://dxx30xqn73e7m" path="res://Coracao.tscn" id="2_heart"]
+
+[node name="HUD" type="CanvasLayer" unique_id=2146717184]
+layer = 5
+script = ExtResource("1_hud")
+cena_coracao = ExtResource("2_heart")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1320375702]
+offset_left = 20.0
+offset_top = 18.0
+offset_right = 220.0
+offset_bottom = 56.0
+theme_override_constants/separation = 6

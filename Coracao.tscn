@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://dxx30xqn73e7m"]
+
+[ext_resource type="Script" uid="uid://df2w0vwackp04" path="res://Coracao.gd" id="1_heart"]
+[ext_resource type="Texture2D" uid="uid://ch4bfmvp2tya7" path="res://Player e inimigo/2 Hyena/Hearts/Hearts/Heart_Full_64.png" id="2_full"]
+[ext_resource type="Texture2D" uid="uid://cw57gtx6brqo4" path="res://Player e inimigo/2 Hyena/Hearts/Hearts/Heart_Empty_64.png" id="3_empty"]
+[ext_resource type="Texture2D" path="res://Player e inimigo/2 Hyena/Hearts/Hearts/Heart_Half_64.png" id="4_half"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ebum8"]
+animations = [{
+"frames": [{"duration": 1.0, "texture": ExtResource("2_full")}],
+"loop": true,
+"name": &"cheio",
+"speed": 5.0
+}, {
+"frames": [{"duration": 1.0, "texture": ExtResource("2_full")}, {"duration": 1.0, "texture": ExtResource("4_half")}, {"duration": 1.0, "texture": ExtResource("3_empty")}],
+"loop": false,
+"name": &"perdendo",
+"speed": 9.0
+}, {
+"frames": [{"duration": 1.0, "texture": ExtResource("3_empty")}, {"duration": 1.0, "texture": ExtResource("4_half")}, {"duration": 1.0, "texture": ExtResource("2_full")}],
+"loop": false,
+"name": &"recuperando",
+"speed": 9.0
+}, {
+"frames": [{"duration": 1.0, "texture": ExtResource("3_empty")}],
+"loop": true,
+"name": &"vazio",
+"speed": 5.0
+}]
+
+[node name="Coracao" type="Control" unique_id=1013391973]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+script = ExtResource("1_heart")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1753287983]
+position = Vector2(18, 18)
+scale = Vector2(0.5, 0.5)
+sprite_frames = SubResource("SpriteFrames_ebum8")
+animation = &"cheio"

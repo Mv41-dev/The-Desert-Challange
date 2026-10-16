@@ -1,0 +1,76 @@
+[gd_scene format=3 uid="uid://tqew04d0dhc8"]
+
+[ext_resource type="Texture2D" uid="uid://cmvlsyss55avh" path="res://DayDesert/Desert Parallax by Cryptogene/images.jpg" id="1_m5fgl"]
+[ext_resource type="Texture2D" uid="uid://bxfjs1agmfpcb" path="res://DayDesert/Desert Parallax by Cryptogene/7 Clouds2.png" id="2_4srxt"]
+[ext_resource type="Texture2D" uid="uid://siwvjb4ueyy2" path="res://DayDesert/Desert Parallax by Cryptogene/6 Sun.png" id="3_s063p"]
+[ext_resource type="Texture2D" uid="uid://c8pdaoq2t34ix" path="res://DayDesert/Desert Parallax by Cryptogene/5 Mountains.png" id="4_fe61w"]
+[ext_resource type="Texture2D" uid="uid://bipxoe533037j" path="res://DayDesert/Desert Parallax by Cryptogene/4 Layer4.png" id="5_0pqtl"]
+[ext_resource type="Texture2D" uid="uid://dcidloy83yfwj" path="res://DayDesert/Desert Parallax by Cryptogene/3 Layer3.png" id="6_tyh5m"]
+[ext_resource type="Texture2D" uid="uid://b3abv3tresala" path="res://DayDesert/Desert Parallax by Cryptogene/2 Layer2.png" id="7_dbwua"]
+[ext_resource type="Texture2D" uid="uid://dbjn4k5t7h8y8" path="res://DayDesert/Desert Parallax by Cryptogene/1 Layer1.png" id="8_62ohh"]
+
+[node name="ParallaxBackground" type="ParallaxBackground" unique_id=999482517]
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="." unique_id=1695175311]
+motion_scale = Vector2(0, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer" unique_id=1021371709]
+position = Vector2(277.00006, 178.5)
+scale = Vector2(1.8628161, 0.666065)
+texture = ExtResource("1_m5fgl")
+
+[node name="ParallaxLayer2" type="ParallaxLayer" parent="." unique_id=803570968]
+motion_scale = Vector2(0.7, 0.7)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer2" unique_id=1252288068]
+position = Vector2(278.49997, 181.50002)
+scale = Vector2(0.53177077, 0.3398148)
+texture = ExtResource("2_4srxt")
+
+[node name="ParallaxLayer3" type="ParallaxLayer" parent="." unique_id=1734867986]
+motion_scale = Vector2(0.6, 0.6)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer3" unique_id=519447686]
+position = Vector2(-66, 208)
+scale = Vector2(0.7375, 0.30555555)
+texture = ExtResource("3_s063p")
+
+[node name="ParallaxLayer4" type="ParallaxLayer" parent="." unique_id=727858934]
+motion_scale = Vector2(0.5, 0.5)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer4" unique_id=428123289]
+position = Vector2(282.99997, 183.00003)
+scale = Vector2(0.5364584, 0.32962966)
+texture = ExtResource("4_fe61w")
+
+[node name="ParallaxLayer5" type="ParallaxLayer" parent="." unique_id=1397749089]
+motion_scale = Vector2(0.4, 0.4)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer5" unique_id=1067392330]
+position = Vector2(279, 188.49995)
+scale = Vector2(0.5364584, 0.33055553)
+texture = ExtResource("5_0pqtl")
+
+[node name="ParallaxLayer6" type="ParallaxLayer" parent="." unique_id=1592924013]
+motion_scale = Vector2(0.3, 0.3)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer6" unique_id=1678298419]
+position = Vector2(279.5, 183.50002)
+scale = Vector2(0.5328125, 0.35092592)
+texture = ExtResource("6_tyh5m")
+
+[node name="ParallaxLayer7" type="ParallaxLayer" parent="." unique_id=1882014902]
+motion_scale = Vector2(0.2, 0.2)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer7" unique_id=236906881]
+position = Vector2(277.5, 187.5)
+scale = Vector2(0.5411458, 0.33425927)
+texture = ExtResource("7_dbwua")
+
+[node name="ParallaxLayer8" type="ParallaxLayer" parent="." unique_id=1618916365]
+motion_scale = Vector2(0.1, 0.1)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer8" unique_id=704521168]
+position = Vector2(278, 180.99998)
+scale = Vector2(0.53749996, 0.34814814)
+texture = ExtResource("8_62ohh")

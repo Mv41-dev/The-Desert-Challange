@@ -1,0 +1,173 @@
+[gd_scene format=3 uid="uid://bc2cm54prrn4q"]
+
+[ext_resource type="Script" uid="uid://cr3yl51t2aiej" path="res://enemy.gd" id="0_ai"]
+[ext_resource type="Texture2D" uid="uid://cwdwg177raifw" path="res://Player e inimigo/2 Hyena/Hyena_idle.png" id="1_e72xl"]
+[ext_resource type="Texture2D" uid="uid://bp3duxyf5avol" path="res://Player e inimigo/2 Hyena/Hyena_attack.png" id="1_sttm0"]
+[ext_resource type="Texture2D" uid="uid://cc4o3nkx7eimr" path="res://Player e inimigo/2 Hyena/Hyena_death.png" id="2_6c1qm"]
+[ext_resource type="Texture2D" uid="uid://dgidoo7j0in5h" path="res://Player e inimigo/2 Hyena/Hyena_walk.png" id="2_mxnys"]
+[ext_resource type="Texture2D" uid="uid://bdt4rcnxfxwpy" path="res://Player e inimigo/2 Hyena/Hyena_hurt.png" id="3_obsjf"]
+
+[sub_resource type="AtlasTexture" id="h_attack_0"]
+atlas = ExtResource("1_sttm0")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_attack_1"]
+atlas = ExtResource("1_sttm0")
+region = Rect2(48, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_attack_2"]
+atlas = ExtResource("1_sttm0")
+region = Rect2(96, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_attack_3"]
+atlas = ExtResource("1_sttm0")
+region = Rect2(144, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_attack_4"]
+atlas = ExtResource("1_sttm0")
+region = Rect2(192, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_attack_5"]
+atlas = ExtResource("1_sttm0")
+region = Rect2(240, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_death_0"]
+atlas = ExtResource("2_6c1qm")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_death_1"]
+atlas = ExtResource("2_6c1qm")
+region = Rect2(48, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_death_2"]
+atlas = ExtResource("2_6c1qm")
+region = Rect2(96, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_death_3"]
+atlas = ExtResource("2_6c1qm")
+region = Rect2(144, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_death_4"]
+atlas = ExtResource("2_6c1qm")
+region = Rect2(192, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_death_5"]
+atlas = ExtResource("2_6c1qm")
+region = Rect2(240, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_hurt_0"]
+atlas = ExtResource("3_obsjf")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_hurt_1"]
+atlas = ExtResource("3_obsjf")
+region = Rect2(48, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_idle_0"]
+atlas = ExtResource("1_e72xl")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_idle_1"]
+atlas = ExtResource("1_e72xl")
+region = Rect2(48, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_idle_2"]
+atlas = ExtResource("1_e72xl")
+region = Rect2(96, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_idle_3"]
+atlas = ExtResource("1_e72xl")
+region = Rect2(144, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_run_0"]
+atlas = ExtResource("2_mxnys")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_run_1"]
+atlas = ExtResource("2_mxnys")
+region = Rect2(48, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_run_2"]
+atlas = ExtResource("2_mxnys")
+region = Rect2(96, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_run_3"]
+atlas = ExtResource("2_mxnys")
+region = Rect2(144, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_run_4"]
+atlas = ExtResource("2_mxnys")
+region = Rect2(192, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="h_run_5"]
+atlas = ExtResource("2_mxnys")
+region = Rect2(240, 0, 48, 48)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ebum8"]
+animations = [{
+"frames": [{"duration": 1.0, "texture": SubResource("h_attack_0")}, {"duration": 1.0, "texture": SubResource("h_attack_1")}, {"duration": 1.0, "texture": SubResource("h_attack_2")}, {"duration": 1.0, "texture": SubResource("h_attack_3")}, {"duration": 1.0, "texture": SubResource("h_attack_4")}, {"duration": 1.0, "texture": SubResource("h_attack_5")}],
+"loop": false,
+"name": &"attack",
+"speed": 10.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("h_death_0")}, {"duration": 1.0, "texture": SubResource("h_death_1")}, {"duration": 1.0, "texture": SubResource("h_death_2")}, {"duration": 1.0, "texture": SubResource("h_death_3")}, {"duration": 1.0, "texture": SubResource("h_death_4")}, {"duration": 1.0, "texture": SubResource("h_death_5")}],
+"loop": false,
+"name": &"death",
+"speed": 8.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("h_hurt_0")}, {"duration": 1.0, "texture": SubResource("h_hurt_1")}],
+"loop": false,
+"name": &"hurt",
+"speed": 9.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("h_idle_0")}, {"duration": 1.0, "texture": SubResource("h_idle_1")}, {"duration": 1.0, "texture": SubResource("h_idle_2")}, {"duration": 1.0, "texture": SubResource("h_idle_3")}],
+"loop": true,
+"name": &"idle",
+"speed": 6.0
+}, {
+"frames": [{"duration": 1.0, "texture": SubResource("h_run_0")}, {"duration": 1.0, "texture": SubResource("h_run_1")}, {"duration": 1.0, "texture": SubResource("h_run_2")}, {"duration": 1.0, "texture": SubResource("h_run_3")}, {"duration": 1.0, "texture": SubResource("h_run_4")}, {"duration": 1.0, "texture": SubResource("h_run_5")}],
+"loop": true,
+"name": &"run",
+"speed": 9.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6c1qm"]
+size = Vector2(34, 24)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_detection"]
+radius = 170.0
+
+[node name="EnemyPatrulha" type="CharacterBody2D" unique_id=32245507 groups=["inimigo"]]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("0_ai")
+speed = 74.0
+vida = 3
+patrulhar = true
+distancia_patrulha = 140.0
+alcance_ataque = 33.0
+quadro_do_golpe = 3
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=932877004]
+sprite_frames = SubResource("SpriteFrames_ebum8")
+animation = &"idle"
+autoplay = "idle"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1158981454]
+position = Vector2(2.5, 11)
+shape = SubResource("RectangleShape2D_6c1qm")
+
+[node name="DetectionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DetectionArea"]
+shape = SubResource("CircleShape2D_detection")
+
+[node name="FloorCheck" type="RayCast2D" parent="."]
+position = Vector2(-22, 0)
+target_position = Vector2(0, 32)
+collision_mask = 1
+
+[connection signal="body_entered" from="DetectionArea" to="." method="_on_detection_area_body_entered"]
+[connection signal="body_exited" from="DetectionArea" to="." method="_on_detection_area_body_exited"]
