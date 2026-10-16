@@ -1,6 +1,12 @@
 [gd_scene format=3 uid="uid://dfnb1lpkmol2a"]
 
 [ext_resource type="Texture2D" uid="uid://78cxic4gm1pp" path="res://pngtree-hanging-wooden-board-png-image_6578280.png" id="1_7hs60"]
+[ext_resource type="FontFile" uid="uid://cb8i4ovy68f5o" path="res://ThaleahFat.ttf" id="2_jkboy"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_6skjg"]
+font = ExtResource("2_jkboy")
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
 
 [node name="PlacaControles" type="Node2D" unique_id=944310889]
 z_index = 5
@@ -11,21 +17,22 @@ position = Vector2(3, -63)
 texture = ExtResource("1_7hs60")
 
 [node name="TextoControles" type="Label" parent="." unique_id=191022201]
-offset_left = -83.0
-offset_top = -67.0
-offset_right = 47.0
-offset_bottom = 117.0
-scale = Vector2(1.3200004, 0.72000027)
+offset_left = -105.0
+offset_top = -75.0
+offset_right = 78.0
+offset_bottom = 133.33325
+scale = Vector2(1.2754266, 0.72000027)
 theme_override_colors/font_color = Color(0.17, 0.09, 0.04, 1)
 theme_override_font_sizes/font_size = 10
-text = "OLÁ, EU SOU O JUNIN,
-FICAREI JUNTO COM VOCÊ
-DURANTE SUA JORNADA
+text = "OI, EU SOU O JUNIN,
+FICAREI CONTIGO DURANTE
+TODA A SUA JORNADA,
 CUIDADO COM INIMIGOS E
 BOA SORTE
 
 CONTROLES
-A / D OU SETAS: MOVER
-W / ESPACO: PULAR
-J / CTRL: GOLPE RAPIDO
-K / SHIFT: GOLPE FORTE"
+A / D / SETAS/ L3: MOVER
+W / ESPACO / X: PULAR
+J / CTRL / L2: GOLPE RAPIDO
+K / SHIFT: / L1: GOLPE FORTE"
+label_settings = SubResource("LabelSettings_6skjg")
