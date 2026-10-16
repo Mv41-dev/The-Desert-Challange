@@ -25,6 +25,10 @@ Sons="*uid://d1t8jh6hxrdue"
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/Godot-Team-Create/Godot-Team-Create-b9d2f16096757f69c025af7fc2b431e0f18f32b1/addons/team_create/plugin.cfg")
+
 [input]
 
 jump={
