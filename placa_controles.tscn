@@ -1,20 +1,31 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dfnb1lpkmol2a"]
 
-[ext_resource type="Texture2D" path="res://placa_controles.png" id="1_placa"]
+[ext_resource type="Texture2D" uid="uid://78cxic4gm1pp" path="res://pngtree-hanging-wooden-board-png-image_6578280.png" id="1_7hs60"]
 
-[node name="PlacaControles" type="Node2D"]
+[node name="PlacaControles" type="Node2D" unique_id=944310889]
 z_index = 5
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1788921412]
 texture_filter = 1
-texture = ExtResource("1_placa")
+position = Vector2(3, -63)
+texture = ExtResource("1_7hs60")
 
-[node name="TextoControles" type="Label" parent="."]
-offset_left = -76.0
-offset_top = -40.0
-offset_right = 77.0
-offset_bottom = 30.0
+[node name="TextoControles" type="Label" parent="." unique_id=191022201]
+offset_left = -83.0
+offset_top = -67.0
+offset_right = 47.0
+offset_bottom = 117.0
+scale = Vector2(1.3200004, 0.72000027)
 theme_override_colors/font_color = Color(0.17, 0.09, 0.04, 1)
 theme_override_font_sizes/font_size = 10
-text = "CONTROLES\nA / D OU SETAS: MOVER\nW / ESPACO: PULAR\nJ: CORTE RAPIDO\nK: GOLPE FORTE"
-horizontal_alignment = 1
+text = "OLÁ, EU SOU O JUNIN,
+FICAREI JUNTO COM VOCÊ
+DURANTE SUA JORNADA
+CUIDADO COM INIMIGOS E
+BOA SORTE
+
+CONTROLES
+A / D OU SETAS: MOVER
+W / ESPACO: PULAR
+J / CTRL: GOLPE RAPIDO
+K / SHIFT: GOLPE FORTE"
