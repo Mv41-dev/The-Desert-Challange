@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://lj35806cvql5"
-path="res://.godot/imported/images.jpg-828aec76970545e387c8e5ec74aa0b53.ctex"
+uid="uid://78cxic4gm1pp"
+path="res://.godot/imported/pngtree-hanging-wooden-board-png-image_6578280.png-18081d1abf82a8a900bcbb8fcd15344a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images.jpg"
-dest_files=["res://.godot/imported/images.jpg-828aec76970545e387c8e5ec74aa0b53.ctex"]
+source_file="res://pngtree-hanging-wooden-board-png-image_6578280.png"
+dest_files=["res://.godot/imported/pngtree-hanging-wooden-board-png-image_6578280.png-18081d1abf82a8a900bcbb8fcd15344a.ctex"]
 
 [params]
 
