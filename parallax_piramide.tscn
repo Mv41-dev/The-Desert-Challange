@@ -9,29 +9,29 @@
 [node name="ParallaxLayer" type="ParallaxLayer" parent="." unique_id=2056353465]
 position = Vector2(795, 5)
 scale = Vector2(2.9199986, 1.5199997)
-motion_scale = Vector2(0, 0)
+motion_scale = Vector2(0.4, 0.4)
 
 [node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer" unique_id=107696633]
-position = Vector2(242.80832, 246.05266)
+position = Vector2(336.64398, 246.71057)
 scale = Vector2(3.5798612, 2.8222222)
 texture = ExtResource("1_mgyet")
 
 [node name="ParallaxLayer2" type="ParallaxLayer" parent="." unique_id=1100933393]
 position = Vector2(795, 5)
 scale = Vector2(2.9199986, 1.5199997)
-motion_scale = Vector2(0, 0)
+motion_scale = Vector2(0.5, 0.5)
 
 [node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer2" unique_id=2063547201]
-position = Vector2(244.17819, 244.07901)
+position = Vector2(388.01385, 245.39479)
 scale = Vector2(3.5868056, 2.8111112)
 texture = ExtResource("2_3mtv3")
 
 [node name="ParallaxLayer3" type="ParallaxLayer" parent="." unique_id=1583869012]
 position = Vector2(795, 5)
 scale = Vector2(2.9199986, 1.5199997)
-motion_scale = Vector2(0, 0)
+motion_scale = Vector2(0.6, 0.6)
 
 [node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer3" unique_id=1912617687]
-position = Vector2(247.94531, 244.73688)
+position = Vector2(386.64398, 244.7369)
 scale = Vector2(3.6006944, 2.8111112)
 texture = ExtResource("3_xut5t")
