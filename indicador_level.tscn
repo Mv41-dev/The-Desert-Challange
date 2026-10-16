@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://jkco8ebsirye"]
+
+[ext_resource type="FontFile" uid="uid://cb8i4ovy68f5o" path="res://ThaleahFat.ttf" id="1_xnpbu"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ebum8"]
+font = ExtResource("1_xnpbu")
+outline_size = 4
+outline_color = Color(0, 0, 0, 1)
+
+[node name="indicador_level" type="ParallaxBackground" unique_id=1156885367]
+
+[node name="Label" type="Label" parent="." unique_id=2012111288]
+offset_left = 27.0
+offset_top = 53.0
+offset_right = 199.50157
+offset_bottom = 75.99999
+scale = Vector2(2.5510476, 3.1584935)
+text = "LEVEL 1 / tutorial"
+label_settings = SubResource("LabelSettings_ebum8")

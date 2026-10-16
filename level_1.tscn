@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://dmea0855e5yie" path="res://Player.tscn" id="2_hbghi"]
 [ext_resource type="PackedScene" uid="uid://tqew04d0dhc8" path="res://parallax_background.tscn" id="3_hn12h"]
 [ext_resource type="PackedScene" uid="uid://d0rdtvtk12s7i" path="res://portal.tscn" id="4_ihfcg"]
+[ext_resource type="PackedScene" uid="uid://jkco8ebsirye" path="res://indicador_level.tscn" id="4_j7kpp"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="5_rka8t"]
 [ext_resource type="PackedScene" uid="uid://dfnb1lpkmol2a" path="res://placa_controles.tscn" id="placa_tutorial"]
 
@@ -343,6 +344,8 @@ z_index = 3
 position = Vector2(129, 243)
 
 [node name="ParallaxBackground" parent="." unique_id=999482517 instance=ExtResource("3_hn12h")]
+
+[node name="indicador_level" parent="." unique_id=1156885367 instance=ExtResource("4_j7kpp")]
 
 [node name="portal" parent="." unique_id=1515034350 instance=ExtResource("4_ihfcg")]
 position = Vector2(594, 239.00003)
