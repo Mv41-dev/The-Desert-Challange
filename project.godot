@@ -25,10 +25,6 @@ Sons="*uid://d1t8jh6hxrdue"
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/w4gd/addons/w4gd/plugin/plugin.cfg")
-
 [input]
 
 jump={
