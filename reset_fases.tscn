@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://ba702tmgqmlbk"]
+
+[ext_resource type="Script" uid="uid://bd2s2soganwlh" path="res://reset_fases.gd" id="1_35bo0"]
+[ext_resource type="Texture2D" uid="uid://dofpjsp4nly8l" path="res://PortalPack/sprite-sheet.png" id="1_ifemk"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_35bo0"]
+atlas = ExtResource("1_ifemk")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rfqbw"]
+atlas = ExtResource("1_ifemk")
+region = Rect2(64, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pkkbm"]
+atlas = ExtResource("1_ifemk")
+region = Rect2(128, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ypafw"]
+atlas = ExtResource("1_ifemk")
+region = Rect2(192, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g0y4n"]
+atlas = ExtResource("1_ifemk")
+region = Rect2(0, 64, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tv55v"]
+atlas = ExtResource("1_ifemk")
+region = Rect2(64, 64, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kie1t"]
+atlas = ExtResource("1_ifemk")
+region = Rect2(128, 64, 64, 64)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ebum8"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_35bo0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rfqbw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pkkbm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ypafw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_g0y4n")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tv55v")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kie1t")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 5.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_j6qfn"]
+radius = 16.0
+height = 38.0
+
+[node name="Reset Fases" type="Area2D" unique_id=1509793574]
+script = ExtResource("1_35bo0")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=813151492]
+position = Vector2(-1.0000024, 3)
+scale = Vector2(0.96874994, 0.90625)
+sprite_frames = SubResource("SpriteFrames_ebum8")
+animation = &"idle"
+autoplay = "idle"
+frame_progress = 0.2678099
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=552922982]
+position = Vector2(-1, 3)
+shape = SubResource("CapsuleShape2D_j6qfn")
+debug_color = Color(0.5916531, 0.30909628, 1, 0.41960785)
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

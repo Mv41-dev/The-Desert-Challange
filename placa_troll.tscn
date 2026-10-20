@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://012jakc3kvlh"]
+
+[ext_resource type="Texture2D" uid="uid://bxof2shy6naxc" path="res://placa_controles.png" id="1_u6pwu"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ebum8"]
+outline_size = 8
+outline_color = Color(0, 0, 0, 1)
+
+[node name="Placa troll" type="Control" unique_id=332553099]
+layout_mode = 3
+anchor_right = 0.081
+anchor_bottom = 0.062000003
+offset_right = 1.6880035
+offset_bottom = 14.8239975
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1537882760]
+position = Vector2(21, 12)
+scale = Vector2(0.22916666, 0.26785716)
+texture = ExtResource("1_u6pwu")
+
+[node name="Label" type="Label" parent="." unique_id=1916643665]
+layout_mode = 0
+offset_left = 7.0
+offset_right = 99.0
+offset_bottom = 49.0
+scale = Vector2(0.31299084, 0.3330029)
+text = "VOCÊ VEIO
+AQUI ATOA!"
+label_settings = SubResource("LabelSettings_ebum8")
