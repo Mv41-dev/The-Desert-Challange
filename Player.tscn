@@ -295,33 +295,34 @@ collision_mask = 3
 script = ExtResource("1_kpjcp")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=742486789]
-position = Vector2(13.5, 10)
-scale = Vector2(0.4791667, 0.75)
+position = Vector2(6, -6)
+scale = Vector2(0.5, 0.75)
 sprite_frames = SubResource("SpriteFrames_ebum8")
-animation = &"fall"
+animation = &"attack_heavy"
 autoplay = "idle"
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=2096591750]
 zoom = Vector2(2.5, 2.5)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1561818429]
-position = Vector2(9, 15.5)
 shape = SubResource("RectangleShape2D_ebum8")
 
-[node name="AttackAreaJ" type="Area2D" parent="." unique_id=1675459781]
+[node name="AttackAreaJ" type="Area2D" parent="." unique_id=1013207625]
 position = Vector2(29, 14)
 collision_layer = 0
 collision_mask = 2
 monitorable = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackAreaJ" unique_id=1349632001]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackAreaJ" unique_id=179950176]
+position = Vector2(-11, -14)
 shape = SubResource("RectangleShape2D_cxr5p")
 
-[node name="AttackAreaK" type="Area2D" parent="." unique_id=1704275092]
+[node name="AttackAreaK" type="Area2D" parent="." unique_id=1232233521]
 position = Vector2(37, 14)
 collision_layer = 0
 collision_mask = 2
 monitorable = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackAreaK" unique_id=271209834]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackAreaK" unique_id=1157390]
+position = Vector2(-9, -17)
 shape = SubResource("RectangleShape2D_heavy")

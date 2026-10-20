@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" uid="uid://d0rdtvtk12s7i" path="res://portal.tscn" id="3_7amt0"]
 [ext_resource type="PackedScene" uid="uid://btcl284vynlwh" path="res://parallax_piramide.tscn" id="4_w5e11"]
 [ext_resource type="PackedScene" uid="uid://cepap36smyjbv" path="res://barreira.tscn" id="6_aie2w"]
-
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="hud_fases"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hbghi"]
@@ -370,4 +369,4 @@ position = Vector2(4854, -302)
 process_priority = 5
 layer = -99
 
-[node name="HUD" parent="." instance=ExtResource("hud_fases")]
+[node name="HUD" parent="." unique_id=1445472947 instance=ExtResource("hud_fases")]
