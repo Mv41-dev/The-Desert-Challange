@@ -4,9 +4,33 @@
 [ext_resource type="Texture2D" uid="uid://8ct4dhx83uid" path="res://Mummy_ataque (1).png" id="2_e80uo"]
 [ext_resource type="Texture2D" uid="uid://c1rekanhojk8n" path="res://Player e inimigo/5 Mummy/Mummy_idle.png" id="3_e80uo"]
 [ext_resource type="Texture2D" uid="uid://cfsad2ka2vgp2" path="res://Mummy_run.png" id="4_cxr5p"]
-[ext_resource type="Texture2D" path="res://Player e inimigo/5 Mummy/Mummy_hurt.png" id="5_hurt"]
-[ext_resource type="Texture2D" path="res://Player e inimigo/5 Mummy/Mummy_death.png" id="6_death"]
-[ext_resource type="Texture2D" path="res://Mummy_attack_forte.png" id="7_heavy"]
+[ext_resource type="Texture2D" uid="uid://cdxsw3opa48q3" path="res://Player e inimigo/5 Mummy/Mummy_hurt.png" id="5_hurt"]
+[ext_resource type="Texture2D" uid="uid://bmtnwq6i4fqey" path="res://Player e inimigo/5 Mummy/Mummy_death.png" id="6_death"]
+[ext_resource type="Texture2D" uid="uid://7x7yky6tvg2t" path="res://Mummy_attack_forte.png" id="7_heavy"]
+
+[sub_resource type="AtlasTexture" id="p_heavy_0"]
+atlas = ExtResource("7_heavy")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="p_heavy_1"]
+atlas = ExtResource("7_heavy")
+region = Rect2(48, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="p_heavy_2"]
+atlas = ExtResource("7_heavy")
+region = Rect2(96, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="p_heavy_3"]
+atlas = ExtResource("7_heavy")
+region = Rect2(144, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="p_heavy_4"]
+atlas = ExtResource("7_heavy")
+region = Rect2(192, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="p_heavy_5"]
+atlas = ExtResource("7_heavy")
+region = Rect2(240, 0, 48, 48)
 
 [sub_resource type="AtlasTexture" id="p_attack_0"]
 atlas = ExtResource("2_e80uo")
@@ -112,70 +136,147 @@ region = Rect2(192, 0, 48, 48)
 atlas = ExtResource("4_cxr5p")
 region = Rect2(240, 0, 48, 48)
 
-
-[sub_resource type="AtlasTexture" id="p_heavy_0"]
-atlas = ExtResource("7_heavy")
-region = Rect2(0, 0, 48, 48)
-
-[sub_resource type="AtlasTexture" id="p_heavy_1"]
-atlas = ExtResource("7_heavy")
-region = Rect2(48, 0, 48, 48)
-
-[sub_resource type="AtlasTexture" id="p_heavy_2"]
-atlas = ExtResource("7_heavy")
-region = Rect2(96, 0, 48, 48)
-
-[sub_resource type="AtlasTexture" id="p_heavy_3"]
-atlas = ExtResource("7_heavy")
-region = Rect2(144, 0, 48, 48)
-
-[sub_resource type="AtlasTexture" id="p_heavy_4"]
-atlas = ExtResource("7_heavy")
-region = Rect2(192, 0, 48, 48)
-
-[sub_resource type="AtlasTexture" id="p_heavy_5"]
-atlas = ExtResource("7_heavy")
-region = Rect2(240, 0, 48, 48)
-
 [sub_resource type="SpriteFrames" id="SpriteFrames_ebum8"]
 animations = [{
-"frames": [{"duration": 1.0, "texture": SubResource("p_attack_0")}, {"duration": 1.0, "texture": SubResource("p_attack_1")}, {"duration": 1.0, "texture": SubResource("p_attack_2")}, {"duration": 1.0, "texture": SubResource("p_attack_3")}, {"duration": 1.0, "texture": SubResource("p_attack_4")}, {"duration": 1.0, "texture": SubResource("p_attack_5")}],
-"loop": false,
-"name": &"attack_quick",
-"speed": 15.0
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("p_heavy_0")
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("p_heavy_0")}, {"duration": 1.0, "texture": SubResource("p_heavy_1")}, {"duration": 1.0, "texture": SubResource("p_heavy_1")}, {"duration": 1.0, "texture": SubResource("p_heavy_2")}, {"duration": 1.0, "texture": SubResource("p_heavy_3")}, {"duration": 1.0, "texture": SubResource("p_heavy_4")}, {"duration": 1.0, "texture": SubResource("p_heavy_5")}, {"duration": 1.0, "texture": SubResource("p_heavy_5")}],
-"loop": false,
+"duration": 1.0,
+"texture": SubResource("p_heavy_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_heavy_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_heavy_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_heavy_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_heavy_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_heavy_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_heavy_5")
+}],
+"loop": 0,
 "name": &"attack_heavy",
 "speed": 10.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("p_death_0")}, {"duration": 1.0, "texture": SubResource("p_death_1")}, {"duration": 1.0, "texture": SubResource("p_death_2")}, {"duration": 1.0, "texture": SubResource("p_death_3")}, {"duration": 1.0, "texture": SubResource("p_death_4")}, {"duration": 1.0, "texture": SubResource("p_death_5")}],
-"loop": false,
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("p_attack_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_attack_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_attack_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_attack_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_attack_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_attack_5")
+}],
+"loop": 0,
+"name": &"attack_quick",
+"speed": 15.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("p_death_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_death_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_death_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_death_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_death_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_death_5")
+}],
+"loop": 0,
 "name": &"death",
 "speed": 7.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("p_fall_0")}],
-"loop": true,
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("p_fall_0")
+}],
+"loop": 1,
 "name": &"fall",
 "speed": 5.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("p_hurt_0")}, {"duration": 1.0, "texture": SubResource("p_hurt_1")}],
-"loop": false,
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("p_hurt_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_hurt_1")
+}],
+"loop": 0,
 "name": &"hurt",
 "speed": 9.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("p_idle_0")}, {"duration": 1.0, "texture": SubResource("p_idle_1")}, {"duration": 1.0, "texture": SubResource("p_idle_2")}, {"duration": 1.0, "texture": SubResource("p_idle_3")}],
-"loop": true,
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("p_idle_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_idle_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_idle_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_idle_3")
+}],
+"loop": 1,
 "name": &"idle",
 "speed": 8.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("p_jump_0")}],
-"loop": true,
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("p_jump_0")
+}],
+"loop": 1,
 "name": &"jump",
 "speed": 5.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("p_run_0")}, {"duration": 1.0, "texture": SubResource("p_run_1")}, {"duration": 1.0, "texture": SubResource("p_run_2")}, {"duration": 1.0, "texture": SubResource("p_run_3")}, {"duration": 1.0, "texture": SubResource("p_run_4")}, {"duration": 1.0, "texture": SubResource("p_run_5")}],
-"loop": true,
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("p_run_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_run_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_run_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_run_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_run_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("p_run_5")
+}],
+"loop": 1,
 "name": &"run",
 "speed": 10.0
 }]
@@ -190,38 +291,38 @@ size = Vector2(28, 24)
 size = Vector2(48, 32)
 
 [node name="Player" type="CharacterBody2D" unique_id=267222214 groups=["player"]]
-collision_layer = 1
 collision_mask = 3
 script = ExtResource("1_kpjcp")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=742486789]
-position = Vector2(13.5, 10)
-scale = Vector2(0.4791667, 0.75)
+position = Vector2(6, -6)
+scale = Vector2(0.5, 0.75)
 sprite_frames = SubResource("SpriteFrames_ebum8")
-animation = &"idle"
+animation = &"attack_heavy"
 autoplay = "idle"
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=2096591750]
 zoom = Vector2(2.5, 2.5)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1561818429]
-position = Vector2(9, 15.5)
 shape = SubResource("RectangleShape2D_ebum8")
 
-[node name="AttackAreaJ" type="Area2D" parent="."]
+[node name="AttackAreaJ" type="Area2D" parent="." unique_id=1013207625]
 position = Vector2(29, 14)
 collision_layer = 0
 collision_mask = 2
 monitorable = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackAreaJ"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackAreaJ" unique_id=179950176]
+position = Vector2(-11, -14)
 shape = SubResource("RectangleShape2D_cxr5p")
 
-[node name="AttackAreaK" type="Area2D" parent="."]
+[node name="AttackAreaK" type="Area2D" parent="." unique_id=1232233521]
 position = Vector2(37, 14)
 collision_layer = 0
 collision_mask = 2
 monitorable = false
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackAreaK"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackAreaK" unique_id=1157390]
+position = Vector2(-9, -17)
 shape = SubResource("RectangleShape2D_heavy")

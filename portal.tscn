@@ -54,22 +54,22 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xvf33"]
-size = Vector2(22.31269, 44.64347)
+size = Vector2(28.59008, 54.33713)
 
 [node name="portal" type="Area2D" unique_id=1515034350]
 script = ExtResource("1_ef3v5")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=422208470]
+position = Vector2(-1, -6)
 sprite_frames = SubResource("SpriteFrames_ebum8")
 animation = &"idle"
 autoplay = "idle"
 frame_progress = 0.4494813
-flip_h = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=888132383]
-position = Vector2(3.048854, 1.7765195)
+position = Vector2(-1.1749936, -4.084219)
 rotation = 0.44854963
-skew = -0.51138175
+skew = -0.511382
 shape = SubResource("RectangleShape2D_xvf33")
 
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]
