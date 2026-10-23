@@ -34,5 +34,6 @@ CONTROLES
 A / D / SETAS/ L3: MOVER
 W / ESPACO / X: PULAR
 J / CTRL / L2: GOLPE RAPIDO
-K / SHIFT: / L1: GOLPE FORTE"
+K / SHIFT: / L1: GOLPE FORTE
+alt / select: next music"
 label_settings = SubResource("LabelSettings_6skjg")

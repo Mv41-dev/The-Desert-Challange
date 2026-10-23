@@ -1,0 +1,84 @@
+[gd_scene format=3 uid="uid://d2bgrt3h24scs"]
+
+[ext_resource type="Texture2D" uid="uid://cqlyvoutetf41" path="res://Player e inimigo/4 Vulture/Vulture_walk.png" id="1_4kbg1"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mke88"]
+atlas = ExtResource("1_4kbg1")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2ctuv"]
+atlas = ExtResource("1_4kbg1")
+region = Rect2(48, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qa0w4"]
+atlas = ExtResource("1_4kbg1")
+region = Rect2(96, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aq54w"]
+atlas = ExtResource("1_4kbg1")
+region = Rect2(144, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mnaj3"]
+atlas = ExtResource("1_4kbg1")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4na1c"]
+atlas = ExtResource("1_4kbg1")
+region = Rect2(48, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_urqdr"]
+atlas = ExtResource("1_4kbg1")
+region = Rect2(96, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hrkc1"]
+atlas = ExtResource("1_4kbg1")
+region = Rect2(144, 0, 48, 48)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ebum8"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mke88")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2ctuv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qa0w4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aq54w")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 7.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mnaj3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4na1c")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_urqdr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hrkc1")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 5.0
+}]
+
+[node name="Voador" type="CharacterBody2D" unique_id=1341953460]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2025351951]
+position = Vector2(1, 0)
+sprite_frames = SubResource("SpriteFrames_ebum8")
+animation = &"walk"
+autoplay = "idle"
+
+[node name="DetectionZone" type="Area2D" parent="." unique_id=216430412]
+
+[node name="Hitbox" type="Area2D" parent="." unique_id=1896999342]

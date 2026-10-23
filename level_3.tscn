@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://dmea0855e5yie" path="res://Player.tscn" id="1_16pka"]
 [ext_resource type="Texture2D" uid="uid://c1ibv3043ljdu" path="res://DesertTileMap/Desert/Tiles/Tiles.png" id="2_j8bo8"]
 [ext_resource type="PackedScene" uid="uid://tqew04d0dhc8" path="res://parallax_background.tscn" id="3_1jdk1"]
-[ext_resource type="PackedScene" uid="uid://d0rdtvtk12s7i" path="res://portal.tscn" id="4_j8bo8"]
+[ext_resource type="PackedScene" uid="uid://vyars1nacp8d" path="res://portal_esquerda.tscn" id="7_7ds5r"]
 [ext_resource type="PackedScene" uid="uid://cepap36smyjbv" path="res://barreira.tscn" id="7_fmu3g"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="hud_fases"]
 [ext_resource type="PackedScene" uid="uid://bc2cm54prrn4q" path="res://enemy_patrulha.tscn" id="hyena_3"]
@@ -334,10 +334,6 @@ tile_set = SubResource("TileSet_ebum8")
 scale = Vector2(2, 2)
 transform = Transform2D(2, 0, 0, 2, 0, 0)
 
-[node name="portal" parent="." unique_id=1515034350 instance=ExtResource("4_j8bo8")]
-position = Vector2(1243, 286)
-next_scene_path = "uid://cmqqddqgytqv7"
-
 [node name="HUD" parent="." unique_id=1752170253 instance=ExtResource("hud_fases")]
 
 [node name="Hiena" parent="." unique_id=2111081270 instance=ExtResource("hyena_3")]
@@ -349,3 +345,7 @@ position = Vector2(-212, -13)
 
 [node name="Barrier2" parent="." unique_id=1727554256 instance=ExtResource("7_fmu3g")]
 position = Vector2(1306, -8)
+
+[node name="portal" parent="." unique_id=1515034350 instance=ExtResource("7_7ds5r")]
+position = Vector2(1244, 301)
+next_scene_path = "uid://cmqqddqgytqv7"

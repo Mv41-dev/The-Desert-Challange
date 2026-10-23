@@ -3,7 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://c1ibv3043ljdu" path="res://DesertTileMap/Desert/Tiles/Tiles.png" id="1_ugxsx"]
 [ext_resource type="PackedScene" uid="uid://012jakc3kvlh" path="res://placa_troll.tscn" id="2_brkdw"]
 [ext_resource type="PackedScene" uid="uid://dmea0855e5yie" path="res://Player.tscn" id="2_yxwl1"]
-[ext_resource type="PackedScene" uid="uid://d0rdtvtk12s7i" path="res://portal.tscn" id="3_mix47"]
+[ext_resource type="PackedScene" uid="uid://d0rdtvtk12s7i" path="res://portal_direita.tscn" id="3_mix47"]
 [ext_resource type="PackedScene" uid="uid://bsqgg5ie82cv7" path="res://parallax_piramide3.0.tscn" id="5_yxwl1"]
 [ext_resource type="PackedScene" uid="uid://cepap36smyjbv" path="res://barreira.tscn" id="6_mix47"]
 [ext_resource type="PackedScene" uid="uid://ba702tmgqmlbk" path="res://reset_fases.tscn" id="7_ixf42"]

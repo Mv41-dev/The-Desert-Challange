@@ -2,11 +2,10 @@
 
 [ext_resource type="Texture2D" uid="uid://c1ibv3043ljdu" path="res://DesertTileMap/Desert/Tiles/Tiles.png" id="1_h6j53"]
 [ext_resource type="PackedScene" uid="uid://dmea0855e5yie" path="res://Player.tscn" id="2_o6l31"]
-[ext_resource type="PackedScene" uid="uid://d0rdtvtk12s7i" path="res://portal.tscn" id="3_72r3b"]
+[ext_resource type="PackedScene" uid="uid://d0rdtvtk12s7i" path="res://portal_direita.tscn" id="3_72r3b"]
 [ext_resource type="PackedScene" uid="uid://btcl284vynlwh" path="res://parallax_piramide.tscn" id="4_1xcjx"]
 [ext_resource type="PackedScene" uid="uid://cy5ex0ib4p4j7" path="res://parallax_piramide2.0.tscn" id="5_23fq3"]
 [ext_resource type="PackedScene" uid="uid://cepap36smyjbv" path="res://barreira.tscn" id="6_mjcbx"]
-
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="hud_fases"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hbghi"]

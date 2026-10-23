@@ -54,7 +54,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xvf33"]
-size = Vector2(28.59008, 54.33713)
+size = Vector2(21.45195, 45.399147)
 
 [node name="portal" type="Area2D" unique_id=1515034350]
 script = ExtResource("1_ef3v5")
@@ -67,9 +67,10 @@ autoplay = "idle"
 frame_progress = 0.4494813
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=888132383]
-position = Vector2(-1.1749936, -4.084219)
-rotation = 0.44854963
-skew = -0.511382
+position = Vector2(-3.489437, -3.9827344)
+rotation = -0.48171088
+scale = Vector2(1, 0.99999994)
+skew = 0.43633232
 shape = SubResource("RectangleShape2D_xvf33")
 
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]
