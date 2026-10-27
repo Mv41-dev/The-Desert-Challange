@@ -1,0 +1,88 @@
+[gd_scene format=3 uid="uid://ds0j1imnvyw4h"]
+
+[ext_resource type="Texture2D" uid="uid://b7dhq8h4x8ylf" path="res://pergaminho/sprites/1x/12_sealed_scroll.png" id="1_3wwwe"]
+[ext_resource type="Texture2D" uid="uid://bm2d2kywfvywj" path="res://pergaminho/sprites/Medievil Banner SPRITESHEET.png" id="2_83vo1"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_upg83"]
+atlas = ExtResource("2_83vo1")
+region = Rect2(0, 0, 100, 50)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vhfyp"]
+atlas = ExtResource("2_83vo1")
+region = Rect2(100, 0, 100, 50)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_di3xe"]
+atlas = ExtResource("2_83vo1")
+region = Rect2(200, 0, 100, 50)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hdt2e"]
+atlas = ExtResource("2_83vo1")
+region = Rect2(300, 0, 100, 50)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jnvvx"]
+atlas = ExtResource("2_83vo1")
+region = Rect2(400, 0, 100, 50)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2mf2t"]
+atlas = ExtResource("2_83vo1")
+region = Rect2(500, 0, 100, 50)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pg2ni"]
+atlas = ExtResource("2_83vo1")
+region = Rect2(600, 0, 100, 50)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3xxi5"]
+atlas = ExtResource("1_3wwwe")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ebum8"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_upg83")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vhfyp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_di3xe")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hdt2e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jnvvx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2mf2t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pg2ni")
+}],
+"loop": 1,
+"name": &"abrindo",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3xxi5")
+}],
+"loop": 1,
+"name": &"fechado",
+"speed": 5.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_2ato0"]
+radius = 20.12461
+
+[node name="Pergaminho" type="Area2D" unique_id=929108766]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2059252894]
+sprite_frames = SubResource("SpriteFrames_ebum8")
+animation = &"fechado"
+autoplay = "fechado"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1067451929]
+shape = SubResource("CircleShape2D_2ato0")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=127529270]

@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://btwy02gnb8jxo"]
+
+[ext_resource type="Script" uid="uid://sbe8kpnop2ep" path="res://pergaminho_ui.gd" id="1_uxakw"]
+[ext_resource type="Texture2D" uid="uid://dxnq80tfyx0hu" path="res://pergaminho/sprites/Pergaminho Aberto.png" id="1_v8chm"]
+[ext_resource type="FontFile" uid="uid://cb8i4ovy68f5o" path="res://ThaleahFat.ttf" id="2_uxakw"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ebum8"]
+font = ExtResource("2_uxakw")
+font_size = 52
+font_color = Color(0.48471344, 0.48339766, 0, 1)
+outline_size = 8
+
+[sub_resource type="LabelSettings" id="LabelSettings_v8chm"]
+font = ExtResource("2_uxakw")
+font_color = Color(0, 0, 0, 1)
+
+[node name="PergaminhoUI" type="CanvasLayer" unique_id=1494743580]
+script = ExtResource("1_uxakw")
+
+[node name="Painel" type="Control" parent="." unique_id=2121083312]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FundoEscuro" type="ColorRect" parent="Painel" unique_id=1847596049]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.49411765)
+
+[node name="ImagemPergaminho" type="TextureRect" parent="Painel" unique_id=284802483]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_v8chm")
+
+[node name="Titulo" type="Label" parent="Painel" unique_id=1220848461]
+layout_mode = 0
+offset_left = 286.0
+offset_top = 189.0
+offset_right = 829.0
+offset_bottom = 237.0
+text = "CURIOSIDADES DO DESERTO"
+label_settings = SubResource("LabelSettings_ebum8")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Painel" unique_id=1108520037]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 224.0
+offset_top = 250.0
+offset_right = -251.0
+offset_bottom = -227.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InstrucaoFechar" type="Label" parent="Painel" unique_id=1108585891]
+layout_mode = 0
+offset_left = 343.0
+offset_top = 428.0
+offset_right = 647.0
+offset_bottom = 451.0
+text = "Pressione E ou Y/ (controle) para continuar"
+label_settings = SubResource("LabelSettings_v8chm")

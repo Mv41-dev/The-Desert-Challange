@@ -1,0 +1,21 @@
+StationSupply Asset License
+Potions, Scrolls & Magic Items 48px — version 2.0
+
+StationSupply grants the purchaser a non-exclusive, worldwide, perpetual
+license to use and modify these assets in personal and commercial games,
+including released games and their related promotional materials.
+No royalties or attribution are required. Optional credit: StationSupply.
+
+You may share the assets with collaborators working on your licensed project.
+They may use the assets only for that project and may not redistribute them.
+You may distribute the assets as incorporated into a finished game.
+
+You may not resell, sublicense, give away, or redistribute this pack or its
+individual assets as standalone assets, as-is or in a modified asset pack.
+Do not offer the source files as a separate download or claim exclusive
+ownership of the original assets. This license does not transfer ownership.
+
+The icons were AI-generated and then converted to true pixel art with
+PixelForge (fixed grid, one palette, outlined, stray pixels removed by script).
+The assets are supplied as-is, without warranties, to the extent permitted
+by applicable law.
