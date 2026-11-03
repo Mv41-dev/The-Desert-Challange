@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://btcl284vynlwh" path="res://parallax_piramide.tscn" id="4_1xcjx"]
 [ext_resource type="PackedScene" uid="uid://cy5ex0ib4p4j7" path="res://parallax_piramide2.0.tscn" id="5_23fq3"]
 [ext_resource type="PackedScene" uid="uid://cepap36smyjbv" path="res://barreira.tscn" id="6_mjcbx"]
+[ext_resource type="PackedScene" uid="uid://b2u6ab45n3lyn" path="res://portamovel.tscn" id="8_72r3b"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="hud_fases"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hbghi"]
@@ -373,4 +374,8 @@ position = Vector2(628, -96)
 [node name="barreira2" parent="." unique_id=223218697 instance=ExtResource("6_mjcbx")]
 position = Vector2(4017, 7)
 
-[node name="HUD" parent="." instance=ExtResource("hud_fases")]
+[node name="HUD" parent="." unique_id=1235009094 instance=ExtResource("hud_fases")]
+
+[node name="staticbody" parent="." unique_id=502500651 instance=ExtResource("8_72r3b")]
+z_index = -1
+position = Vector2(1319, 456)

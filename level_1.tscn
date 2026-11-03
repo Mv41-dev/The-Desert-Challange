@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://d0rdtvtk12s7i" path="res://portal_direita.tscn" id="7_gjkv5"]
 [ext_resource type="PackedScene" uid="uid://cepap36smyjbv" path="res://barreira.tscn" id="8_bjebc"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="9_3qmij"]
-[ext_resource type="PackedScene" uid="uid://ds0j1imnvyw4h" path="res://pergaminho.tscn" id="9_5rr72"]
+[ext_resource type="PackedScene" uid="uid://c4rohd8hefpig" path="res://artefato.tscn" id="10_gyffv"]
 [ext_resource type="PackedScene" uid="uid://dfnb1lpkmol2a" path="res://placa_controles.tscn" id="12_ethxx"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hbghi"]
@@ -378,5 +378,5 @@ scale = Vector2(0.8204087, 0.7576962)
 next_scene_path = "uid://cb3qxy13u6pq4"
 metadata/_tc_uuid = "1879907232873173736"
 
-[node name="Pergaminho" parent="." unique_id=929108766 instance=ExtResource("9_5rr72")]
-position = Vector2(685, 255)
+[node name="artefato" parent="." unique_id=897673077 instance=ExtResource("10_gyffv")]
+position = Vector2(370, 174)

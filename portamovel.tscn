@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://b2u6ab45n3lyn"]
+
+[ext_resource type="Script" uid="uid://b8l3kvua8qijr" path="res://portamovel.gd" id="1_7rs8g"]
+[ext_resource type="Texture2D" uid="uid://dlxrjo84562y1" path="res://addons/pixel-art-background-seamless-pattern-260nw-2678167329.webp" id="1_fiifc"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7rs8g"]
+atlas = ExtResource("1_fiifc")
+region = Rect2(106, 70, 106, 70)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ebum8"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7rs8g")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ebum8"]
+size = Vector2(64, 138)
+
+[node name="staticbody" type="StaticBody2D" unique_id=502500651]
+position = Vector2(9, 2)
+script = ExtResource("1_7rs8g")
+
+[node name="Sprite2D" type="AnimatedSprite2D" parent="." unique_id=804699822]
+position = Vector2(-21, 0)
+scale = Vector2(0.6037736, 1)
+sprite_frames = SubResource("SpriteFrames_ebum8")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1082348374]
+position = Vector2(-21, -34)
+shape = SubResource("RectangleShape2D_ebum8")
+
+[node name="Sprite2D2" type="AnimatedSprite2D" parent="." unique_id=422483552]
+z_index = -1
+position = Vector2(-21, -70)
+scale = Vector2(0.6037736, 1)
+sprite_frames = SubResource("SpriteFrames_ebum8")

@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://c4rohd8hefpig"]
+
+[ext_resource type="Script" uid="uid://c17vmi0xxij4o" path="res://artefato.gd" id="1_kaprr"]
+[ext_resource type="Texture2D" uid="uid://bny2reo0fm30p" path="res://pergaminho/download.png" id="2_lmmxc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_uiv75"]
+size = Vector2(6, 14)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kug23"]
+atlas = ExtResource("2_lmmxc")
+region = Rect2(768, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jqi55"]
+atlas = ExtResource("2_lmmxc")
+region = Rect2(1024, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7fsml"]
+atlas = ExtResource("2_lmmxc")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6gytm"]
+atlas = ExtResource("2_lmmxc")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2bic2"]
+atlas = ExtResource("2_lmmxc")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_xvf33"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kug23")
+}],
+"loop": 1,
+"name": &"ankh",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jqi55")
+}],
+"loop": 1,
+"name": &"calice",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7fsml")
+}],
+"loop": 1,
+"name": &"escaravelho",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6gytm")
+}],
+"loop": 1,
+"name": &"lapislazulidofarao",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2bic2")
+}],
+"loop": 1,
+"name": &"mascara",
+"speed": 5.0
+}]
+
+[node name="artefato" type="Area2D" unique_id=897673077]
+script = ExtResource("1_kaprr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1048900490]
+position = Vector2(-2, 5)
+shape = SubResource("RectangleShape2D_uiv75")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1254070797]
+position = Vector2(-2.0000038, 5)
+scale = Vector2(0.076171875, 0.07226559)
+sprite_frames = SubResource("SpriteFrames_xvf33")
+animation = &"lapislazulidofarao"

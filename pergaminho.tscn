@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://ds0j1imnvyw4h"]
 
 [ext_resource type="Texture2D" uid="uid://b7dhq8h4x8ylf" path="res://pergaminho/sprites/1x/12_sealed_scroll.png" id="1_3wwwe"]
+[ext_resource type="Script" uid="uid://cuoyvdttmw6o3" path="res://pergaminho.gd" id="1_inusg"]
 [ext_resource type="Texture2D" uid="uid://bm2d2kywfvywj" path="res://pergaminho/sprites/Medievil Banner SPRITESHEET.png" id="2_83vo1"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_upg83"]
@@ -59,7 +60,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_pg2ni")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"abrindo",
 "speed": 8.0
 }, {
@@ -76,13 +77,14 @@ animations = [{
 radius = 20.12461
 
 [node name="Pergaminho" type="Area2D" unique_id=929108766]
+script = ExtResource("1_inusg")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2059252894]
 sprite_frames = SubResource("SpriteFrames_ebum8")
-animation = &"fechado"
+animation = &"abrindo"
 autoplay = "fechado"
+frame = 6
+frame_progress = 1.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1067451929]
 shape = SubResource("CircleShape2D_2ato0")
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=127529270]
