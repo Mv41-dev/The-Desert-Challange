@@ -364,4 +364,4 @@ position = Vector2(4427, -437)
 
 [node name="Night parallax" parent="." unique_id=1496345904 instance=ExtResource("5_p6q33")]
 
-[node name="HUD" parent="." instance=ExtResource("hud_fases")]
+[node name="HUD" parent="." unique_id=1754962102 instance=ExtResource("hud_fases")]

@@ -47,11 +47,13 @@ metadata/_tc_uuid = "7206804681631446065"
 [node name="BtnJogar" type="Button" parent="VBoxContainer" unique_id=1491733790]
 layout_mode = 2
 icon = ExtResource("3_qe12f")
+flat = true
 metadata/_tc_uuid = "6816685250556865210"
 
 [node name="BtnSair" type="Button" parent="VBoxContainer" unique_id=1487956074]
 layout_mode = 2
 icon = ExtResource("4_8qtwp")
+flat = true
 metadata/_tc_uuid = "1334324770599356820"
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="." unique_id=2032900940]

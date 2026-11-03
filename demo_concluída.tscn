@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://dh81a806tkvrt"]
+
+[ext_resource type="Texture2D" uid="uid://nqlitg5vb2uh" path="res://DayDesert/Desert Parallax by Cryptogene/Desert.png" id="1_3q8ye"]
+[ext_resource type="Script" uid="uid://blfpdtjlolaop" path="res://demo_concluída.gd" id="1_o714v"]
+[ext_resource type="FontFile" uid="uid://cb8i4ovy68f5o" path="res://ThaleahFat.ttf" id="2_mo3c8"]
+[ext_resource type="Texture2D" uid="uid://bv723ixg38er" path="res://Menu Buttons/Large Buttons/Large Buttons/Quit Button.png" id="3_5v21c"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_mo3c8"]
+font = ExtResource("2_mo3c8")
+font_size = 32
+font_color = Color(0.61331403, 0.61331403, 0, 1)
+outline_size = 4
+
+[node name="Control" type="Control" unique_id=638059531]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_o714v")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1422382623]
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+scale = Vector2(0.6000011, 0.60000026)
+texture = ExtResource("1_3q8ye")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=548331348]
+layout_mode = 0
+offset_left = 328.0
+offset_top = 178.0
+offset_right = 840.0
+offset_bottom = 316.0
+
+[node name="Label" type="Label" parent="VBoxContainer" unique_id=1325534402]
+layout_mode = 2
+text = "Parabéns!!!
+Você concluiu a demo!
+Espere até lançar o jogo completo!!!"
+label_settings = SubResource("LabelSettings_mo3c8")
+horizontal_alignment = 1
+
+[node name="BtnSair" type="Button" parent="." unique_id=294208360]
+layout_mode = 0
+offset_left = 488.0
+offset_top = 379.00003
+offset_right = 1096.0
+offset_bottom = 587.0
+scale = Vector2(0.30141598, 0.32607013)
+icon = ExtResource("3_5v21c")
+
+[connection signal="pressed" from="BtnSair" to="." method="_on_btn_sair_pressed"]
