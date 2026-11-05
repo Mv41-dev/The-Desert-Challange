@@ -1,6 +1,11 @@
 extends CharacterBody2D
 
-signal vida_alterada(vida_atual: int, vida_maxima: int)
+
+signal vida_alterada(
+	vida_atual: int,
+	vida_maxima: int
+)
+
 
 enum Estado {
 	NORMAL,
@@ -8,6 +13,7 @@ enum Estado {
 	FERIDO,
 	MORTO
 }
+
 
 enum TipoGolpe {
 	LEVE,
@@ -79,61 +85,61 @@ var aceleracao_ar: float = 1100.0
 
 @export_group("Queda Profunda")
 
+
 # Primeiros 2 segundos:
-# queda completamente normal.
+# queda normal.
 @export_range(0.5, 5.0, 0.1)
 var tempo_antes_queda_profunda: float = 2.0
 
 
-# Crescimento bem mais lento.
-#
-# Antes:
-# 1.15
-#
-# Agora:
-# 1.10
-#
-# Continua exponencial, mas demora mais
-# para ficar realmente absurdo.
+# Crescimento exponencial suave.
 @export_range(1.01, 2.0, 0.01)
 var crescimento_exponencial_queda: float = 1.10
 
 
-# Mantemos um teto alto.
-# Ele ainda pode ficar MUITO rapido,
-# apenas demora mais para chegar perto dele.
-@export_range(1000.0, 6000.0, 100.0)
-var velocidade_maxima_queda_profunda: float = 3200.0
+# NOVO LIMITE MAXIMO.
+#
+# Antes estava extremamente rapido.
+# Agora ainda acelera bastante,
+# mas fica muito mais controlavel.
+@export_range(800.0, 3000.0, 50.0)
+var velocidade_maxima_queda_profunda: float = 1400.0
 
 
-# O escurecimento tambem comeca depois
-# de 2 segundos de queda.
+# =====================================================
+# ESCURECIMENTO
+# =====================================================
+
+# Comeca junto com a queda profunda.
 @export_range(0.5, 5.0, 0.1)
 var tempo_antes_escurecer: float = 2.0
 
 
-# Agora demora bem mais para ficar quase preto.
-@export_range(1.0, 12.0, 0.1)
-var duracao_escurecimento: float = 6.5
-
-
-# Curva do escurecimento.
+# NOVO:
 #
-# Acima de 1.0:
-# escurece devagar no inicio
-# e cresce progressivamente depois.
+# Como a queda agora dura mais por causa
+# do teto de 1400, o escurecimento tambem
+# demora mais.
+@export_range(1.0, 15.0, 0.1)
+var duracao_escurecimento: float = 8.5
+
+
+# NOVO:
+#
+# Quanto maior, mais devagar fica o inicio
+# do escurecimento e mais forte ele fica
+# perto do fim.
 @export_range(1.0, 3.0, 0.05)
-var curva_escurecimento: float = 1.35
+var curva_escurecimento: float = 1.45
 
 
-# DemoEnd ainda completa os ultimos porcentos
-# instantaneamente.
+# Quase totalmente preto.
 @export_range(0.5, 0.99, 0.01)
 var escuridao_maxima: float = 0.96
 
 
 # =====================================================
-# ALINHAMENTO
+# ALINHAMENTO VISUAL
 # =====================================================
 
 @export_group("Alinhamento visual")
@@ -207,13 +213,21 @@ var fundo_escuridao: ColorRect = null
 # NODES
 # =====================================================
 
-@onready var anim: AnimatedSprite2D = $AnimatedSprite2D
+@onready var anim: AnimatedSprite2D = (
+	$AnimatedSprite2D
+)
 
-@onready var colisao_player: CollisionShape2D = $CollisionShape2D
+@onready var colisao_player: CollisionShape2D = (
+	$CollisionShape2D
+)
 
-@onready var attack_area_j: Area2D = $AttackAreaJ
+@onready var attack_area_j: Area2D = (
+	$AttackAreaJ
+)
 
-@onready var attack_area_k: Area2D = $AttackAreaK
+@onready var attack_area_k: Area2D = (
+	$AttackAreaK
+)
 
 
 # =====================================================
@@ -221,8 +235,9 @@ var fundo_escuridao: ColorRect = null
 # =====================================================
 
 func _ready() -> void:
-
-	add_to_group("player")
+	add_to_group(
+		"player"
+	)
 
 
 	posicao_inicial = global_position
@@ -243,7 +258,6 @@ func _ready() -> void:
 
 
 	if Global.vida_atual <= 0:
-
 		Global.reiniciar_vida()
 
 
@@ -267,7 +281,6 @@ func _ready() -> void:
 	if not anim.animation_finished.is_connected(
 		_ao_terminar_animacao
 	):
-
 		anim.animation_finished.connect(
 			_ao_terminar_animacao
 		)
@@ -288,27 +301,23 @@ func _ready() -> void:
 func _physics_process(
 	delta: float
 ) -> void:
-
 	_atualizar_temporizador_queda(
 		delta
 	)
 
 
-	# =====================================================
+	# =================================================
 	# BUFFER DE PULO
-	# =====================================================
+	# =================================================
 
 	if Input.is_action_just_pressed(
 		"jump"
 	):
-
 		tempo_buffer_restante = (
 			tempo_buffer_pulo
 		)
 
-
 	else:
-
 		tempo_buffer_restante = maxf(
 			tempo_buffer_restante
 			- delta,
@@ -316,19 +325,16 @@ func _physics_process(
 		)
 
 
-	# =====================================================
+	# =================================================
 	# COYOTE TIME
-	# =====================================================
+	# =================================================
 
 	if is_on_floor():
-
 		tempo_coyote_restante = (
 			tempo_coyote
 		)
 
-
 	else:
-
 		tempo_coyote_restante = maxf(
 			tempo_coyote_restante
 			- delta,
@@ -336,33 +342,27 @@ func _physics_process(
 		)
 
 
-	# =====================================================
+	# =================================================
 	# GRAVIDADE
-	# =====================================================
+	# =================================================
 
 	if not is_on_floor():
-
 		var multiplicador_gravidade: float = 1.0
 
 
 		if velocity.y < 0.0:
-
 			if not Input.is_action_pressed(
 				"jump"
 			):
-
 				multiplicador_gravidade = (
 					gravidade_pulo_curto
 				)
 
-
 			else:
-
 				multiplicador_gravidade = 1.0
 
 
 		elif velocity.y > 0.0:
-
 			multiplicador_gravidade = (
 				gravidade_queda
 			)
@@ -379,12 +379,11 @@ func _physics_process(
 		)
 
 
-		# =================================================
+		# =============================================
 		# QUEDA PROFUNDA
-		# =================================================
+		# =============================================
 
 		if queda_profunda_ativa:
-
 			var tempo_extra: float = maxf(
 				0.0,
 				tempo_caindo
@@ -417,16 +416,14 @@ func _physics_process(
 
 
 	elif velocity.y > 0.0:
-
 		velocity.y = 0.0
 
 
-	# =====================================================
+	# =================================================
 	# INVULNERABILIDADE
-	# =====================================================
+	# =================================================
 
 	if tempo_invulneravel_restante > 0.0:
-
 		tempo_invulneravel_restante = maxf(
 			tempo_invulneravel_restante
 			- delta,
@@ -443,22 +440,21 @@ func _physics_process(
 			else 1.0
 		)
 
-
 	else:
-
 		anim.modulate.a = 1.0
 
 
-	# =====================================================
+	# =================================================
 	# MORTE
-	# =====================================================
+	# =================================================
 
 	if estado == Estado.MORTO:
-
 		velocity.x = move_toward(
 			velocity.x,
 			0.0,
-			SPEED * delta * 3.0
+			SPEED
+			* delta
+			* 3.0
 		)
 
 
@@ -471,16 +467,17 @@ func _physics_process(
 		return
 
 
-	# =====================================================
+	# =================================================
 	# FERIDO
-	# =====================================================
+	# =================================================
 
 	if estado == Estado.FERIDO:
-
 		velocity.x = move_toward(
 			velocity.x,
 			0.0,
-			SPEED * delta * 3.0
+			SPEED
+			* delta
+			* 3.0
 		)
 
 
@@ -493,20 +490,18 @@ func _physics_process(
 		return
 
 
-	# =====================================================
+	# =================================================
 	# PULO
-	# =====================================================
+	# =================================================
 
 	if (
 		tempo_buffer_restante > 0.0
 		and tempo_coyote_restante > 0.0
 	):
-
 		velocity.y = forca_pulo
 
 
 		tempo_buffer_restante = 0.0
-
 
 		tempo_coyote_restante = 0.0
 
@@ -517,13 +512,12 @@ func _physics_process(
 		)
 		and velocity.y < 0.0
 	):
-
 		velocity.y *= corte_pulo
 
 
-	# =====================================================
+	# =================================================
 	# MOVIMENTO
-	# =====================================================
+	# =================================================
 
 	var direcao: float = Input.get_axis(
 		"left",
@@ -532,7 +526,6 @@ func _physics_process(
 
 
 	if estado == Estado.NORMAL:
-
 		var aceleracao: float = (
 			aceleracao_chao
 			if is_on_floor()
@@ -550,14 +543,12 @@ func _physics_process(
 		if absf(
 			direcao
 		) > 0.01:
-
 			_virar(
 				direcao
 			)
 
 
 	else:
-
 		var velocidade_ataque: float = (
 			SPEED * 0.30
 			if golpe_atual == TipoGolpe.LEVE
@@ -574,14 +565,13 @@ func _physics_process(
 		)
 
 
-	# =====================================================
+	# =================================================
 	# ATAQUES
-	# =====================================================
+	# =================================================
 
 	if Input.is_action_just_pressed(
 		"attack_quick"
 	):
-
 		solicitar_ataque(
 			TipoGolpe.LEVE
 		)
@@ -590,7 +580,6 @@ func _physics_process(
 	elif Input.is_action_just_pressed(
 		"attack_heavy"
 	):
-
 		solicitar_ataque(
 			TipoGolpe.FORTE
 		)
@@ -603,12 +592,9 @@ func _physics_process(
 
 
 	if estado == Estado.ATAQUE:
-
 		_verificar_acertos()
 
-
 	elif estado == Estado.NORMAL:
-
 		_atualizar_animacao_movimento(
 			direcao
 		)
@@ -619,7 +605,6 @@ func _physics_process(
 # =====================================================
 
 func _criar_escuridao_queda() -> void:
-
 	camada_escuridao = CanvasLayer.new()
 
 
@@ -671,14 +656,12 @@ func _criar_escuridao_queda() -> void:
 	if not get_viewport().size_changed.is_connected(
 		_atualizar_tamanho_escuridao
 	):
-
 		get_viewport().size_changed.connect(
 			_atualizar_tamanho_escuridao
 		)
 
 
 func _atualizar_tamanho_escuridao() -> void:
-
 	if fundo_escuridao == null:
 		return
 
@@ -698,45 +681,40 @@ func _atualizar_tamanho_escuridao() -> void:
 func _atualizar_temporizador_queda(
 	delta: float
 ) -> void:
-
 	if is_on_floor():
-
 		_resetar_queda_profunda()
 
 		return
 
 
 	if velocity.y <= 0.0:
-
 		return
 
 
 	tempo_caindo += delta
 
 
-	# =====================================================
+	# =================================================
 	# ACELERACAO
-	# =====================================================
+	# =================================================
 
 	if (
 		not queda_profunda_ativa
 		and tempo_caindo
 		>= tempo_antes_queda_profunda
 	):
-
 		queda_profunda_ativa = true
 
 
-	# =====================================================
-	# ESCURIDAO
-	# =====================================================
+	# =================================================
+	# ESCURECIMENTO
+	# =================================================
 
 	if (
 		not escurecimento_ativo
 		and tempo_caindo
 		>= tempo_antes_escurecer
 	):
-
 		escurecimento_ativo = true
 
 
@@ -745,13 +723,11 @@ func _atualizar_temporizador_queda(
 # =====================================================
 
 func _atualizar_escuridao_queda() -> void:
-
 	if fundo_escuridao == null:
 		return
 
 
 	if not escurecimento_ativo:
-
 		fundo_escuridao.modulate.a = 0.0
 
 		return
@@ -775,20 +751,21 @@ func _atualizar_escuridao_queda() -> void:
 	)
 
 
-	# =====================================================
-	# CURVA EXPONENCIAL SUAVE
+	# =================================================
+	# CURVA PROGRESSIVA
 	#
-	# Exemplo:
+	# A tela fica pouco mais escura no começo
+	# e vai ganhando intensidade aos poucos.
 	#
-	# 0% tempo  -> 0%
-	# 25% tempo -> ~15%
-	# 50% tempo -> ~39%
-	# 75% tempo -> ~68%
-	# 100% tempo -> 100%
+	# Com 1.45:
 	#
-	# Portanto ele continua escurecendo o tempo inteiro,
-	# mas bem devagar no começo.
-	# =====================================================
+	# 25% do tempo -> ~13%
+	# 50% do tempo -> ~36%
+	# 75% do tempo -> ~66%
+	# 100%          -> 100%
+	#
+	# Isso evita aquele "de repente ficou preto".
+	# =================================================
 
 	var progresso_curvado: float = pow(
 		progresso,
@@ -812,7 +789,6 @@ func _atualizar_escuridao_queda() -> void:
 # =====================================================
 
 func _resetar_queda_profunda() -> void:
-
 	tempo_caindo = 0.0
 
 
@@ -823,7 +799,6 @@ func _resetar_queda_profunda() -> void:
 
 
 	if fundo_escuridao != null:
-
 		fundo_escuridao.modulate.a = 0.0
 
 
@@ -832,7 +807,6 @@ func _resetar_queda_profunda() -> void:
 # =====================================================
 
 func forcar_tela_preta() -> void:
-
 	if fundo_escuridao == null:
 		return
 
@@ -845,7 +819,6 @@ func forcar_tela_preta() -> void:
 # =====================================================
 
 func resetar_para_inicio() -> void:
-
 	estado = Estado.NORMAL
 
 
@@ -867,9 +840,7 @@ func resetar_para_inicio() -> void:
 	_resetar_queda_profunda()
 
 
-	global_position = (
-		posicao_inicial
-	)
+	global_position = posicao_inicial
 
 
 	reset_physics_interpolation()
@@ -890,14 +861,12 @@ func resetar_para_inicio() -> void:
 func _virar(
 	direcao: float
 ) -> void:
-
 	var nova_direcao: bool = (
 		direcao > 0.0
 	)
 
 
 	if olhando_direita == nova_direcao:
-
 		return
 
 
@@ -920,16 +889,12 @@ func _virar(
 # =====================================================
 
 func _atualizar_alinhamento_sprite() -> void:
-
 	if olhando_direita:
-
 		anim.position = (
 			posicao_original_sprite
 		)
 
-
 	else:
-
 		anim.position = (
 			posicao_original_sprite
 			+ Vector2(
@@ -944,9 +909,7 @@ func _atualizar_alinhamento_sprite() -> void:
 # =====================================================
 
 func atualizar_areas_ataque() -> void:
-
 	if olhando_direita:
-
 		attack_area_j.position = (
 			OFFSET_J_DIREITA
 		)
@@ -959,12 +922,10 @@ func atualizar_areas_ataque() -> void:
 
 		attack_area_j.scale.x = 1.0
 
-
 		attack_area_k.scale.x = 1.0
 
 
 	else:
-
 		attack_area_j.position = Vector2(
 			-OFFSET_J_DIREITA.x,
 			OFFSET_J_DIREITA.y
@@ -979,7 +940,6 @@ func atualizar_areas_ataque() -> void:
 
 		attack_area_j.scale.x = -1.0
 
-
 		attack_area_k.scale.x = -1.0
 
 
@@ -990,18 +950,13 @@ func atualizar_areas_ataque() -> void:
 func _atualizar_animacao_movimento(
 	direcao: float
 ) -> void:
-
 	if not is_on_floor():
-
 		if velocity.y < 0.0:
-
 			_tocar(
 				&"jump"
 			)
 
-
 		else:
-
 			_tocar(
 				&"fall"
 			)
@@ -1010,14 +965,12 @@ func _atualizar_animacao_movimento(
 	elif absf(
 		direcao
 	) > 0.01:
-
 		_tocar(
 			&"run"
 		)
 
 
 	else:
-
 		_tocar(
 			&"idle"
 		)
@@ -1026,7 +979,6 @@ func _atualizar_animacao_movimento(
 func _tocar(
 	nome: StringName
 ) -> void:
-
 	if (
 		anim.sprite_frames.has_animation(
 			nome
@@ -1036,7 +988,6 @@ func _tocar(
 			or not anim.is_playing()
 		)
 	):
-
 		anim.play(
 			nome
 		)
@@ -1049,9 +1000,7 @@ func _tocar(
 func solicitar_ataque(
 	tipo: TipoGolpe
 ) -> void:
-
 	if estado == Estado.NORMAL:
-
 		_iniciar_ataque(
 			tipo
 		)
@@ -1061,7 +1010,6 @@ func solicitar_ataque(
 		estado == Estado.ATAQUE
 		and anim.frame >= 2
 	):
-
 		golpe_em_fila = int(
 			tipo
 		)
@@ -1070,7 +1018,6 @@ func solicitar_ataque(
 func _iniciar_ataque(
 	tipo: TipoGolpe
 ) -> void:
-
 	estado = Estado.ATAQUE
 
 
@@ -1087,21 +1034,17 @@ func _iniciar_ataque(
 
 
 	if tipo == TipoGolpe.LEVE:
-
 		anim.play(
 			&"attack_quick"
 		)
 
-
 	else:
-
 		anim.play(
 			&"attack_heavy"
 		)
 
 
 func _verificar_acertos() -> void:
-
 	var frame: int = anim.frame
 
 
@@ -1115,15 +1058,12 @@ func _verificar_acertos() -> void:
 
 
 	if golpe_atual == TipoGolpe.LEVE:
-
 		ativo = (
 			frame >= 2
 			and frame <= 3
 		)
 
-
 	else:
-
 		ativo = (
 			frame >= 3
 			and frame <= 5
@@ -1137,23 +1077,19 @@ func _verificar_acertos() -> void:
 
 
 	if not ativo:
-
 		return
 
 
 	for corpo in area.get_overlapping_bodies():
-
 		if not is_instance_valid(
 			corpo
 		):
-
 			continue
 
 
 		if not corpo.is_in_group(
 			"inimigo"
 		):
-
 			continue
 
 
@@ -1165,7 +1101,6 @@ func _verificar_acertos() -> void:
 				corpo
 			)
 		):
-
 			atingidos_no_golpe.append(
 				corpo
 			)
@@ -1185,13 +1120,11 @@ func tomar_dano(
 	quantidade: int,
 	origem: Vector2 = Vector2.ZERO
 ) -> void:
-
 	if (
 		quantidade <= 0
 		or estado == Estado.MORTO
 		or tempo_invulneravel_restante > 0.0
 	):
-
 		return
 
 
@@ -1218,7 +1151,6 @@ func tomar_dano(
 
 
 	if vida <= 0:
-
 		morrer()
 
 		return
@@ -1238,7 +1170,6 @@ func tomar_dano(
 
 
 	if origem != Vector2.ZERO:
-
 		lado = (
 			1.0
 			if global_position.x
@@ -1269,9 +1200,7 @@ func tomar_dano(
 # =====================================================
 
 func morrer() -> void:
-
 	if estado == Estado.MORTO:
-
 		return
 
 
@@ -1300,23 +1229,16 @@ func morrer() -> void:
 # =====================================================
 
 func _ao_terminar_animacao() -> void:
-
 	match estado:
-
 		Estado.ATAQUE:
-
 			if (
-				anim.animation
-				== &"attack_quick"
-				or anim.animation
-				== &"attack_heavy"
+				anim.animation == &"attack_quick"
+				or anim.animation == &"attack_heavy"
 			):
-
 				estado = Estado.NORMAL
 
 
 				if golpe_em_fila != -1:
-
 					var proximo: TipoGolpe = (
 						TipoGolpe.FORTE
 						if golpe_em_fila
@@ -1333,16 +1255,12 @@ func _ao_terminar_animacao() -> void:
 
 
 		Estado.FERIDO:
-
 			if anim.animation == &"hurt":
-
 				estado = Estado.NORMAL
 
 
 		Estado.MORTO:
-
 			if anim.animation == &"death":
-
 				Global.reiniciar_vida()
 
 

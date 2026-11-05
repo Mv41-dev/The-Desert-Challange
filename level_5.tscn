@@ -527,7 +527,7 @@ position = Vector2(5191, 16443)
 
 [node name="Player" parent="." unique_id=267222214 instance=ExtResource("1_cp4ax")]
 z_index = 3
-position = Vector2(3516, -249)
+position = Vector2(878, -249)
 
 [node name="ParallaxBackground" parent="." unique_id=503224253 instance=ExtResource("4_8ons7")]
 
