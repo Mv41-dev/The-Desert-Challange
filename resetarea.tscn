@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://bu1bbvi7k45pk"]
+
+[ext_resource type="Script" uid="uid://dtb7sjich6far" path="res://resetarea.gd" id="1_yuy2d"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_q45od"]
+size = Vector2(2616, 106)
+
+[node name="area2d" type="Area2D" unique_id=1114173430]
+script = ExtResource("1_yuy2d")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=4943098]
+position = Vector2(1298, 43)
+shape = SubResource("RectangleShape2D_q45od")

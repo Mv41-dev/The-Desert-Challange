@@ -19,23 +19,23 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ebum8"]
-size = Vector2(64, 138)
+size = Vector2(195, 234)
 
 [node name="staticbody" type="StaticBody2D" unique_id=502500651]
 position = Vector2(9, 2)
 script = ExtResource("1_7rs8g")
 
 [node name="Sprite2D" type="AnimatedSprite2D" parent="." unique_id=804699822]
-position = Vector2(-21, 0)
-scale = Vector2(0.6037736, 1)
+position = Vector2(44.499996, 75.5)
+scale = Vector2(1.8396226, 1.6428572)
 sprite_frames = SubResource("SpriteFrames_ebum8")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1082348374]
-position = Vector2(-21, -34)
+position = Vector2(44.5, 14)
 shape = SubResource("RectangleShape2D_ebum8")
 
 [node name="Sprite2D2" type="AnimatedSprite2D" parent="." unique_id=422483552]
 z_index = -1
-position = Vector2(-21, -70)
-scale = Vector2(0.6037736, 1)
+position = Vector2(44.5, -42.5)
+scale = Vector2(1.8396227, 1.7857143)
 sprite_frames = SubResource("SpriteFrames_ebum8")
