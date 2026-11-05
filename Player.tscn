@@ -279,6 +279,11 @@ animations = [{
 "loop": 1,
 "name": &"run",
 "speed": 10.0
+}, {
+"frames": [],
+"loop": 0,
+"name": &"test",
+"speed": 13.0
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ebum8"]
@@ -298,7 +303,7 @@ script = ExtResource("1_kpjcp")
 position = Vector2(6, -6)
 scale = Vector2(0.5, 0.75)
 sprite_frames = SubResource("SpriteFrames_ebum8")
-animation = &"attack_heavy"
+animation = &"test"
 autoplay = "idle"
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=2096591750]
