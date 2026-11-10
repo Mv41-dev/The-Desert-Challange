@@ -341,7 +341,7 @@ metadata/scene_file_path = "res://level_1.tscn"
 
 [node name="Player" parent="." unique_id=267222214 instance=ExtResource("2_sof0w")]
 z_index = 3
-position = Vector2(2727, -299)
+position = Vector2(137, 252)
 metadata/_tc_uuid = "1056997128168136342"
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=969581031]

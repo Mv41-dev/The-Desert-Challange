@@ -326,7 +326,7 @@ sources/0 = SubResource("TileSetAtlasSource_nmjpi")
 [node name="Player" parent="." unique_id=267222214 instance=ExtResource("2_nmjpi")]
 process_priority = 3
 z_index = 3
-position = Vector2(5464, 327)
+position = Vector2(-55, 286)
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=764266952]
 position = Vector2(-128, 312)
@@ -406,3 +406,15 @@ metadata/_edit_lock_ = true
 [node name="Inimigo13" parent="." unique_id=1958634037 instance=ExtResource("5_n7ypv")]
 position = Vector2(3346, 148)
 metadata/_edit_lock_ = true
+
+[node name="EnemyPatrulha6" parent="." unique_id=794204254 instance=ExtResource("9_ehv2h")]
+position = Vector2(3775, -310)
+
+[node name="Inimigo14" parent="." unique_id=819120017 instance=ExtResource("5_n7ypv")]
+position = Vector2(3364, -273)
+
+[node name="Inimigo15" parent="." unique_id=1272696300 instance=ExtResource("5_n7ypv")]
+position = Vector2(4482, -235)
+
+[node name="EnemyPatrulha7" parent="." unique_id=790402555 instance=ExtResource("9_ehv2h")]
+position = Vector2(5264, 344)
