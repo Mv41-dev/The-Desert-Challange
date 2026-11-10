@@ -353,3 +353,6 @@ next_scene_path = "uid://cmqqddqgytqv7"
 
 [node name="artefato" parent="." unique_id=897673077 instance=ExtResource("8_7ds5r")]
 position = Vector2(1035, 271)
+
+[node name="EnemyPatrulha" parent="." unique_id=32245507 instance=ExtResource("hyena_3")]
+position = Vector2(452, 219)
