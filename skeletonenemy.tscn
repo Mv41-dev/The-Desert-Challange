@@ -59,6 +59,7 @@
 [ext_resource type="Texture2D" uid="uid://tdqwlxu7bc04" path="res://miniboss/Skeleton_frames/Skeleton_f60.png" id="56_j22tr"]
 [ext_resource type="Texture2D" uid="uid://cgfvea05jhhky" path="res://miniboss/Skeleton_frames/Skeleton_f61.png" id="57_m4j0x"]
 [ext_resource type="Texture2D" uid="uid://bc271lbqq3g3s" path="res://miniboss/Skeleton_frames/Skeleton_f62.png" id="58_3bk5w"]
+[ext_resource type="Texture2D" uid="uid://lesmeg52kfan" path="res://miniboss/Skeleton head.png" id="60_dfid6"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_ebum8"]
 animations = [{
@@ -99,7 +100,7 @@ animations = [{
 "duration": 1.0,
 "texture": ExtResource("12_qvdeo")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"attack",
 "speed": 20.0
 }, {
@@ -221,6 +222,11 @@ animations = [{
 "name": &"idle",
 "speed": 10.0
 }, {
+"frames": [],
+"loop": 1,
+"name": &"new_animation",
+"speed": 5.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": ExtResource("49_tpc14")
@@ -258,7 +264,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ebum8"]
-size = Vector2(22, 20)
+size = Vector2(49, 26)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xvf33"]
 size = Vector2(49, 6)
@@ -268,18 +274,21 @@ radius = 11.401458
 height = 35.93947
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_svhir"]
-size = Vector2(54, 29)
+size = Vector2(93, 29)
 
-[node name="Node2D" type="CharacterBody2D" unique_id=17897554]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_q45od"]
+size = Vector2(9, 11.733334)
+
+[node name="skeleton" type="CharacterBody2D" unique_id=17897554]
 script = ExtResource("1_l65i7")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1367886930]
 position = Vector2(-1, 1)
 sprite_frames = SubResource("SpriteFrames_ebum8")
-animation = &"attack"
+animation = &"attack2"
 
 [node name="hitbox" type="CollisionShape2D" parent="." unique_id=827331733]
-position = Vector2(-1, 7)
+position = Vector2(0.5, 4)
 shape = SubResource("RectangleShape2D_ebum8")
 
 [node name="Area2D" type="Area2D" parent="." unique_id=2107136064]
@@ -289,11 +298,20 @@ position = Vector2(-1.5, 5)
 shape = SubResource("RectangleShape2D_xvf33")
 
 [node name="areattack" type="CollisionShape2D" parent="Area2D" unique_id=910649810]
-position = Vector2(-13, 5.000001)
+position = Vector2(-16, 5)
 rotation = 0.733254
 shape = SubResource("CapsuleShape2D_ebum8")
 
 [node name="detectionarea" type="CollisionShape2D" parent="Area2D" unique_id=842639155]
-position = Vector2(0, 5)
+position = Vector2(-0.5, 5)
 shape = SubResource("RectangleShape2D_svhir")
 metadata/_edit_lock_ = true
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1367324005]
+position = Vector2(82, -12)
+scale = Vector2(1, 0.9375)
+texture = ExtResource("60_dfid6")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Sprite2D" unique_id=1786980317]
+position = Vector2(-3.5, 0.5333338)
+shape = SubResource("RectangleShape2D_q45od")

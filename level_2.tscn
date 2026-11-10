@@ -3,11 +3,11 @@
 [ext_resource type="Texture2D" uid="uid://c1ibv3043ljdu" path="res://DesertTileMap/Desert/Tiles/Tiles.png" id="1_jg0dc"]
 [ext_resource type="PackedScene" uid="uid://dmea0855e5yie" path="res://Player.tscn" id="2_nmjpi"]
 [ext_resource type="PackedScene" uid="uid://tqew04d0dhc8" path="res://parallax_background.tscn" id="3_xdadj"]
-[ext_resource type="PackedScene" uid="uid://cl2qtlyg4f0x1" path="res://enemy.tscn" id="5_n7ypv"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="6_0s5r2"]
 [ext_resource type="PackedScene" uid="uid://vyars1nacp8d" path="res://portal_esquerda.tscn" id="7_7dov7"]
 [ext_resource type="PackedScene" uid="uid://cepap36smyjbv" path="res://barreira.tscn" id="7_7j8ne"]
 [ext_resource type="PackedScene" uid="uid://c4rohd8hefpig" path="res://artefato.tscn" id="8_7dov7"]
+[ext_resource type="PackedScene" uid="uid://bki42pmwj6agw" path="res://skeletonenemy.tscn" id="8_ehv2h"]
 [ext_resource type="PackedScene" uid="uid://bc2cm54prrn4q" path="res://enemy_patrulha.tscn" id="9_ehv2h"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_nmjpi"]
@@ -349,72 +349,32 @@ next_scene_path = "uid://c6fmp4rc2cnq4"
 [node name="artefato" parent="." unique_id=897673077 instance=ExtResource("8_7dov7")]
 position = Vector2(3825, -103)
 
-[node name="Inimigo2" parent="." unique_id=580578705 instance=ExtResource("5_n7ypv")]
-position = Vector2(4278, 214)
+[node name="skeleton" parent="." unique_id=17897554 instance=ExtResource("8_ehv2h")]
+position = Vector2(3870, 673)
+
+[node name="skeleton2" parent="." unique_id=1847010354 instance=ExtResource("8_ehv2h")]
+position = Vector2(4307, 201)
+
+[node name="skeleton3" parent="." unique_id=2131989188 instance=ExtResource("8_ehv2h")]
+position = Vector2(2932, 613)
+
+[node name="skeleton4" parent="." unique_id=2020892605 instance=ExtResource("8_ehv2h")]
+position = Vector2(811, 748)
+
+[node name="skeleton5" parent="." unique_id=1025131820 instance=ExtResource("8_ehv2h")]
+position = Vector2(1778, 537)
 
 [node name="EnemyPatrulha" parent="." unique_id=32245507 instance=ExtResource("9_ehv2h")]
-position = Vector2(2998, 604)
+position = Vector2(1815, 748)
 
-[node name="Inimigo3" parent="." unique_id=1389621354 instance=ExtResource("5_n7ypv")]
-position = Vector2(3838, 490)
+[node name="EnemyPatrulha2" parent="." unique_id=1111928889 instance=ExtResource("9_ehv2h")]
+position = Vector2(2743, 474)
 
-[node name="EnemyPatrulha2" parent="." unique_id=315620474 instance=ExtResource("9_ehv2h")]
-position = Vector2(3898, 679)
+[node name="EnemyPatrulha3" parent="." unique_id=2065859560 instance=ExtResource("9_ehv2h")]
+position = Vector2(3035, 268)
 
-[node name="EnemyPatrulha3" parent="." unique_id=1590738430 instance=ExtResource("9_ehv2h")]
-position = Vector2(2928, 758)
+[node name="skeleton6" parent="." unique_id=122783415 instance=ExtResource("8_ehv2h")]
+position = Vector2(3933, -74)
 
-[node name="EnemyPatrulha4" parent="." unique_id=1017501287 instance=ExtResource("9_ehv2h")]
-position = Vector2(2536, 765)
-
-[node name="Inimigo4" parent="." unique_id=824753861 instance=ExtResource("5_n7ypv")]
-position = Vector2(1379, 757)
-
-[node name="Inimigo5" parent="." unique_id=297465976 instance=ExtResource("5_n7ypv")]
-position = Vector2(1127, 756)
-
-[node name="Inimigo6" parent="." unique_id=157601136 instance=ExtResource("5_n7ypv")]
-position = Vector2(1285, 555)
-
-[node name="Inimigo7" parent="." unique_id=340062999 instance=ExtResource("5_n7ypv")]
-position = Vector2(1271, 301)
-
-[node name="EnemyPatrulha5" parent="." unique_id=1201785922 instance=ExtResource("9_ehv2h")]
-position = Vector2(851, 557)
-
-[node name="Inimigo" parent="." unique_id=1680325900 instance=ExtResource("5_n7ypv")]
-position = Vector2(2325, 530)
-
-[node name="Inimigo8" parent="." unique_id=1205176741 instance=ExtResource("5_n7ypv")]
-position = Vector2(3194, 323)
-
-[node name="Inimigo9" parent="." unique_id=1092723155 instance=ExtResource("5_n7ypv")]
-position = Vector2(3021, 115)
-
-[node name="Inimigo10" parent="." unique_id=826591007 instance=ExtResource("5_n7ypv")]
-position = Vector2(3327, 190)
-metadata/_edit_lock_ = true
-
-[node name="Inimigo11" parent="." unique_id=1052081803 instance=ExtResource("5_n7ypv")]
-position = Vector2(3274, 194)
-metadata/_edit_lock_ = true
-
-[node name="Inimigo12" parent="." unique_id=1997316793 instance=ExtResource("5_n7ypv")]
-position = Vector2(3277, 148)
-metadata/_edit_lock_ = true
-
-[node name="Inimigo13" parent="." unique_id=1958634037 instance=ExtResource("5_n7ypv")]
-position = Vector2(3346, 148)
-metadata/_edit_lock_ = true
-
-[node name="EnemyPatrulha6" parent="." unique_id=794204254 instance=ExtResource("9_ehv2h")]
-position = Vector2(3775, -310)
-
-[node name="Inimigo14" parent="." unique_id=819120017 instance=ExtResource("5_n7ypv")]
-position = Vector2(3364, -273)
-
-[node name="Inimigo15" parent="." unique_id=1272696300 instance=ExtResource("5_n7ypv")]
-position = Vector2(4482, -235)
-
-[node name="EnemyPatrulha7" parent="." unique_id=790402555 instance=ExtResource("9_ehv2h")]
-position = Vector2(5264, 344)
+[node name="skeleton7" parent="." unique_id=1112271321 instance=ExtResource("8_ehv2h")]
+position = Vector2(3834, -74)

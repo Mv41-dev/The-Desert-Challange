@@ -181,6 +181,114 @@ var tempo_buffer_restante: float = 0.0
 
 
 var atingidos_no_golpe: Array[Node2D] = []
+var inimigos_recompensados: Dictionary = {}
+var brilho_verde_tempo: float = 0.0
+var brilho_verde_material_original: Material = null
+var brilho_verde_material: ShaderMaterial = null
+
+# Emergency defense: 3x melee animation speed while an approaching
+# hostile flying skull is present.
+@export_group("Skull Defense")
+@export var skull_defense_attack_speed: float = 3.0
+@export var skull_defense_detection_range: float = 850.0
+@export_range(0.0, 1.0, 0.05) var skull_defense_approach_dot: float = 0.55
+
+
+# Menacing Skeleton bonuses are enabled ONLY during the boss encounter.
+# The boss provides a count of collected artifacts on encounter start.
+@export_group("Menacing Skeleton Artifact Buffs")
+@export var miniboss_movement_buff_per_artifact: float = 0.07
+@export var miniboss_attack_speed_buff_per_artifact: float = 0.12
+@export var miniboss_protection_recharge: float = 15.0
+var miniboss_buffs_active: bool = false
+var miniboss_artifact_count: int = 0
+var miniboss_protection_charges: int = 0
+var miniboss_protection_timer: float = 0.0
+@export var giant_artifact_required_count: int = 4
+@export var giant_artifact_scale_multiplier: float = 1.25
+@export var giant_artifact_power_multiplier: float = 2.0
+@export var giant_artifact_move_multiplier: float = 1.45
+@export var giant_artifact_jump_multiplier: float = 1.65
+var giant_artifact_active: bool = false
+var pre_giant_max_health: int = 3
+var pre_giant_visual_scale: Vector2 = Vector2.ONE
+
+
+func _activate_giant_artifact() -> void:
+	if giant_artifact_active:
+		return
+	giant_artifact_active = true
+	pre_giant_max_health = Global.vida_maxima
+	pre_giant_visual_scale = scale
+	scale = pre_giant_visual_scale * giant_artifact_scale_multiplier
+	Global.vida_maxima = pre_giant_max_health * 2
+	Global.vida_atual = mini(Global.vida_maxima, Global.vida_atual * 2)
+	vida_maxima = Global.vida_maxima
+	vida = Global.vida_atual
+	Global.vida_alterada.emit(Global.vida_atual)
+	vida_alterada.emit(vida, vida_maxima)
+
+
+func _deactivate_giant_artifact() -> void:
+	if not giant_artifact_active:
+		return
+	giant_artifact_active = false
+	scale = pre_giant_visual_scale
+	Global.vida_maxima = maxi(1, pre_giant_max_health)
+	Global.vida_atual = clampi(ceili(float(Global.vida_atual) / 2.0), 0, Global.vida_maxima)
+	vida_maxima = Global.vida_maxima
+	vida = Global.vida_atual
+	Global.vida_alterada.emit(Global.vida_atual)
+	vida_alterada.emit(vida, vida_maxima)
+
+
+func _giant_jump_multiplier() -> float:
+	return giant_artifact_jump_multiplier if giant_artifact_active else 1.0
+
+
+func _giant_damage_multiplier() -> int:
+	return 2 if giant_artifact_active else 1
+
+
+func begin_menacing_skeleton_fight(artifact_count: int) -> void:
+	miniboss_buffs_active = true
+	miniboss_artifact_count = clampi(artifact_count, 0, 4)
+	# Third collected artifact: regenerating one-hit protection.
+	miniboss_protection_charges = 1 if miniboss_artifact_count >= 3 else 0
+	miniboss_protection_timer = 0.0
+	if miniboss_artifact_count >= giant_artifact_required_count:
+		_activate_giant_artifact()
+
+func end_menacing_skeleton_fight() -> void:
+	_deactivate_giant_artifact()
+	miniboss_buffs_active = false
+	miniboss_artifact_count = 0
+	miniboss_protection_charges = 0
+	miniboss_protection_timer = 0.0
+
+func _miniboss_attack_multiplier() -> float:
+	if giant_artifact_active:
+		return giant_artifact_power_multiplier
+	if not miniboss_buffs_active or miniboss_artifact_count < 2:
+		return 1.0
+	return 1.0 + miniboss_attack_speed_buff_per_artifact * float(miniboss_artifact_count - 1)
+
+func _miniboss_move_multiplier() -> float:
+	if giant_artifact_active:
+		return giant_artifact_move_multiplier
+	if not miniboss_buffs_active or miniboss_artifact_count < 1:
+		return 1.0
+	return 1.0 + miniboss_movement_buff_per_artifact * float(miniboss_artifact_count)
+
+func _tick_miniboss_protection(delta: float) -> void:
+	if not miniboss_buffs_active or miniboss_artifact_count < 3:
+		return
+	if miniboss_protection_charges > 0:
+		return
+	miniboss_protection_timer -= delta
+	if miniboss_protection_timer <= 0.0:
+		miniboss_protection_charges = 1
+		miniboss_protection_timer = 0.0
 
 
 var posicao_original_sprite: Vector2 = Vector2.ZERO
@@ -287,6 +395,7 @@ func _ready() -> void:
 
 
 	_criar_escuridao_queda()
+	_configurar_brilho_verde()
 
 
 	_tocar(
@@ -304,6 +413,9 @@ func _physics_process(
 	_atualizar_temporizador_queda(
 		delta
 	)
+	_atualizar_brilho_verde(delta)
+	_tick_miniboss_protection(delta)
+	_atualizar_velocidade_defesa_cranio()
 
 
 	# =================================================
@@ -498,7 +610,7 @@ func _physics_process(
 		tempo_buffer_restante > 0.0
 		and tempo_coyote_restante > 0.0
 	):
-		velocity.y = forca_pulo
+		velocity.y = forca_pulo * _giant_jump_multiplier()
 
 
 		tempo_buffer_restante = 0.0
@@ -535,7 +647,7 @@ func _physics_process(
 
 		velocity.x = move_toward(
 			velocity.x,
-			direcao * SPEED,
+			direcao * SPEED * _miniboss_move_multiplier(),
 			aceleracao * delta
 		)
 
@@ -819,6 +931,7 @@ func forcar_tela_preta() -> void:
 # =====================================================
 
 func resetar_para_inicio() -> void:
+	_deactivate_giant_artifact()
 	estado = Estado.NORMAL
 
 
@@ -826,7 +939,8 @@ func resetar_para_inicio() -> void:
 
 
 	atingidos_no_golpe.clear()
-
+	inimigos_recompensados.clear()
+	_finalizar_brilho_verde()
 
 	velocity = Vector2.ZERO
 
@@ -1043,6 +1157,43 @@ func _iniciar_ataque(
 			&"attack_heavy"
 		)
 
+	_atualizar_velocidade_defesa_cranio()
+
+
+func _existe_cranio_vindo_na_minha_direcao() -> bool:
+	for cranio in get_tree().get_nodes_in_group(&"skeleton_skull"):
+		if not cranio is Node2D or not is_instance_valid(cranio):
+			continue
+		if cranio.is_queued_for_deletion():
+			continue
+		# Aiming skulls and already reflected skulls do not activate it.
+		if not bool(cranio.get_meta(&"skull_in_flight", false)):
+			continue
+		if bool(cranio.get_meta(&"skull_reflected", false)):
+			continue
+		var movimento: Vector2 = cranio.get_meta(&"skull_movement_direction", Vector2.ZERO)
+		if movimento.length_squared() < 0.001:
+			continue
+		var ate_jogador: Vector2 = global_position - cranio.global_position
+		if ate_jogador.length_squared() > skull_defense_detection_range * skull_defense_detection_range:
+			continue
+		if ate_jogador.length_squared() < 0.001:
+			return true
+		if movimento.normalized().dot(ate_jogador.normalized()) >= skull_defense_approach_dot:
+			return true
+	return false
+
+
+func _atualizar_velocidade_defesa_cranio() -> void:
+	if estado != Estado.ATAQUE:
+		if not is_equal_approx(anim.speed_scale, 1.0):
+			anim.speed_scale = 1.0
+		return
+	if anim.animation != &"attack_quick" and anim.animation != &"attack_heavy":
+		return
+	var skull_multiplier: float = skull_defense_attack_speed if _existe_cranio_vindo_na_minha_direcao() else 1.0
+	anim.speed_scale = skull_multiplier * _miniboss_attack_multiplier()
+
 
 func _verificar_acertos() -> void:
 	var frame: int = anim.frame
@@ -1075,10 +1226,18 @@ func _verificar_acertos() -> void:
 
 		dano = dano_forte
 
+	dano *= _giant_damage_multiplier()
 
 	if not ativo:
 		return
 
+
+	_verificar_reflexao_cranios(area, golpe_atual == TipoGolpe.FORTE)
+
+	# Menacing Skeleton may not share the collision mask used by regular
+	# enemies. Use the player's existing AttackAreaJ/K shapes against its
+	# existing BODY collision shape, without adding fake damage zones.
+	_verificar_acertos_miniboss(area, dano)
 
 	for corpo in area.get_overlapping_bodies():
 		if not is_instance_valid(
@@ -1111,6 +1270,132 @@ func _verificar_acertos() -> void:
 				global_position
 			)
 
+			if _inimigo_morreu(corpo):
+				on_enemy_killed(corpo)
+
+
+func _verificar_acertos_miniboss(area: Area2D, dano: int) -> void:
+	for boss_node in get_tree().get_nodes_in_group(&"menacing_skeleton"):
+		if not boss_node is CharacterBody2D or not is_instance_valid(boss_node):
+			continue
+		if atingidos_no_golpe.has(boss_node):
+			continue
+		if boss_node.has_method(&"is_dead") and bool(boss_node.call(&"is_dead")):
+			continue
+		var corpo_shape: CollisionShape2D = boss_node.get_node_or_null("CollisionShape2D") as CollisionShape2D
+		if corpo_shape == null or corpo_shape.disabled or corpo_shape.shape == null:
+			continue
+		var acertou: bool = false
+		for shape_node in area.find_children("*", "CollisionShape2D", true, false):
+			if not shape_node is CollisionShape2D:
+				continue
+			var ataque_shape: CollisionShape2D = shape_node as CollisionShape2D
+			if ataque_shape.disabled or ataque_shape.shape == null:
+				continue
+			if ataque_shape.shape.collide(
+				ataque_shape.global_transform,
+				corpo_shape.shape,
+				corpo_shape.global_transform
+			):
+				acertou = true
+				break
+		if acertou and boss_node.has_method(&"tomar_dano"):
+			atingidos_no_golpe.append(boss_node)
+			boss_node.call(&"tomar_dano", dano, global_position)
+			# The miniboss calls on_enemy_killed on its own death.
+
+
+# =====================================================
+# SKULL REFLECTION + HEAL ON KILL
+# =====================================================
+func _verificar_reflexao_cranios(area: Area2D, forte: bool) -> void:
+	# The Skull Area2D has collision_layer=0, so overlapping_areas() alone
+	# cannot find it. Check actual CollisionShape2D geometry instead.
+	for cranio in get_tree().get_nodes_in_group(&"skeleton_skull"):
+		if not cranio is Node2D or not is_instance_valid(cranio):
+			continue
+		if cranio.is_queued_for_deletion():
+			continue
+		var origem: Variant = cranio.get_meta(&"skeleton_owner", null)
+		if not origem is Node2D or not is_instance_valid(origem):
+			continue
+		var encontrou: bool = false
+		for area_shape in area.find_children("*", "CollisionShape2D", true, false):
+			if not area_shape is CollisionShape2D or area_shape.disabled or area_shape.shape == null:
+				continue
+			for skull_shape in cranio.find_children("*", "CollisionShape2D", true, false):
+				if not skull_shape is CollisionShape2D or skull_shape.disabled or skull_shape.shape == null:
+					continue
+				if area_shape.shape.collide(area_shape.global_transform, skull_shape.shape, skull_shape.global_transform):
+					encontrou = true
+					break
+			if encontrou:
+				break
+		if encontrou and origem.has_method(&"reflect_skull"):
+			origem.call(&"reflect_skull", cranio, forte, self)
+
+func _inimigo_morreu(corpo: Node) -> bool:
+	if not is_instance_valid(corpo):
+		return false
+	if corpo.is_queued_for_deletion():
+		return true
+	for campo in ["dead", "is_dead", "morto"]:
+		for dado in corpo.get_property_list():
+			if String(dado["name"]) == campo and bool(corpo.get(campo)):
+				return true
+	for campo in ["hp", "vida", "current_health", "vida_atual"]:
+		for dado in corpo.get_property_list():
+			if String(dado["name"]) == campo:
+				return int(corpo.get(campo)) <= 0
+	return false
+
+func on_enemy_killed(corpo: Node) -> void:
+	if not is_instance_valid(corpo):
+		return
+	var id: int = corpo.get_instance_id()
+	if inimigos_recompensados.has(id):
+		return
+	inimigos_recompensados[id] = true
+	# Use the Global heal method so its vida_alterada signal refreshes the HUD.
+	Global.curar(1)
+	vida = Global.vida_atual
+	vida_alterada.emit(vida, vida_maxima)
+	_iniciar_brilho_verde()
+
+func _configurar_brilho_verde() -> void:
+	brilho_verde_material_original = anim.material
+	var shader := Shader.new()
+	shader.code = """
+shader_type canvas_item;
+uniform float glow_strength = 0.0;
+void fragment() {
+    vec4 tex = texture(TEXTURE, UV) * COLOR;
+    float gradient = 0.45 + 0.55 * (1.0 - UV.y);
+    vec3 green = mix(vec3(0.14, 0.95, 0.25), vec3(0.65, 1.0, 0.42), UV.x);
+    tex.rgb = mix(tex.rgb, green * tex.a, clamp(glow_strength * gradient, 0.0, 1.0));
+    COLOR = tex;
+}
+"""
+	brilho_verde_material = ShaderMaterial.new()
+	brilho_verde_material.shader = shader
+
+func _iniciar_brilho_verde() -> void:
+	brilho_verde_tempo = 0.45
+	anim.material = brilho_verde_material
+
+func _atualizar_brilho_verde(delta: float) -> void:
+	if brilho_verde_tempo <= 0.0:
+		return
+	brilho_verde_tempo = maxf(0.0, brilho_verde_tempo - delta)
+	if brilho_verde_tempo <= 0.0:
+		_finalizar_brilho_verde()
+	else:
+		brilho_verde_material.set_shader_parameter("glow_strength", minf(1.0, brilho_verde_tempo * 4.0))
+
+func _finalizar_brilho_verde() -> void:
+	brilho_verde_tempo = 0.0
+	if is_instance_valid(anim):
+		anim.material = brilho_verde_material_original
 
 # =====================================================
 # DANO
@@ -1127,11 +1412,19 @@ func tomar_dano(
 	):
 		return
 
+	# A third artifact grants one shield hit every recharge interval.
+	if miniboss_buffs_active and miniboss_artifact_count >= 3 and miniboss_protection_charges > 0:
+		miniboss_protection_charges = 0
+		miniboss_protection_timer = miniboss_protection_recharge
+		tempo_invulneravel_restante = maxf(tempo_invulneravel_restante, 0.30)
+		_iniciar_brilho_verde()
+		return
 
 	tempo_invulneravel_restante = (
 		tempo_invulneravel
 	)
-
+	if miniboss_buffs_active and miniboss_artifact_count >= 4:
+		tempo_invulneravel_restante += 0.24
 
 	golpe_em_fila = -1
 
@@ -1157,6 +1450,7 @@ func tomar_dano(
 
 
 	estado = Estado.FERIDO
+	anim.speed_scale = 1.0
 
 
 	atingidos_no_golpe.clear()
@@ -1205,6 +1499,7 @@ func morrer() -> void:
 
 
 	estado = Estado.MORTO
+	anim.speed_scale = 1.0
 
 
 	golpe_em_fila = -1
@@ -1236,6 +1531,7 @@ func _ao_terminar_animacao() -> void:
 				or anim.animation == &"attack_heavy"
 			):
 				estado = Estado.NORMAL
+				anim.speed_scale = 1.0
 
 
 				if golpe_em_fila != -1:
