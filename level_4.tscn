@@ -7,6 +7,8 @@
 [ext_resource type="PackedScene" uid="uid://btcl284vynlwh" path="res://parallax_piramide.tscn" id="4_48hld"]
 [ext_resource type="PackedScene" uid="uid://vyars1nacp8d" path="res://portal_esquerda.tscn" id="6_c8stx"]
 [ext_resource type="PackedScene" uid="uid://c4rohd8hefpig" path="res://artefato.tscn" id="7_aqy51"]
+[ext_resource type="PackedScene" uid="uid://bc2cm54prrn4q" path="res://enemy_patrulha.tscn" id="9_66w8i"]
+[ext_resource type="PackedScene" uid="uid://bki42pmwj6agw" path="res://skeletonenemy.tscn" id="10_80qnk"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="hud_fases"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_nmjpi"]
@@ -532,3 +534,27 @@ metadata/_edit_lock_ = true
 
 [node name="artefato" parent="." unique_id=897673077 instance=ExtResource("7_aqy51")]
 position = Vector2(2795, -42)
+
+[node name="EnemyPatrulha" parent="." unique_id=32245507 instance=ExtResource("9_66w8i")]
+position = Vector2(1135, 294)
+
+[node name="EnemyPatrulha2" parent="." unique_id=717385350 instance=ExtResource("9_66w8i")]
+position = Vector2(1490, 302)
+
+[node name="EnemyPatrulha3" parent="." unique_id=1081136149 instance=ExtResource("9_66w8i")]
+position = Vector2(2300, 277)
+
+[node name="EnemyPatrulha4" parent="." unique_id=1727751217 instance=ExtResource("9_66w8i")]
+position = Vector2(1834, 106)
+
+[node name="EnemyPatrulha6" parent="." unique_id=865508934 instance=ExtResource("9_66w8i")]
+position = Vector2(2495, -34)
+
+[node name="EnemyPatrulha7" parent="." unique_id=1687491806 instance=ExtResource("9_66w8i")]
+position = Vector2(2748, 297)
+
+[node name="EnemyPatrulha5" parent="." unique_id=650439258 instance=ExtResource("9_66w8i")]
+position = Vector2(2106, 121)
+
+[node name="Node2D" parent="." unique_id=17897554 instance=ExtResource("10_80qnk")]
+position = Vector2(370, 289)
