@@ -261,14 +261,14 @@ animations = [{
 size = Vector2(22, 20)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xvf33"]
-size = Vector2(69, 6)
+size = Vector2(49, 6)
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ebum8"]
 radius = 11.401458
 height = 35.93947
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_svhir"]
-size = Vector2(69, 29)
+size = Vector2(54, 29)
 
 [node name="Node2D" type="CharacterBody2D" unique_id=17897554]
 script = ExtResource("1_l65i7")
@@ -285,14 +285,15 @@ shape = SubResource("RectangleShape2D_ebum8")
 [node name="Area2D" type="Area2D" parent="." unique_id=2107136064]
 
 [node name="areattack2" type="CollisionShape2D" parent="Area2D" unique_id=1870945386]
-position = Vector2(-2.5, 5)
+position = Vector2(-1.5, 5)
 shape = SubResource("RectangleShape2D_xvf33")
 
 [node name="areattack" type="CollisionShape2D" parent="Area2D" unique_id=910649810]
-position = Vector2(-19.999996, 5.000001)
+position = Vector2(-13, 5.000001)
 rotation = 0.733254
 shape = SubResource("CapsuleShape2D_ebum8")
 
 [node name="detectionarea" type="CollisionShape2D" parent="Area2D" unique_id=842639155]
-position = Vector2(-1.5, 4.5)
+position = Vector2(0, 5)
 shape = SubResource("RectangleShape2D_svhir")
+metadata/_edit_lock_ = true
