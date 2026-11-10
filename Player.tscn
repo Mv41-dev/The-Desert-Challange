@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://cdxsw3opa48q3" path="res://Player e inimigo/5 Mummy/Mummy_hurt.png" id="5_hurt"]
 [ext_resource type="Texture2D" uid="uid://bmtnwq6i4fqey" path="res://Player e inimigo/5 Mummy/Mummy_death.png" id="6_death"]
 [ext_resource type="Texture2D" uid="uid://7x7yky6tvg2t" path="res://Mummy_attack_forte.png" id="7_heavy"]
+[ext_resource type="Texture2D" uid="uid://7ni55vp66bj8" path="res://miniboss/Pixel Art Animations - Slashes/64x64/Slash 1/color4/sprite-sheet.png" id="8_5ncpa"]
 
 [sub_resource type="AtlasTexture" id="p_heavy_0"]
 atlas = ExtResource("7_heavy")
@@ -111,6 +112,46 @@ region = Rect2(144, 0, 48, 48)
 [sub_resource type="AtlasTexture" id="p_jump_0"]
 atlas = ExtResource("4_cxr5p")
 region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wi0c6"]
+atlas = ExtResource("8_5ncpa")
+region = Rect2(0, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hp6x6"]
+atlas = ExtResource("8_5ncpa")
+region = Rect2(64, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3tkgg"]
+atlas = ExtResource("8_5ncpa")
+region = Rect2(128, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l6ohk"]
+atlas = ExtResource("8_5ncpa")
+region = Rect2(192, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oudfo"]
+atlas = ExtResource("8_5ncpa")
+region = Rect2(256, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d6rpx"]
+atlas = ExtResource("8_5ncpa")
+region = Rect2(0, 64, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r3kul"]
+atlas = ExtResource("8_5ncpa")
+region = Rect2(64, 64, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jatw7"]
+atlas = ExtResource("8_5ncpa")
+region = Rect2(128, 64, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rv870"]
+atlas = ExtResource("8_5ncpa")
+region = Rect2(192, 64, 64, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_efikj"]
+atlas = ExtResource("8_5ncpa")
+region = Rect2(256, 64, 64, 64)
 
 [sub_resource type="AtlasTexture" id="p_run_0"]
 atlas = ExtResource("4_cxr5p")
@@ -259,6 +300,41 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_wi0c6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hp6x6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3tkgg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l6ohk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oudfo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d6rpx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r3kul")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jatw7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rv870")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_efikj")
+}],
+"loop": 0,
+"name": &"parry",
+"speed": 40.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("p_run_0")
 }, {
 "duration": 1.0,
@@ -303,8 +379,10 @@ script = ExtResource("1_kpjcp")
 position = Vector2(6, -6)
 scale = Vector2(0.5, 0.75)
 sprite_frames = SubResource("SpriteFrames_ebum8")
-animation = &"test"
+animation = &"parry"
 autoplay = "idle"
+frame = 9
+frame_progress = 1.0
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=2096591750]
 zoom = Vector2(2.5, 2.5)

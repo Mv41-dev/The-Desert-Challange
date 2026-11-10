@@ -209,6 +209,149 @@ var miniboss_protection_timer: float = 0.0
 @export var giant_artifact_power_multiplier: float = 2.0
 @export var giant_artifact_move_multiplier: float = 1.45
 @export var giant_artifact_jump_multiplier: float = 1.65
+@export var miniboss_double_jump_enabled: bool = true
+@export var miniboss_air_jump_multiplier: float = 0.92
+var miniboss_extra_jumps_left: int = 0
+
+# Animation-free boss parry: press F just before an authored sword hit.
+@export_group("Menacing Skeleton Parry")
+@export var miniboss_parry_window: float = 0.13
+@export var miniboss_parry_cooldown: float = 1.50
+@export var miniboss_parry_visual_seconds: float = 0.18
+@export var miniboss_parry_success_recovery: float = 0.0
+@export var miniboss_parry_hitstop_seconds: float = 0.010
+var miniboss_parry_timer: float = 0.0
+var miniboss_parry_cd: float = 0.0
+var miniboss_parry_key_held: bool = false
+var miniboss_parry_flash_tween: Tween = null
+var miniboss_parry_hitstop_active: bool = false
+var miniboss_parry_deadline_usec: int = 0
+var miniboss_parry_armed: bool = false
+var miniboss_parry_visual: AnimatedSprite2D = null
+@export var miniboss_parry_counter_damage: int = 5
+@export var miniboss_parry_counter_animation: StringName = &"parry"
+
+
+func _update_menacing_parry(delta: float) -> void:
+	miniboss_parry_cd = maxf(0.0, miniboss_parry_cd - delta)
+	var now_usec: int = Time.get_ticks_usec()
+	if miniboss_parry_armed and now_usec > miniboss_parry_deadline_usec:
+		# Missed parry: 1.5s recovery. Successful parry: no cooldown.
+		miniboss_parry_armed = false
+		miniboss_parry_timer = 0.0
+		miniboss_parry_cd = miniboss_parry_cooldown
+	var key_down: bool = Input.is_physical_key_pressed(KEY_F)
+	if (
+		key_down and not miniboss_parry_key_held
+		and miniboss_buffs_active
+		and estado != Estado.MORTO and estado != Estado.FERIDO
+		and miniboss_parry_cd <= 0.0
+		and not miniboss_parry_armed
+	):
+		miniboss_parry_armed = true
+		miniboss_parry_deadline_usec = now_usec + int(miniboss_parry_window * 1000000.0)
+		miniboss_parry_timer = miniboss_parry_window
+		# Telegraph that a parry has been pressed, using the player's real
+		# authored 'parry' SpriteFrames in a separate overlay sprite.
+		_play_menacing_parry_visual(false)
+	miniboss_parry_key_held = key_down
+
+
+func try_parry_menacing_hit(_attack_position: Vector2 = Vector2.ZERO) -> bool:
+	if not miniboss_buffs_active or estado == Estado.MORTO:
+		return false
+	if not miniboss_parry_armed:
+		return false
+	if Time.get_ticks_usec() > miniboss_parry_deadline_usec:
+		return false
+	miniboss_parry_armed = false
+	miniboss_parry_timer = 0.0
+	miniboss_parry_cd = 0.0
+	# Only enough iframes for the successful clash, not free invincibility.
+	tempo_invulneravel_restante = maxf(tempo_invulneravel_restante, 0.045)
+	_menacing_parry_hitstop()
+	_play_menacing_parry_visual(true)
+	_flash_menacing_parry(Color(0.75, 1.0, 1.0))
+	_spawn_menacing_parry_ring()
+	return true
+
+
+func _play_menacing_parry_visual(perfect: bool) -> void:
+	if anim.sprite_frames == null or not anim.sprite_frames.has_animation(miniboss_parry_counter_animation):
+		return
+	if miniboss_parry_visual == null or not is_instance_valid(miniboss_parry_visual):
+		miniboss_parry_visual = AnimatedSprite2D.new()
+		miniboss_parry_visual.name = "ParryEffect"
+		miniboss_parry_visual.z_index = 25
+		miniboss_parry_visual.sprite_frames = anim.sprite_frames
+		add_child(miniboss_parry_visual)
+	miniboss_parry_visual.stop()
+	miniboss_parry_visual.animation = miniboss_parry_counter_animation
+	miniboss_parry_visual.frame = 0
+	miniboss_parry_visual.frame_progress = 0.0
+	miniboss_parry_visual.position = anim.position
+	miniboss_parry_visual.scale = anim.scale
+	miniboss_parry_visual.flip_h = anim.flip_h
+	miniboss_parry_visual.modulate = Color(0.55, 1.0, 1.0) if perfect else Color(1.0, 1.0, 1.0, 0.65)
+	miniboss_parry_visual.speed_scale = 1.35 if perfect else 1.0
+	miniboss_parry_visual.visible = true
+	miniboss_parry_visual.play()
+	# Keep the normal player animation and hitboxes available; parry VFX
+	# does not hijack the AnimatedSprite2D state machine.
+	var show_time: float = 0.28 if perfect else 0.15
+	var counter_sprite: AnimatedSprite2D = miniboss_parry_visual
+	get_tree().create_timer(show_time).timeout.connect(
+		func() -> void:
+			if is_instance_valid(counter_sprite):
+				counter_sprite.visible = false
+	)
+
+
+func _menacing_parry_hitstop() -> void:
+	if miniboss_parry_hitstop_active:
+		return
+	miniboss_parry_hitstop_active = true
+	# Micro hit-stop using unscaled time: only 10 milliseconds in real time.
+	# Keep time_scale above zero so timers and physics continue normally.
+	var previous_scale: float = Engine.time_scale
+	Engine.time_scale = 0.05
+	_restore_menacing_parry_time(previous_scale)
+
+
+func _restore_menacing_parry_time(previous_scale: float) -> void:
+	await get_tree().create_timer(
+		miniboss_parry_hitstop_seconds, true, false, true
+	).timeout
+	Engine.time_scale = previous_scale
+	miniboss_parry_hitstop_active = false
+
+
+func _flash_menacing_parry(color: Color) -> void:
+	if miniboss_parry_flash_tween != null and miniboss_parry_flash_tween.is_running():
+		miniboss_parry_flash_tween.kill()
+	anim.self_modulate = color
+	miniboss_parry_flash_tween = create_tween()
+	miniboss_parry_flash_tween.tween_property(
+		anim, "self_modulate", Color.WHITE, miniboss_parry_visual_seconds
+	)
+
+
+func _spawn_menacing_parry_ring() -> void:
+	var ring := Line2D.new()
+	ring.width = 3.0
+	ring.default_color = Color(0.37, 0.96, 1.0, 0.85)
+	ring.closed = true
+	ring.z_index = 50
+	for i in range(20):
+		var theta: float = TAU * float(i) / 20.0
+		ring.add_point(Vector2.RIGHT.rotated(theta) * 22.0)
+	add_child(ring)
+	ring.position = Vector2(0.0, -12.0)
+	var tween := create_tween()
+	tween.tween_property(ring, "scale", Vector2(2.0, 2.0), 0.18)
+	tween.parallel().tween_property(ring, "modulate:a", 0.0, 0.18)
+	tween.tween_callback(ring.queue_free)
+
 var giant_artifact_active: bool = false
 var pre_giant_max_health: int = 3
 var pre_giant_visual_scale: Vector2 = Vector2.ONE
@@ -256,11 +399,18 @@ func begin_menacing_skeleton_fight(artifact_count: int) -> void:
 	# Third collected artifact: regenerating one-hit protection.
 	miniboss_protection_charges = 1 if miniboss_artifact_count >= 3 else 0
 	miniboss_protection_timer = 0.0
+	miniboss_extra_jumps_left = 1 if miniboss_double_jump_enabled else 0
 	if miniboss_artifact_count >= giant_artifact_required_count:
 		_activate_giant_artifact()
 
 func end_menacing_skeleton_fight() -> void:
+	miniboss_parry_timer = 0.0
+	miniboss_parry_cd = 0.0
+	miniboss_parry_armed = false
+	if is_instance_valid(miniboss_parry_visual):
+		miniboss_parry_visual.visible = false
 	_deactivate_giant_artifact()
+	miniboss_extra_jumps_left = 0
 	miniboss_buffs_active = false
 	miniboss_artifact_count = 0
 	miniboss_protection_charges = 0
@@ -415,6 +565,7 @@ func _physics_process(
 	)
 	_atualizar_brilho_verde(delta)
 	_tick_miniboss_protection(delta)
+	_update_menacing_parry(delta)
 	_atualizar_velocidade_defesa_cranio()
 
 
@@ -444,6 +595,9 @@ func _physics_process(
 	if is_on_floor():
 		tempo_coyote_restante = (
 			tempo_coyote
+		)
+		miniboss_extra_jumps_left = (
+			1 if miniboss_buffs_active and miniboss_double_jump_enabled else 0
 		)
 
 	else:
@@ -606,16 +760,25 @@ func _physics_process(
 	# PULO
 	# =================================================
 
-	if (
-		tempo_buffer_restante > 0.0
-		and tempo_coyote_restante > 0.0
-	):
-		velocity.y = forca_pulo * _giant_jump_multiplier()
-
-
-		tempo_buffer_restante = 0.0
-
-		tempo_coyote_restante = 0.0
+	if tempo_buffer_restante > 0.0:
+		if tempo_coyote_restante > 0.0:
+			# First jump: original coyote-time jump.
+			velocity.y = forca_pulo * _giant_jump_multiplier()
+			tempo_buffer_restante = 0.0
+			tempo_coyote_restante = 0.0
+		elif (
+			miniboss_buffs_active
+			and miniboss_double_jump_enabled
+			and miniboss_extra_jumps_left > 0
+			and estado == Estado.NORMAL
+		):
+			# Second press in midair: one extra jump only.
+			velocity.y = (
+				forca_pulo * _giant_jump_multiplier()
+				* miniboss_air_jump_multiplier
+			)
+			miniboss_extra_jumps_left -= 1
+			tempo_buffer_restante = 0.0
 
 
 	if (
@@ -931,7 +1094,10 @@ func forcar_tela_preta() -> void:
 # =====================================================
 
 func resetar_para_inicio() -> void:
+	miniboss_parry_armed = false
+	miniboss_parry_cd = 0.0
 	_deactivate_giant_artifact()
+	miniboss_extra_jumps_left = 0
 	estado = Estado.NORMAL
 
 

@@ -418,10 +418,10 @@ size = Vector2(14, 50.5)
 height = 74.023315
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_q45od"]
-radius = 34.713108
+radius = 50.08992
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3o1bh"]
-size = Vector2(64.714195, 29.37468)
+size = Vector2(64.714195, 64.96132)
 
 [node name="charbody2d" type="CharacterBody2D" unique_id=129879535]
 script = ExtResource("1_u5bdw")
@@ -433,13 +433,14 @@ sprite_frames = SubResource("SpriteFrames_3o1bh")
 animation = &"new_animation"
 frame = 8
 frame_progress = 1.0
+metadata/_edit_lock_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1302626030]
 position = Vector2(1, -2.25)
 shape = SubResource("RectangleShape2D_q45od")
 
 [node name="Area2D" type="Area2D" parent="." unique_id=2127672532]
-position = Vector2(37, 1)
+position = Vector2(32, 2)
 
 [node name="frontswing" type="CollisionShape2D" parent="Area2D" unique_id=302556904]
 position = Vector2(14.000004, 1.0000002)
@@ -447,12 +448,12 @@ rotation = 1.5537813
 shape = SubResource("CapsuleShape2D_q45od")
 metadata/_edit_lock_ = true
 
-[node name="donwswing" type="CollisionShape2D" parent="Area2D" unique_id=1911858266]
-position = Vector2(3, 1)
+[node name="downswing" type="CollisionShape2D" parent="Area2D" unique_id=1911858266]
+position = Vector2(-6, -4)
 shape = SubResource("CircleShape2D_q45od")
-metadata/_edit_lock_ = true
 
 [node name="upswing" type="CollisionShape2D" parent="Area2D" unique_id=117998689]
-position = Vector2(0.3658414, -25.449078)
+position = Vector2(-9.186108, -10.436997)
 rotation = 0.5666727
 shape = SubResource("RectangleShape2D_3o1bh")
+metadata/_edit_lock_ = true
