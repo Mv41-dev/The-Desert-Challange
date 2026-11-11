@@ -194,24 +194,144 @@ var brilho_verde_material: ShaderMaterial = null
 @export_range(0.0, 1.0, 0.05) var skull_defense_approach_dot: float = 0.55
 
 
-# Menacing Skeleton bonuses are enabled ONLY during the boss encounter.
-# The boss provides a count of collected artifacts on encounter start.
-@export_group("Menacing Skeleton Artifact Buffs")
-@export var miniboss_movement_buff_per_artifact: float = 0.07
-@export var miniboss_attack_speed_buff_per_artifact: float = 0.12
-@export var miniboss_protection_recharge: float = 15.0
-var miniboss_buffs_active: bool = false
-var miniboss_artifact_count: int = 0
-var miniboss_protection_charges: int = 0
-var miniboss_protection_timer: float = 0.0
-@export var giant_artifact_required_count: int = 4
-@export var giant_artifact_scale_multiplier: float = 1.25
-@export var giant_artifact_power_multiplier: float = 2.0
-@export var giant_artifact_move_multiplier: float = 1.45
-@export var giant_artifact_jump_multiplier: float = 1.65
-@export var miniboss_double_jump_enabled: bool = true
-@export var miniboss_air_jump_multiplier: float = 0.92
-var miniboss_extra_jumps_left: int = 0
+@export_group("Artifact Abilities")
+@export var dash_speed: float = 420.0
+@export var dash_duration: float = 0.16
+@export var slide_speed: float = 290.0
+@export var slide_duration: float = 0.30
+@export var wall_cling_fall_speed: float = 35.0
+@export var wall_jump_speed: float = 225.0
+
+var dash_remaining: float = 0.0
+var dash_direction: float = 1.0
+var dash_used: bool = false
+var slide_remaining: float = 0.0
+var slide_direction: float = 1.0
+var standing_shape: RectangleShape2D
+var standing_position: Vector2
+var wall_jump_lock: float = 0.0
+
+
+func _register_ability_key(action: StringName, key: Key) -> void:
+	if InputMap.has_action(action):
+		return
+	InputMap.add_action(action)
+	var event := InputEventKey.new()
+	event.physical_keycode = key
+	InputMap.action_add_event(action, event)
+
+
+func _update_artifact_movement(delta: float) -> bool:
+	if estado != Estado.NORMAL:
+		dash_remaining = 0.0
+		slide_remaining = 0.0
+		_try_stand()
+		return false
+
+	var direction := Input.get_axis(&"left", &"right")
+	if is_on_floor() and dash_remaining <= 0.0:
+		dash_used = false
+
+	if standing_shape != null:
+		if slide_remaining > 0.0 and is_on_floor():
+			slide_remaining = maxf(0.0, slide_remaining - delta)
+			velocity.x = slide_direction * slide_speed
+		elif not _try_stand():
+			velocity.x = direction * SPEED * 0.45
+		if standing_shape != null:
+			tempo_buffer_restante = 0.0
+			_tocar(&"slide")
+			move_and_slide()
+			return true
+
+	if dash_remaining <= 0.0 and not dash_used and Input.is_action_just_pressed(&"dash") and GerenciadorArtefatos.possui_artefato("escaravelho"):
+		dash_direction = signf(direction) if absf(direction) > 0.01 else (1.0 if olhando_direita else -1.0)
+		_virar(dash_direction)
+		dash_remaining = dash_duration
+		dash_used = true
+	if dash_remaining > 0.0:
+		velocity = Vector2(dash_direction * dash_speed, 0.0)
+		dash_remaining = maxf(0.0, dash_remaining - delta)
+		tempo_buffer_restante = 0.0
+		_tocar(&"dash")
+		move_and_slide()
+		if is_on_wall():
+			dash_remaining = 0.0
+		return true
+
+	if is_on_floor() and absf(direction) > 0.01 and Input.is_action_just_pressed(&"slide") and GerenciadorArtefatos.possui_artefato("ankh"):
+		_begin_slide(signf(direction))
+		if standing_shape != null:
+			velocity.x = slide_direction * slide_speed
+			tempo_buffer_restante = 0.0
+			_tocar(&"slide")
+			move_and_slide()
+			return true
+
+	wall_jump_lock = maxf(0.0, wall_jump_lock - delta)
+	if wall_jump_lock > 0.0 and not is_on_floor():
+		move_and_slide()
+		_atualizar_animacao_movimento(direction)
+		return true
+	if not is_on_floor() and is_on_wall_only() and velocity.y >= 0.0 and GerenciadorArtefatos.possui_artefato("calice"):
+		var normal := get_wall_normal()
+		if direction * normal.x < -0.01:
+			if tempo_buffer_restante > 0.0:
+				velocity = Vector2(signf(normal.x) * wall_jump_speed, forca_pulo)
+				_virar(velocity.x)
+				tempo_buffer_restante = 0.0
+				tempo_coyote_restante = 0.0
+				wall_jump_lock = 0.10
+				_tocar(&"jump")
+			else:
+				_virar(direction)
+				velocity.x = direction * SPEED
+				velocity.y = minf(velocity.y, wall_cling_fall_speed)
+				_tocar(&"wallhang")
+			move_and_slide()
+			return true
+	return false
+
+
+func _begin_slide(direction: float) -> void:
+	if not colisao_player.shape is RectangleShape2D:
+		return
+	standing_shape = colisao_player.shape as RectangleShape2D
+	standing_position = colisao_player.position
+	var low_shape := standing_shape.duplicate() as RectangleShape2D
+	low_shape.size.y *= 0.55
+	colisao_player.shape = low_shape
+	colisao_player.position.y += (standing_shape.size.y - low_shape.size.y) * 0.5 * colisao_player.scale.y
+	slide_remaining = slide_duration
+	slide_direction = direction
+	_virar(direction)
+
+
+func _try_stand() -> bool:
+	if standing_shape == null:
+		return true
+	var query := PhysicsShapeQueryParameters2D.new()
+	query.shape = standing_shape
+	var standing_transform := global_transform * Transform2D(colisao_player.rotation, colisao_player.scale, colisao_player.skew, standing_position)
+	standing_transform.origin -= Vector2(0.0, 0.1)
+	query.transform = standing_transform
+	query.collision_mask = collision_mask
+	query.exclude = [get_rid()]
+	if not get_world_2d().direct_space_state.intersect_shape(query, 1).is_empty():
+		return false
+	_restore_standing_shape()
+	return true
+
+
+func _restore_standing_shape() -> void:
+	if standing_shape != null:
+		colisao_player.shape = standing_shape
+		colisao_player.position = standing_position
+		standing_shape = null
+
+
+
+var menacing_fight_active: bool = false
 
 # Animation-free boss parry: press F just before an authored sword hit.
 @export_group("Menacing Skeleton Parry")
@@ -243,7 +363,7 @@ func _update_menacing_parry(delta: float) -> void:
 	var key_down: bool = Input.is_physical_key_pressed(KEY_F)
 	if (
 		key_down and not miniboss_parry_key_held
-		and miniboss_buffs_active
+		and menacing_fight_active
 		and estado != Estado.MORTO and estado != Estado.FERIDO
 		and miniboss_parry_cd <= 0.0
 		and not miniboss_parry_armed
@@ -258,7 +378,7 @@ func _update_menacing_parry(delta: float) -> void:
 
 
 func try_parry_menacing_hit(_attack_position: Vector2 = Vector2.ZERO) -> bool:
-	if not miniboss_buffs_active or estado == Estado.MORTO:
+	if not menacing_fight_active or estado == Estado.MORTO:
 		return false
 	if not miniboss_parry_armed:
 		return false
@@ -352,94 +472,17 @@ func _spawn_menacing_parry_ring() -> void:
 	tween.parallel().tween_property(ring, "modulate:a", 0.0, 0.18)
 	tween.tween_callback(ring.queue_free)
 
-var giant_artifact_active: bool = false
-var pre_giant_max_health: int = 3
-var pre_giant_visual_scale: Vector2 = Vector2.ONE
+func begin_menacing_skeleton_fight(_artifact_count: int = 0) -> void:
+	menacing_fight_active = true
 
-
-func _activate_giant_artifact() -> void:
-	if giant_artifact_active:
-		return
-	giant_artifact_active = true
-	pre_giant_max_health = Global.vida_maxima
-	pre_giant_visual_scale = scale
-	scale = pre_giant_visual_scale * giant_artifact_scale_multiplier
-	Global.vida_maxima = pre_giant_max_health * 2
-	Global.vida_atual = mini(Global.vida_maxima, Global.vida_atual * 2)
-	vida_maxima = Global.vida_maxima
-	vida = Global.vida_atual
-	Global.vida_alterada.emit(Global.vida_atual)
-	vida_alterada.emit(vida, vida_maxima)
-
-
-func _deactivate_giant_artifact() -> void:
-	if not giant_artifact_active:
-		return
-	giant_artifact_active = false
-	scale = pre_giant_visual_scale
-	Global.vida_maxima = maxi(1, pre_giant_max_health)
-	Global.vida_atual = clampi(ceili(float(Global.vida_atual) / 2.0), 0, Global.vida_maxima)
-	vida_maxima = Global.vida_maxima
-	vida = Global.vida_atual
-	Global.vida_alterada.emit(Global.vida_atual)
-	vida_alterada.emit(vida, vida_maxima)
-
-
-func _giant_jump_multiplier() -> float:
-	return giant_artifact_jump_multiplier if giant_artifact_active else 1.0
-
-
-func _giant_damage_multiplier() -> int:
-	return 2 if giant_artifact_active else 1
-
-
-func begin_menacing_skeleton_fight(artifact_count: int) -> void:
-	miniboss_buffs_active = true
-	miniboss_artifact_count = clampi(artifact_count, 0, 4)
-	# Third collected artifact: regenerating one-hit protection.
-	miniboss_protection_charges = 1 if miniboss_artifact_count >= 3 else 0
-	miniboss_protection_timer = 0.0
-	miniboss_extra_jumps_left = 1 if miniboss_double_jump_enabled else 0
-	if miniboss_artifact_count >= giant_artifact_required_count:
-		_activate_giant_artifact()
 
 func end_menacing_skeleton_fight() -> void:
+	menacing_fight_active = false
 	miniboss_parry_timer = 0.0
 	miniboss_parry_cd = 0.0
 	miniboss_parry_armed = false
 	if is_instance_valid(miniboss_parry_visual):
 		miniboss_parry_visual.visible = false
-	_deactivate_giant_artifact()
-	miniboss_extra_jumps_left = 0
-	miniboss_buffs_active = false
-	miniboss_artifact_count = 0
-	miniboss_protection_charges = 0
-	miniboss_protection_timer = 0.0
-
-func _miniboss_attack_multiplier() -> float:
-	if giant_artifact_active:
-		return giant_artifact_power_multiplier
-	if not miniboss_buffs_active or miniboss_artifact_count < 2:
-		return 1.0
-	return 1.0 + miniboss_attack_speed_buff_per_artifact * float(miniboss_artifact_count - 1)
-
-func _miniboss_move_multiplier() -> float:
-	if giant_artifact_active:
-		return giant_artifact_move_multiplier
-	if not miniboss_buffs_active or miniboss_artifact_count < 1:
-		return 1.0
-	return 1.0 + miniboss_movement_buff_per_artifact * float(miniboss_artifact_count)
-
-func _tick_miniboss_protection(delta: float) -> void:
-	if not miniboss_buffs_active or miniboss_artifact_count < 3:
-		return
-	if miniboss_protection_charges > 0:
-		return
-	miniboss_protection_timer -= delta
-	if miniboss_protection_timer <= 0.0:
-		miniboss_protection_charges = 1
-		miniboss_protection_timer = 0.0
-
 
 var posicao_original_sprite: Vector2 = Vector2.ZERO
 
@@ -479,20 +522,23 @@ var fundo_escuridao: ColorRect = null
 	$CollisionShape2D
 )
 
-@onready var attack_area_j: Area2D = (
-	$AttackAreaJ
-)
-
-@onready var attack_area_k: Area2D = (
-	$AttackAreaK
-)
-
+@onready var shared_attack_area := get_node_or_null("AttackArea") as Area2D
+@onready var shared_attack_position: Vector2 = shared_attack_area.position if shared_attack_area != null else Vector2.ZERO
+@onready var attack_area_j: Area2D = get_node_or_null("AttackAreaJ") as Area2D
+@onready var attack_area_k: Area2D = get_node_or_null("AttackAreaK") as Area2D
 
 # =====================================================
 # READY
 # =====================================================
 
 func _ready() -> void:
+	_register_ability_key(&"dash", KEY_Q)
+	_register_ability_key(&"slide", KEY_C)
+	if attack_area_j == null:
+		attack_area_j = shared_attack_area
+	if attack_area_k == null:
+		attack_area_k = shared_attack_area
+	_prepare_action_animations()
 	add_to_group(
 		"player"
 	)
@@ -564,7 +610,6 @@ func _physics_process(
 		delta
 	)
 	_atualizar_brilho_verde(delta)
-	_tick_miniboss_protection(delta)
 	_update_menacing_parry(delta)
 	_atualizar_velocidade_defesa_cranio()
 
@@ -595,9 +640,6 @@ func _physics_process(
 	if is_on_floor():
 		tempo_coyote_restante = (
 			tempo_coyote
-		)
-		miniboss_extra_jumps_left = (
-			1 if miniboss_buffs_active and miniboss_double_jump_enabled else 0
 		)
 
 	else:
@@ -715,6 +757,7 @@ func _physics_process(
 	# =================================================
 
 	if estado == Estado.MORTO:
+		_update_artifact_movement(delta)
 		velocity.x = move_toward(
 			velocity.x,
 			0.0,
@@ -738,6 +781,7 @@ func _physics_process(
 	# =================================================
 
 	if estado == Estado.FERIDO:
+		_update_artifact_movement(delta)
 		velocity.x = move_toward(
 			velocity.x,
 			0.0,
@@ -760,26 +804,16 @@ func _physics_process(
 	# PULO
 	# =================================================
 
+	if _update_artifact_movement(delta):
+		_atualizar_escuridao_queda()
+		return
+
 	if tempo_buffer_restante > 0.0:
 		if tempo_coyote_restante > 0.0:
 			# First jump: original coyote-time jump.
-			velocity.y = forca_pulo * _giant_jump_multiplier()
+			velocity.y = forca_pulo
 			tempo_buffer_restante = 0.0
 			tempo_coyote_restante = 0.0
-		elif (
-			miniboss_buffs_active
-			and miniboss_double_jump_enabled
-			and miniboss_extra_jumps_left > 0
-			and estado == Estado.NORMAL
-		):
-			# Second press in midair: one extra jump only.
-			velocity.y = (
-				forca_pulo * _giant_jump_multiplier()
-				* miniboss_air_jump_multiplier
-			)
-			miniboss_extra_jumps_left -= 1
-			tempo_buffer_restante = 0.0
-
 
 	if (
 		Input.is_action_just_released(
@@ -810,7 +844,7 @@ func _physics_process(
 
 		velocity.x = move_toward(
 			velocity.x,
-			direcao * SPEED * _miniboss_move_multiplier(),
+			direcao * SPEED,
 			aceleracao * delta
 		)
 
@@ -1094,10 +1128,13 @@ func forcar_tela_preta() -> void:
 # =====================================================
 
 func resetar_para_inicio() -> void:
+	dash_remaining = 0.0
+	dash_used = false
+	slide_remaining = 0.0
+	wall_jump_lock = 0.0
+	_restore_standing_shape()
 	miniboss_parry_armed = false
 	miniboss_parry_cd = 0.0
-	_deactivate_giant_artifact()
-	miniboss_extra_jumps_left = 0
 	estado = Estado.NORMAL
 
 
@@ -1189,6 +1226,10 @@ func _atualizar_alinhamento_sprite() -> void:
 # =====================================================
 
 func atualizar_areas_ataque() -> void:
+	if shared_attack_area != null and attack_area_j == shared_attack_area and attack_area_k == shared_attack_area:
+		shared_attack_area.position.x = shared_attack_position.x * (1.0 if olhando_direita else -1.0)
+		shared_attack_area.scale.x = absf(shared_attack_area.scale.x) * (1.0 if olhando_direita else -1.0)
+		return
 	if olhando_direita:
 		attack_area_j.position = (
 			OFFSET_J_DIREITA
@@ -1256,6 +1297,22 @@ func _atualizar_animacao_movimento(
 		)
 
 
+func _action_animation(preferred: StringName, fallback: StringName) -> StringName:
+	return preferred if anim.sprite_frames.has_animation(preferred) else fallback
+
+
+func _prepare_action_animations() -> void:
+	anim.sprite_frames = anim.sprite_frames.duplicate() as SpriteFrames
+	var names: Array[StringName] = [
+		_action_animation(&"attack_quick", &"attack1"),
+		_action_animation(&"attack_heavy", &"attack2"),
+		_action_animation(&"hurt", &"damagetaken"),
+		_action_animation(&"death", &"damagetaken"),
+	]
+	for animation in names:
+		if anim.sprite_frames.has_animation(animation):
+			anim.sprite_frames.set_animation_loop(animation, false)
+
 func _tocar(
 	nome: StringName
 ) -> void:
@@ -1288,7 +1345,7 @@ func solicitar_ataque(
 
 	elif (
 		estado == Estado.ATAQUE
-		and anim.frame >= 2
+		and anim.frame >= mini(2, anim.sprite_frames.get_frame_count(anim.animation) - 1)
 	):
 		golpe_em_fila = int(
 			tipo
@@ -1315,12 +1372,12 @@ func _iniciar_ataque(
 
 	if tipo == TipoGolpe.LEVE:
 		anim.play(
-			&"attack_quick"
+			_action_animation(&"attack_quick", &"attack1")
 		)
 
 	else:
 		anim.play(
-			&"attack_heavy"
+			_action_animation(&"attack_heavy", &"attack2")
 		)
 
 	_atualizar_velocidade_defesa_cranio()
@@ -1355,10 +1412,10 @@ func _atualizar_velocidade_defesa_cranio() -> void:
 		if not is_equal_approx(anim.speed_scale, 1.0):
 			anim.speed_scale = 1.0
 		return
-	if anim.animation != &"attack_quick" and anim.animation != &"attack_heavy":
+	if anim.animation != _action_animation(&"attack_quick", &"attack1") and anim.animation != _action_animation(&"attack_heavy", &"attack2"):
 		return
 	var skull_multiplier: float = skull_defense_attack_speed if _existe_cranio_vindo_na_minha_direcao() else 1.0
-	anim.speed_scale = skull_multiplier * _miniboss_attack_multiplier()
+	anim.speed_scale = skull_multiplier
 
 
 func _verificar_acertos() -> void:
@@ -1376,13 +1433,13 @@ func _verificar_acertos() -> void:
 
 	if golpe_atual == TipoGolpe.LEVE:
 		ativo = (
-			frame >= 2
+			frame >= mini(2, anim.sprite_frames.get_frame_count(anim.animation) - 1)
 			and frame <= 3
 		)
 
 	else:
 		ativo = (
-			frame >= 3
+			frame >= mini(3, anim.sprite_frames.get_frame_count(anim.animation) - 1)
 			and frame <= 5
 		)
 
@@ -1392,7 +1449,6 @@ func _verificar_acertos() -> void:
 
 		dano = dano_forte
 
-	dano *= _giant_damage_multiplier()
 
 	if not ativo:
 		return
@@ -1578,19 +1634,9 @@ func tomar_dano(
 	):
 		return
 
-	# A third artifact grants one shield hit every recharge interval.
-	if miniboss_buffs_active and miniboss_artifact_count >= 3 and miniboss_protection_charges > 0:
-		miniboss_protection_charges = 0
-		miniboss_protection_timer = miniboss_protection_recharge
-		tempo_invulneravel_restante = maxf(tempo_invulneravel_restante, 0.30)
-		_iniciar_brilho_verde()
-		return
-
 	tempo_invulneravel_restante = (
 		tempo_invulneravel
 	)
-	if miniboss_buffs_active and miniboss_artifact_count >= 4:
-		tempo_invulneravel_restante += 0.24
 
 	golpe_em_fila = -1
 
@@ -1651,7 +1697,7 @@ func tomar_dano(
 
 
 	anim.play(
-		&"hurt"
+		_action_animation(&"hurt", &"damagetaken")
 	)
 
 
@@ -1681,7 +1727,7 @@ func morrer() -> void:
 
 
 	anim.play(
-		&"death"
+		_action_animation(&"death", &"damagetaken")
 	)
 
 
@@ -1693,8 +1739,8 @@ func _ao_terminar_animacao() -> void:
 	match estado:
 		Estado.ATAQUE:
 			if (
-				anim.animation == &"attack_quick"
-				or anim.animation == &"attack_heavy"
+				anim.animation == _action_animation(&"attack_quick", &"attack1")
+				or anim.animation == _action_animation(&"attack_heavy", &"attack2")
 			):
 				estado = Estado.NORMAL
 				anim.speed_scale = 1.0
@@ -1717,12 +1763,12 @@ func _ao_terminar_animacao() -> void:
 
 
 		Estado.FERIDO:
-			if anim.animation == &"hurt":
+			if anim.animation == _action_animation(&"hurt", &"damagetaken"):
 				estado = Estado.NORMAL
 
 
 		Estado.MORTO:
-			if anim.animation == &"death":
+			if anim.animation == _action_animation(&"death", &"damagetaken"):
 				Global.reiniciar_vida()
 
 
