@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cml2juwqv24e6"]
 
 [ext_resource type="Texture2D" uid="uid://bcxx0fpms8l4e" path="res://miniboss/Necromancer_creativekind-Sheet.png" id="1_8mbp0"]
+[ext_resource type="Script" uid="uid://bj2vrnb6fn1e2" path="res://necromancer.gd" id="1_ap7yy"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ap7yy"]
 atlas = ExtResource("1_8mbp0")
@@ -527,10 +528,13 @@ animations = [{
 size = Vector2(20, 41)
 
 [node name="charbody2d" type="CharacterBody2D" unique_id=1828284636]
+script = ExtResource("1_ap7yy")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=871920533]
 sprite_frames = SubResource("SpriteFrames_3o1bh")
-animation = &"death"
+animation = &"spawnenemies2"
+frame = 12
+frame_progress = 1.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1194566569]
 position = Vector2(0, 29.5)

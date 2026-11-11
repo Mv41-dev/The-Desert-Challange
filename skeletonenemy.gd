@@ -405,10 +405,35 @@ func _physics_process(delta: float) -> void:
 	_update_platform_engagement()
 	face_target()
 	_update_ai(delta)
+	_space_from_summoned_allies()
 	_update_move_animation()
 	if hp <= 2:
 		velocity.x *= red_move_speed_multiplier
 	move_and_slide()
+
+func _space_from_summoned_allies() -> void:
+	var owner_id := int(get_meta(&"necromancer_summon_owner", 0))
+	if owner_id == 0 or not is_on_floor():
+		return
+	if attacking or melee_warning_active or skull_action_active or rush_active or high_jump_active or drop_chase_active:
+		return
+	var closest: Node2D
+	var distance := 48.0
+	for node in get_tree().get_nodes_in_group(SKELETON_GROUP):
+		if node == self or not node is Node2D or int(node.get_meta(&"necromancer_summon_owner", 0)) != owner_id:
+			continue
+		var offset: Vector2 = node.global_position - global_position
+		if absf(offset.y) <= 24.0 and absf(offset.x) < distance:
+			closest = node
+			distance = absf(offset.x)
+	if closest == null:
+		return
+	var dx := global_position.x - closest.global_position.x
+	var direction := signf(dx)
+	if absf(dx) < 0.1:
+		direction = -1.0 if get_instance_id() < closest.get_instance_id() else 1.0
+	velocity.x = direction * maxf(25.0, move_speed * (1.0 - distance / 48.0))
+
 
 func _tick_timers(delta: float) -> void:
 	drop_chase_cd = maxf(0.0, drop_chase_cd - delta)
@@ -2232,6 +2257,14 @@ func _receive_damage(amount: int) -> void:
 
 	if hp <= 0:
 		die()
+		return
+
+	# Necromancer buffs let warnings finish even under repeated hits.
+	if bool(get_meta(&"necromancer_buffed", false)):
+		stun_timer = 0.0
+		if not was_warning and not already_committed and not high_jump_active and not drop_chase_active:
+			intent = Intent.ATTACK
+			ai_timer = 0.0
 		return
 
 	# Orange (3-4) and red (1-2): taking damage does not interrupt attack.

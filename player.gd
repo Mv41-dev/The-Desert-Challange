@@ -15,12 +15,6 @@ enum Estado {
 }
 
 
-enum TipoGolpe {
-	LEVE,
-	FORTE
-}
-
-
 const SPEED: float = 200.0
 const GRAVITY: float = 980.0
 const MAX_FALL_SPEED: float = 650.0
@@ -36,10 +30,12 @@ const MAX_FALL_SPEED: float = 650.0
 var vida_maxima: int = 3
 
 @export_range(1, 10, 1)
-var dano_leve: int = 1
+var dano_normal: int = 1
 
 @export_range(1, 10, 1)
-var dano_forte: int = 2
+var dano_critico: int = 2
+
+const DANO_SUPER_CRITICO: int = 10
 
 @export_range(0.2, 3.0, 0.05)
 var tempo_invulneravel: float = 0.85
@@ -152,10 +148,6 @@ const OFFSET_J_DIREITA: Vector2 = Vector2(
 	14.0
 )
 
-const OFFSET_K_DIREITA: Vector2 = Vector2(
-	37.0,
-	13.0
-)
 
 
 # =====================================================
@@ -166,9 +158,10 @@ var vida: int = 3
 
 var estado: Estado = Estado.NORMAL
 
-var golpe_atual: TipoGolpe = TipoGolpe.LEVE
+var dano_do_golpe: int = 1
+var attack_damage_roll: int = 100
 
-var golpe_em_fila: int = -1
+var golpe_em_fila: bool = false
 
 
 var olhando_direita: bool = true
@@ -194,6 +187,8 @@ var brilho_verde_material: ShaderMaterial = null
 @export_range(0.0, 1.0, 0.05) var skull_defense_approach_dot: float = 0.55
 
 
+@export_range(0.0, 1.0, 0.01) var attack_move_multiplier: float = 0.18
+
 @export_group("Artifact Abilities")
 @export var dash_speed: float = 420.0
 @export var dash_duration: float = 0.16
@@ -212,6 +207,15 @@ var standing_position: Vector2
 var wall_jump_lock: float = 0.0
 
 
+func _register_mouse_button(action: StringName, button: MouseButton) -> void:
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+	var event := InputEventMouseButton.new()
+	event.button_index = button
+	if not InputMap.action_has_event(action, event):
+		InputMap.action_add_event(action, event)
+
+
 func _register_ability_key(action: StringName, key: Key) -> void:
 	if InputMap.has_action(action):
 		return
@@ -222,7 +226,7 @@ func _register_ability_key(action: StringName, key: Key) -> void:
 
 
 func _update_artifact_movement(delta: float) -> bool:
-	if estado != Estado.NORMAL:
+	if estado != Estado.NORMAL and estado != Estado.ATAQUE:
 		dash_remaining = 0.0
 		slide_remaining = 0.0
 		_try_stand()
@@ -244,7 +248,12 @@ func _update_artifact_movement(delta: float) -> bool:
 			move_and_slide()
 			return true
 
-	if dash_remaining <= 0.0 and not dash_used and Input.is_action_just_pressed(&"dash") and GerenciadorArtefatos.possui_artefato("escaravelho"):
+	if dash_remaining <= 0.0 and not dash_used and Input.is_action_just_pressed(&"dash") and GerenciadorArtefatos.possui_artefato("ankh"):
+		if estado == Estado.ATAQUE:
+			estado = Estado.NORMAL
+			golpe_em_fila = false
+			atingidos_no_golpe.clear()
+			anim.speed_scale = 1.0
 		dash_direction = signf(direction) if absf(direction) > 0.01 else (1.0 if olhando_direita else -1.0)
 		_virar(dash_direction)
 		dash_remaining = dash_duration
@@ -259,7 +268,10 @@ func _update_artifact_movement(delta: float) -> bool:
 			dash_remaining = 0.0
 		return true
 
-	if is_on_floor() and absf(direction) > 0.01 and Input.is_action_just_pressed(&"slide") and GerenciadorArtefatos.possui_artefato("ankh"):
+	if estado == Estado.ATAQUE:
+		return false
+
+	if is_on_floor() and absf(direction) > 0.01 and Input.is_action_just_pressed(&"slide") and GerenciadorArtefatos.possui_artefato("mascara"):
 		_begin_slide(signf(direction))
 		if standing_shape != null:
 			velocity.x = slide_direction * slide_speed
@@ -523,22 +535,24 @@ var fundo_escuridao: ColorRect = null
 )
 
 @onready var shared_attack_area := get_node_or_null("AttackArea") as Area2D
-@onready var shared_attack_position: Vector2 = shared_attack_area.position if shared_attack_area != null else Vector2.ZERO
+var authored_sword_transform: Transform2D
 @onready var attack_area_j: Area2D = get_node_or_null("AttackAreaJ") as Area2D
-@onready var attack_area_k: Area2D = get_node_or_null("AttackAreaK") as Area2D
 
 # =====================================================
 # READY
 # =====================================================
 
 func _ready() -> void:
-	_register_ability_key(&"dash", KEY_Q)
+	_register_mouse_button(&"dash", MOUSE_BUTTON_RIGHT)
+	_register_mouse_button(&"attack_quick", MOUSE_BUTTON_LEFT)
 	_register_ability_key(&"slide", KEY_C)
 	if attack_area_j == null:
 		attack_area_j = shared_attack_area
-	if attack_area_k == null:
-		attack_area_k = shared_attack_area
+	authored_sword_transform = attack_area_j.transform
+	if attack_area_j != shared_attack_area:
+		authored_sword_transform.origin = OFFSET_J_DIREITA
 	_prepare_action_animations()
+	_fit_knight_attack_shape()
 	add_to_group(
 		"player"
 	)
@@ -576,7 +590,6 @@ func _ready() -> void:
 
 	attack_area_j.monitoring = true
 
-	attack_area_k.monitoring = true
 
 
 	atualizar_areas_ataque()
@@ -858,11 +871,7 @@ func _physics_process(
 
 
 	else:
-		var velocidade_ataque: float = (
-			SPEED * 0.30
-			if golpe_atual == TipoGolpe.LEVE
-			else 0.0
-		)
+		var velocidade_ataque: float = SPEED * attack_move_multiplier
 
 
 		velocity.x = move_toward(
@@ -878,20 +887,8 @@ func _physics_process(
 	# ATAQUES
 	# =================================================
 
-	if Input.is_action_just_pressed(
-		"attack_quick"
-	):
-		solicitar_ataque(
-			TipoGolpe.LEVE
-		)
-
-
-	elif Input.is_action_just_pressed(
-		"attack_heavy"
-	):
-		solicitar_ataque(
-			TipoGolpe.FORTE
-		)
+	if Input.is_action_just_pressed(&"attack_quick"):
+		solicitar_ataque()
 
 
 	move_and_slide()
@@ -1138,7 +1135,7 @@ func resetar_para_inicio() -> void:
 	estado = Estado.NORMAL
 
 
-	golpe_em_fila = -1
+	golpe_em_fila = false
 
 
 	atingidos_no_golpe.clear()
@@ -1226,43 +1223,8 @@ func _atualizar_alinhamento_sprite() -> void:
 # =====================================================
 
 func atualizar_areas_ataque() -> void:
-	if shared_attack_area != null and attack_area_j == shared_attack_area and attack_area_k == shared_attack_area:
-		shared_attack_area.position.x = shared_attack_position.x * (1.0 if olhando_direita else -1.0)
-		shared_attack_area.scale.x = absf(shared_attack_area.scale.x) * (1.0 if olhando_direita else -1.0)
-		return
-	if olhando_direita:
-		attack_area_j.position = (
-			OFFSET_J_DIREITA
-		)
-
-
-		attack_area_k.position = (
-			OFFSET_K_DIREITA
-		)
-
-
-		attack_area_j.scale.x = 1.0
-
-		attack_area_k.scale.x = 1.0
-
-
-	else:
-		attack_area_j.position = Vector2(
-			-OFFSET_J_DIREITA.x,
-			OFFSET_J_DIREITA.y
-		)
-
-
-		attack_area_k.position = Vector2(
-			-OFFSET_K_DIREITA.x,
-			OFFSET_K_DIREITA.y
-		)
-
-
-		attack_area_j.scale.x = -1.0
-
-		attack_area_k.scale.x = -1.0
-
+	var reflection := Transform2D(Vector2(-1.0, 0.0), Vector2(0.0, 1.0), Vector2.ZERO)
+	attack_area_j.transform = authored_sword_transform if olhando_direita else reflection * authored_sword_transform
 
 # =====================================================
 # ANIMACAO
@@ -1297,6 +1259,19 @@ func _atualizar_animacao_movimento(
 		)
 
 
+func _fit_knight_attack_shape() -> void:
+	if shared_attack_area == null or not anim.sprite_frames.has_animation(&"attack1"):
+		return
+	var hit_shape := shared_attack_area.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if hit_shape == null or not hit_shape.shape is RectangleShape2D:
+		return
+	var rectangle := hit_shape.shape.duplicate() as RectangleShape2D
+	# Cover the extra reach and higher arc of the knight's sword frames.
+	rectangle.size += Vector2(10.0, 8.0)
+	hit_shape.shape = rectangle
+	hit_shape.position += Vector2(5.0, -4.0)
+
+
 func _action_animation(preferred: StringName, fallback: StringName) -> StringName:
 	return preferred if anim.sprite_frames.has_animation(preferred) else fallback
 
@@ -1305,7 +1280,6 @@ func _prepare_action_animations() -> void:
 	anim.sprite_frames = anim.sprite_frames.duplicate() as SpriteFrames
 	var names: Array[StringName] = [
 		_action_animation(&"attack_quick", &"attack1"),
-		_action_animation(&"attack_heavy", &"attack2"),
 		_action_animation(&"hurt", &"damagetaken"),
 		_action_animation(&"death", &"damagetaken"),
 	]
@@ -1334,54 +1308,36 @@ func _tocar(
 # ATAQUES
 # =====================================================
 
-func solicitar_ataque(
-	tipo: TipoGolpe
-) -> void:
+func is_swinging() -> bool:
+	return estado == Estado.ATAQUE
+
+
+func solicitar_ataque() -> void:
 	if estado == Estado.NORMAL:
-		_iniciar_ataque(
-			tipo
-		)
+		_iniciar_ataque()
+	elif estado == Estado.ATAQUE and anim.frame >= mini(2, anim.sprite_frames.get_frame_count(anim.animation) - 1):
+		golpe_em_fila = true
 
 
-	elif (
-		estado == Estado.ATAQUE
-		and anim.frame >= mini(2, anim.sprite_frames.get_frame_count(anim.animation) - 1)
-	):
-		golpe_em_fila = int(
-			tipo
-		)
-
-
-func _iniciar_ataque(
-	tipo: TipoGolpe
-) -> void:
+func _iniciar_ataque() -> void:
 	estado = Estado.ATAQUE
-
-
-	golpe_atual = tipo
-
-
-	golpe_em_fila = -1
-
-
+	var attack_speed := SPEED * attack_move_multiplier
+	velocity.x = clampf(velocity.x, -attack_speed, attack_speed)
+	golpe_em_fila = false
 	atingidos_no_golpe.clear()
-
-
 	atualizar_areas_ataque()
 
-
-	if tipo == TipoGolpe.LEVE:
-		anim.play(
-			_action_animation(&"attack_quick", &"attack1")
-		)
-
+	# One roll per swing. Every target hit by that swing gets the same damage.
+	attack_damage_roll = randi_range(1, 100)
+	if attack_damage_roll <= 10:
+		dano_do_golpe = DANO_SUPER_CRITICO
+	elif attack_damage_roll <= 60:
+		dano_do_golpe = dano_critico
 	else:
-		anim.play(
-			_action_animation(&"attack_heavy", &"attack2")
-		)
+		dano_do_golpe = dano_normal
 
+	anim.play(_action_animation(&"attack_quick", &"attack1"))
 	_atualizar_velocidade_defesa_cranio()
-
 
 func _existe_cranio_vindo_na_minha_direcao() -> bool:
 	for cranio in get_tree().get_nodes_in_group(&"skeleton_skull"):
@@ -1412,89 +1368,68 @@ func _atualizar_velocidade_defesa_cranio() -> void:
 		if not is_equal_approx(anim.speed_scale, 1.0):
 			anim.speed_scale = 1.0
 		return
-	if anim.animation != _action_animation(&"attack_quick", &"attack1") and anim.animation != _action_animation(&"attack_heavy", &"attack2"):
+	if anim.animation != _action_animation(&"attack_quick", &"attack1"):
 		return
 	var skull_multiplier: float = skull_defense_attack_speed if _existe_cranio_vindo_na_minha_direcao() else 1.0
 	anim.speed_scale = skull_multiplier
 
 
 func _verificar_acertos() -> void:
-	var frame: int = anim.frame
-
-
-	var ativo: bool = false
-
-
-	var area: Area2D = attack_area_j
-
-
-	var dano: int = dano_leve
-
-
-	if golpe_atual == TipoGolpe.LEVE:
-		ativo = (
-			frame >= mini(2, anim.sprite_frames.get_frame_count(anim.animation) - 1)
-			and frame <= 3
-		)
-
-	else:
-		ativo = (
-			frame >= mini(3, anim.sprite_frames.get_frame_count(anim.animation) - 1)
-			and frame <= 5
-		)
-
-
-		area = attack_area_k
-
-
-		dano = dano_forte
-
-
-	if not ativo:
+	var frame := anim.frame
+	var first_hit_frame := mini(2, anim.sprite_frames.get_frame_count(anim.animation) - 1)
+	var area := attack_area_j
+	var dano := dano_do_golpe
+	var boss_hit_frame_end := 4 if anim.animation == &"attack1" else 3
+	if frame >= first_hit_frame and frame <= boss_hit_frame_end:
+		_verificar_acertos_miniboss(area, dano)
+	if frame < first_hit_frame or frame > 3:
 		return
+	_verificar_reflexao_cranios(area, false)
 
-
-	_verificar_reflexao_cranios(area, golpe_atual == TipoGolpe.FORTE)
-
-	# Menacing Skeleton may not share the collision mask used by regular
-	# enemies. Use the player's existing AttackAreaJ/K shapes against its
-	# existing BODY collision shape, without adding fake damage zones.
-	_verificar_acertos_miniboss(area, dano)
-
-	for corpo in area.get_overlapping_bodies():
-		if not is_instance_valid(
-			corpo
-		):
+	var sword_shapes := area.find_children("*", "CollisionShape2D", true, false)
+	for corpo in get_tree().get_nodes_in_group(&"inimigo"):
+		if not is_instance_valid(corpo) or not corpo is PhysicsBody2D:
 			continue
-
-
-		if not corpo.is_in_group(
-			"inimigo"
-		):
+		if atingidos_no_golpe.has(corpo) or _inimigo_morreu(corpo):
 			continue
+		if corpo.has_method(&"attack_shape_hits_hurtbox") or not corpo.has_method(&"tomar_dano"):
+			continue
+		if corpo.has_method(&"can_receive_player_hit") and not bool(corpo.call(&"can_receive_player_hit")):
+			continue
+		if not area.overlaps_body(corpo) and not _sword_overlaps_enemy(sword_shapes, corpo):
+			continue
+		atingidos_no_golpe.append(corpo)
+		corpo.call(&"tomar_dano", _damage_against_enemy(corpo), global_position)
+		if _inimigo_morreu(corpo):
+			on_enemy_killed(corpo)
 
 
-		if (
-			corpo.has_method(
-				"tomar_dano"
-			)
-			and not atingidos_no_golpe.has(
-				corpo
-			)
-		):
-			atingidos_no_golpe.append(
-				corpo
-			)
+func _damage_against_enemy(enemy: Node) -> int:
+	if not enemy.is_in_group(&"necromancer") or not enemy.has_method(&"is_reviving"):
+		return dano_do_golpe
+	if not bool(enemy.call(&"is_reviving")) or Global.vida_atual > 2:
+		return dano_do_golpe
+	var very_critical_limit := 40 if Global.vida_atual == 1 else 20
+	var critical_limit := 95 if Global.vida_atual == 1 else 80
+	if attack_damage_roll <= very_critical_limit:
+		return DANO_SUPER_CRITICO
+	if attack_damage_roll <= critical_limit:
+		return dano_critico
+	return dano_normal
 
 
-			corpo.tomar_dano(
-				dano,
-				global_position
-			)
-
-			if _inimigo_morreu(corpo):
-				on_enemy_killed(corpo)
-
+func _sword_overlaps_enemy(sword_shapes: Array[Node], enemy: PhysicsBody2D) -> bool:
+	for child in enemy.get_children():
+		var body_hitbox := child as CollisionShape2D
+		if body_hitbox == null or body_hitbox.disabled or body_hitbox.shape == null:
+			continue
+		for node in sword_shapes:
+			var sword_hitbox := node as CollisionShape2D
+			if sword_hitbox == null or sword_hitbox.disabled or sword_hitbox.shape == null:
+				continue
+			if sword_hitbox.shape.collide(sword_hitbox.global_transform, body_hitbox.shape, body_hitbox.global_transform):
+				return true
+	return false
 
 func _verificar_acertos_miniboss(area: Area2D, dano: int) -> void:
 	for boss_node in get_tree().get_nodes_in_group(&"menacing_skeleton"):
@@ -1505,7 +1440,8 @@ func _verificar_acertos_miniboss(area: Area2D, dano: int) -> void:
 		if boss_node.has_method(&"is_dead") and bool(boss_node.call(&"is_dead")):
 			continue
 		var corpo_shape: CollisionShape2D = boss_node.get_node_or_null("CollisionShape2D") as CollisionShape2D
-		if corpo_shape == null or corpo_shape.disabled or corpo_shape.shape == null:
+		var has_hurtbox := boss_node.has_method(&"attack_shape_hits_hurtbox")
+		if not has_hurtbox and (corpo_shape == null or corpo_shape.disabled or corpo_shape.shape == null):
 			continue
 		var acertou: bool = false
 		for shape_node in area.find_children("*", "CollisionShape2D", true, false):
@@ -1513,6 +1449,11 @@ func _verificar_acertos_miniboss(area: Area2D, dano: int) -> void:
 				continue
 			var ataque_shape: CollisionShape2D = shape_node as CollisionShape2D
 			if ataque_shape.disabled or ataque_shape.shape == null:
+				continue
+			if has_hurtbox:
+				if bool(boss_node.call(&"attack_shape_hits_hurtbox", ataque_shape)):
+					acertou = true
+					break
 				continue
 			if ataque_shape.shape.collide(
 				ataque_shape.global_transform,
@@ -1638,7 +1579,7 @@ func tomar_dano(
 		tempo_invulneravel
 	)
 
-	golpe_em_fila = -1
+	golpe_em_fila = false
 
 
 	Global.tomar_dano(
@@ -1714,7 +1655,7 @@ func morrer() -> void:
 	anim.speed_scale = 1.0
 
 
-	golpe_em_fila = -1
+	golpe_em_fila = false
 
 
 	atingidos_no_golpe.clear()
@@ -1738,29 +1679,11 @@ func morrer() -> void:
 func _ao_terminar_animacao() -> void:
 	match estado:
 		Estado.ATAQUE:
-			if (
-				anim.animation == _action_animation(&"attack_quick", &"attack1")
-				or anim.animation == _action_animation(&"attack_heavy", &"attack2")
-			):
+			if anim.animation == _action_animation(&"attack_quick", &"attack1"):
 				estado = Estado.NORMAL
 				anim.speed_scale = 1.0
-
-
-				if golpe_em_fila != -1:
-					var proximo: TipoGolpe = (
-						TipoGolpe.FORTE
-						if golpe_em_fila
-						== int(
-							TipoGolpe.FORTE
-						)
-						else TipoGolpe.LEVE
-					)
-
-
-					_iniciar_ataque(
-						proximo
-					)
-
+				if golpe_em_fila:
+					_iniciar_ataque()
 
 		Estado.FERIDO:
 			if anim.animation == _action_animation(&"hurt", &"damagetaken"):

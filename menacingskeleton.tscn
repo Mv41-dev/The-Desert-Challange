@@ -412,7 +412,7 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_q45od"]
-size = Vector2(14, 50.5)
+size = Vector2(109, 43.25)
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_q45od"]
 height = 74.023315
@@ -427,20 +427,17 @@ size = Vector2(64.714195, 64.96132)
 script = ExtResource("1_u5bdw")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=583200397]
-position = Vector2(30.000006, 1.9999967)
+position = Vector2(0, -0.99999976)
 scale = Vector2(1.0588235, 1.136)
 sprite_frames = SubResource("SpriteFrames_3o1bh")
-animation = &"new_animation"
-frame = 8
-frame_progress = 1.0
-metadata/_edit_lock_ = true
+animation = &"walk"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1302626030]
-position = Vector2(1, -2.25)
+position = Vector2(0, -3.625)
 shape = SubResource("RectangleShape2D_q45od")
 
 [node name="Area2D" type="Area2D" parent="." unique_id=2127672532]
-position = Vector2(32, 2)
+position = Vector2(0, 1)
 
 [node name="frontswing" type="CollisionShape2D" parent="Area2D" unique_id=302556904]
 position = Vector2(14.000004, 1.0000002)

@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://bc2cm54prrn4q" path="res://enemy_patrulha.tscn" id="9_66w8i"]
 [ext_resource type="PackedScene" uid="uid://bki42pmwj6agw" path="res://skeletonenemy.tscn" id="10_80qnk"]
 [ext_resource type="PackedScene" uid="uid://bu1bbvi7k45pk" path="res://resetarea.tscn" id="11_cicwn"]
+[ext_resource type="PackedScene" uid="uid://cml2juwqv24e6" path="res://necromancer.tscn" id="12_lj1an"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="hud_fases"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_nmjpi"]
@@ -556,3 +557,9 @@ position = Vector2(-1248, 160)
 
 [node name="area2d" parent="." unique_id=1114173430 instance=ExtResource("11_cicwn")]
 position = Vector2(-4013, 389)
+
+[node name="charbody2d" parent="." unique_id=1828284636 instance=ExtResource("12_lj1an")]
+position = Vector2(-3067, 24)
+
+[node name="charbody2d2" parent="." unique_id=868407206 instance=ExtResource("12_lj1an")]
+position = Vector2(2238, 16)
