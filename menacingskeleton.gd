@@ -1,3 +1,4 @@
+# V15 - King Necromancer summon integration without artifact-mode side effects
 extends CharacterBody2D
 # Menacing Skeleton miniboss, Godot 4.x.
 # Scene children (exact): AnimatedSprite2D, CollisionShape2D,
@@ -321,11 +322,14 @@ func _begin_fight() -> void:
 	engaged = true
 	mode = Mode.CHASE
 	attack_cd = 0.60
-	if is_instance_valid(target) and target.has_method(&"begin_menacing_skeleton_fight"):
-		target.call(
-			&"begin_menacing_skeleton_fight",
-			4 if debug_grant_all_artifact_buffs_on_engage else _get_collected_artifacts()
-		)
+	# King's summons are elite guards, not independent artifact minibosses.
+	# Their attacks/parry behavior stays intact without changing Kris's buffs.
+	if not bool(get_meta(&"king_necromancer_summon", false)):
+		if is_instance_valid(target) and target.has_method(&"begin_menacing_skeleton_fight"):
+			target.call(
+				&"begin_menacing_skeleton_fight",
+				4 if debug_grant_all_artifact_buffs_on_engage else _get_collected_artifacts()
+			)
 	fight_started.emit()
 
 func _update_chase(_delta: float) -> void:
@@ -989,8 +993,9 @@ func _die() -> void:
 	sprite.speed_scale = 1.0
 	sprite.stop()
 	if is_instance_valid(target):
-		if target.has_method(&"end_menacing_skeleton_fight"):
-			target.call(&"end_menacing_skeleton_fight")
+		if not bool(get_meta(&"king_necromancer_summon", false)):
+			if target.has_method(&"end_menacing_skeleton_fight"):
+				target.call(&"end_menacing_skeleton_fight")
 		if target.has_method(&"on_enemy_killed"):
 			target.call(&"on_enemy_killed", self)
 	died.emit()

@@ -1,3 +1,4 @@
+# NORMAL NECROMANCER - V2 wall phasing/platform revival (no king code)
 extends CharacterBody2D
 
 signal health_changed(current: int, maximum: int)
@@ -27,6 +28,13 @@ const MAX_BUFFED_SKELETONS := 2
 @export var arena_roam_distance: float = 155.0
 @export var skull_speed: float = 245.0
 @export var skull_damage: int = 1
+
+# Platform arena support: fly through solid walls/floors, but land on a REAL
+# platform via a downward terrain raycast before reviving a skeleton.
+@export_group("Wall Phasing and Platform Revival")
+@export var phase_through_walls_while_flying: bool = true
+@export_range(360.0, 2000.0, 20.0) var platform_search_depth: float = 900.0
+@export_range(1.0, 12.0, 1.0) var revive_floor_clearance: float = 4.0
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
@@ -69,12 +77,28 @@ var shots_left: int = 0
 var flash_timer: float = 0.0
 var hover_side: float = 1.0
 var sprite_tint: Color
+var original_collision_mask: int = 0
+
+
+func _set_flight_collision(landing: bool) -> void:
+	# Collision LAYER stays unchanged so Kris's attack/hurtbox systems can
+	# still detect the Necromancer when its descending/reviving window is open.
+	# Only collision MASK is disabled while travelling through terrain.
+	if not phase_through_walls_while_flying:
+		return
+	if state == State.DEAD:
+		return
+	var wanted_mask: int = original_collision_mask if landing else 0
+	if collision_mask != wanted_mask:
+		collision_mask = wanted_mask
 
 
 func _ready() -> void:
+	original_collision_mask = collision_mask
 	hp = maxi(1, max_hp)
 	home = global_position
 	hover_center_x = home.x
+	_set_flight_collision(false)
 	sprite_tint = sprite.self_modulate
 	add_to_group(&"inimigo")
 	add_to_group(&"enemy")
@@ -118,15 +142,41 @@ func _physics_process(delta: float) -> void:
 
 
 func _begin_encounter() -> void:
-	for index in range(clampi(skeleton_count, 1, 2)):
-		var side := -1.0 if index % 2 == 0 else 1.0
-		var offset := side * (72.0 + floorf(float(index) * 0.5) * 53.0)
-		var floor_hit := _ground_at(home.x + offset)
+	# Narrow, separated platforms often have no ground at exactly +/-72px.
+	# Sample the nearby ledges before abandoning the summon encounter.
+	var desired_count: int = clampi(skeleton_count, 1, 2)
+	var offsets: Array[float] = [-72.0, 72.0, -40.0, 40.0, 0.0, -120.0, 120.0]
+	for offset: float in offsets:
+		if slots.size() >= desired_count:
+			break
+		var floor_hit: Dictionary = _ground_at(home.x + offset)
 		if floor_hit.is_empty():
 			continue
+		var new_floor: Vector2 = floor_hit["position"]
+		var overlaps_slot: bool = false
+		for existing: SummonSlot in slots:
+			if existing.floor_position.distance_to(new_floor) < 44.0:
+				overlaps_slot = true
+				break
+		if overlaps_slot:
+			continue
 		var slot := SummonSlot.new()
-		slot.floor_position = floor_hit["position"]
+		slot.floor_position = new_floor
 		slots.append(slot)
+	if slots.is_empty() and is_instance_valid(target):
+		# A boss hovering above a gap can still start its encounter by finding
+		# the platform Kris is actually standing on (common in Radiance arenas).
+		for offset: float in [0.0, -55.0, 55.0]:
+			var floor_hit: Dictionary = _ground_at(
+				target.global_position.x + offset,
+				target.global_position.y - 85.0
+			)
+			if floor_hit.is_empty():
+				continue
+			var slot := SummonSlot.new()
+			slot.floor_position = floor_hit["position"]
+			slots.append(slot)
+			break
 	if slots.is_empty():
 		return
 	state = State.OPENING
@@ -206,11 +256,20 @@ func _finish_summoning() -> void:
 	barrage_timer = 1.1
 	_play(&"idle")
 
-func _ground_at(x: float) -> Dictionary:
+func _ground_at(x: float, ray_start_y: float = -INF) -> Dictionary:
+	# Raycasting explicitly against the terrain remains functional even when
+	# the flying Necromancer has collision_mask = 0. It also finds platforms
+	# substantially above/below the original home position when used near a corpse.
+	var start_y: float = home.y - 60.0
+	if ray_start_y != -INF:
+		start_y = ray_start_y
 	var query := PhysicsRayQueryParameters2D.create(
-		Vector2(x, home.y - 12.0), Vector2(x, home.y + 360.0), terrain_mask, _excluded_bodies()
+		Vector2(x, start_y),
+		Vector2(x, start_y + maxf(360.0, platform_search_depth)),
+		terrain_mask,
+		_excluded_bodies()
 	)
-	var hit := get_world_2d().direct_space_state.intersect_ray(query)
+	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
 		var normal: Vector2 = hit["normal"]
 		if normal.y < -0.6:
@@ -225,6 +284,13 @@ func _excluded_bodies() -> Array[RID]:
 	for slot in slots:
 		if is_instance_valid(slot.skeleton):
 			excluded.append(slot.skeleton.get_rid())
+	# In a three-Necromancer arena, other bosses/skeletons should NEVER be
+	# mistaken for platforms by a terrain ray (even if their layer overlaps).
+	for enemy_node: Node in get_tree().get_nodes_in_group(&"enemy"):
+		if enemy_node is CollisionObject2D and enemy_node != self:
+			var enemy_rid: RID = (enemy_node as CollisionObject2D).get_rid()
+			if not excluded.has(enemy_rid):
+				excluded.append(enemy_rid)
 	return excluded
 
 
@@ -287,7 +353,10 @@ func _update_guarded(delta: float) -> void:
 			continue
 		if bool(slot.skeleton.get(&"dead")):
 			if slot.skeleton.collision_layer == 0:
-				var floor_hit := _ground_at(slot.skeleton.global_position.x)
+				var floor_hit := _ground_at(
+					slot.skeleton.global_position.x,
+					slot.skeleton.global_position.y - 24.0
+				)
 				if not floor_hit.is_empty():
 					slot.floor_position = floor_hit["position"]
 			continue
@@ -340,36 +409,52 @@ func _begin_descent() -> void:
 			continue
 		if revive_slot == null or global_position.distance_squared_to(slot.floor_position) < global_position.distance_squared_to(revive_slot.floor_position):
 			revive_slot = slot
+	if revive_slot == null:
+		# Do not access a null revival slot when a platform prevented a cast.
+		state = State.GUARDED
+		return
 	revive_destination = _revive_position()
 	state = State.DESCENDING
+	_set_flight_collision(false)
 	_play(&"walk")
 
 
 func _revive_position() -> Vector2:
 	var rectangle := body_shape.shape as RectangleShape2D
 	var feet := body_shape.position.y + rectangle.size.y * 0.5
-	var floor_position := revive_slot.floor_position
-	var side := -1.0 if global_position.x < floor_position.x else 1.0
+	var floor_position: Vector2 = revive_slot.floor_position
+	var side: float = -1.0 if global_position.x < floor_position.x else 1.0
 	for direction in [side, -side]:
-		var ground := _ground_at(floor_position.x + float(direction) * 40.0)
+		# Probe from the DEAD skeleton's actual platform elevation, not home.y.
+		# Another platform below it is not a valid replacement landing spot.
+		var ground: Dictionary = _ground_at(
+			floor_position.x + float(direction) * 40.0,
+			floor_position.y - 54.0
+		)
 		if ground.is_empty():
 			continue
 		var candidate: Vector2 = ground["position"]
 		if absf(candidate.y - floor_position.y) <= 12.0:
-			return candidate - Vector2(0.0, feet + 4.0)
-	return floor_position - Vector2(0.0, feet + 4.0)
+			return candidate - Vector2(0.0, feet + revive_floor_clearance)
+	return floor_position - Vector2(0.0, feet + revive_floor_clearance)
 
 
 func _update_descent(delta: float) -> void:
-	var destination := revive_destination
-	# Line up above the corpse before dropping within sword reach.
+	var destination: Vector2 = revive_destination
+	# If the corpse is on a raised platform, approach ABOVE that platform
+	# before dropping onto it, rather than visually rising through its underside.
 	if absf(global_position.x - destination.x) > 5.0:
-		_fly_toward(Vector2(destination.x, minf(global_position.y, home.y)), hover_speed, delta)
+		var approach_y: float = minf(global_position.y, destination.y - 44.0)
+		_fly_toward(Vector2(destination.x, approach_y), hover_speed, delta)
 	else:
 		_fly_toward(destination, hover_speed, delta)
 	if global_position.distance_to(destination) <= 6.0:
+		# Land EXACTLY above the raycast floor. Restore solid collision only now,
+		# otherwise a wall can block the descent before he reaches the corpse.
+		global_position = destination
 		velocity = Vector2.ZERO
 		state = State.REVIVING
+		_set_flight_collision(true)
 		revive_timer = maxf(0.01, revive_seconds)
 		_start_revive_animation()
 		_create_revive_preview()
@@ -386,6 +471,7 @@ func _update_revive(delta: float) -> void:
 	_spawn_skeleton(revive_slot, true)
 	revive_slot = null
 	state = State.GUARDED
+	_set_flight_collision(false)
 	barrage_timer = 2.0
 	hover_center_x = global_position.x
 	_play(&"idle")
@@ -449,8 +535,19 @@ func _update_revive_animation(delta: float) -> void:
 
 
 func _fly_toward(destination: Vector2, speed: float, delta: float) -> void:
-	velocity = (destination - global_position).limit_length(speed * delta) / delta
-	move_and_slide()
+	if delta <= 0.0:
+		return
+	var movement: Vector2 = (destination - global_position).limit_length(
+		maxf(0.0, speed) * delta
+	)
+	if phase_through_walls_while_flying:
+		# Flying movement is intangible; physics still detects the actual platform
+		# with _ground_at(), and revival re-enables ground collision when landed.
+		global_position += movement
+		velocity = Vector2.ZERO
+	else:
+		velocity = movement / delta
+		move_and_slide()
 
 
 func _launch_skull() -> void:
