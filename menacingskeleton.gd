@@ -1,5 +1,7 @@
+# V17 - faster Menacing attack rhythms; regular hits deal damage without interrupting an already committed attack; parry still cancels
 # V15 - King Necromancer summon integration without artifact-mode side effects
 extends CharacterBody2D
+# V16: true sprite-aligned hurtbox + no stun immunity (including King summons)
 # Menacing Skeleton miniboss, Godot 4.x.
 # Scene children (exact): AnimatedSprite2D, CollisionShape2D,
 # Area2D/frontswing, Area2D/downswing, Area2D/upswing.
@@ -14,40 +16,40 @@ enum Mode { DORMANT, CHASE, WARNING, STRIKE, RECOVER, STUNNED, DEAD, EXHAUSTED, 
 enum Slash { FRONT, SIDE, DOWN }
 
 @export_group("Combat")
-@export var max_hp: int = 50
+@export var max_hp: int = 25
 @export var damage_per_hit: int = 1
 @export var activation_radius: float = 165.0
-@export var pursuit_speed: float = 92.0
+@export var pursuit_speed: float = 120.0
 @export var gravity: float = 980.0
 @export var maximum_fall_speed: float = 680.0
 @export var melee_reach: float = 105.0
-@export var attack_interval: float = 0.80
+@export var attack_interval: float = 0.42
 @export var attack_interval_random: float = 0.10
 
 @export_group("Sword Attacks")
 @export var dash_attack_distance: float = 310.0
-@export var attack_warning_seconds: float = 0.58
+@export var attack_warning_seconds: float = 0.42
 @export var attack_warning_color: Color = Color(1.0, 0.72, 0.32)
-@export var combo_swing_seconds: float = 0.19
-@export var combo_followup_pause: float = 0.025
-@export var combo_dash_seconds: float = 0.10
+@export var combo_swing_seconds: float = 0.15
+@export var combo_followup_pause: float = 0.020
+@export var combo_dash_seconds: float = 0.085
 @export var combo_dash_distance: float = 52.0
 @export var point_blank_distance: float = 60.0
-@export var point_blank_warning_seconds: float = 0.82
-@export var point_blank_commit_seconds: float = 0.13
+@export var point_blank_warning_seconds: float = 0.59
+@export var point_blank_commit_seconds: float = 0.09
 @export var point_blank_followup_pause: float = 0.12
-@export var point_blank_swing_seconds: float = 0.23
+@export var point_blank_swing_seconds: float = 0.18
 @export_range(0.0, 1.0) var alternate_combo_chance: float = 0.30
-@export var endlag: float = 1.50
+@export var endlag: float = 0.72
 @export_range(0.0, 1.0) var advancing_slam_chance: float = 0.18
-@export var advancing_slam_warning_seconds: float = 0.72
+@export var advancing_slam_warning_seconds: float = 0.54
 @export var advancing_slam_distance: float = 104.0
 @export var advancing_slam_seconds: float = 0.30
 
 @export_group("Jump Slam and Evasion")
 @export_range(0.0, 1.0) var jump_slam_chance: float = 0.30
 @export var jump_slam_range: float = 155.0
-@export var jump_slam_warning_seconds: float = 0.55
+@export var jump_slam_warning_seconds: float = 0.46
 @export var jump_slam_launch_speed: float = 305.0
 @export var jump_slam_move_speed: float = 235.0
 @export_range(0.0, 1.0) var evade_chance: float = 0.24
@@ -57,7 +59,7 @@ enum Slash { FRONT, SIDE, DOWN }
 
 @export_group("Long Lunge")
 @export_range(0.0, 1.0) var close_lunge_chance: float = 0.23
-@export var lunge_warning_seconds: float = 0.78
+@export var lunge_warning_seconds: float = 0.56
 @export var lunge_retreat_distance: float = 34.0
 @export var lunge_retreat_speed: float = 160.0
 @export var lunge_speed: float = 850.0
@@ -71,7 +73,7 @@ enum Slash { FRONT, SIDE, DOWN }
 
 @export_group("Damage Stun")
 @export var stun_duration: float = 0.65
-@export var stun_immunity_period: float = 4.5
+@export var stun_immunity_period: float = 0.0 # Legacy Inspector setting; damage now always stuns.
 
 @export_group("Platform Waiting")
 @export var unreachable_vertical_gap: float = 78.0
@@ -201,6 +203,7 @@ var obstacle_jump_start_y: float = 0.0
 var obstacle_jump_committed: bool = false
 var pass_through_player: PhysicsBody2D = null
 var low_hp_phase_seen: bool = false
+var damage_white_flash: float = 0.0
 
 func _ready() -> void:
 	hp = maxi(1, max_hp)
@@ -236,6 +239,7 @@ func _physics_process(delta: float) -> void:
 	evade_cd = maxf(0.0, evade_cd - delta)
 	stun_cd = maxf(0.0, stun_cd - delta)
 	obstacle_jump_cd = maxf(0.0, obstacle_jump_cd - delta)
+	damage_white_flash = maxf(0.0, damage_white_flash - delta)
 	if _is_desperate() and not low_hp_phase_seen:
 		low_hp_phase_seen = true
 		attacks_since_fatigue = 0
@@ -280,7 +284,14 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	if mode == Mode.STRIKE:
 		_check_strike_hit_window()
-	if show_damage_hitbox:
+	# Preserve attack warning coloration, with a short white hit flash on damage.
+	if damage_white_flash > 0.0:
+		sprite.self_modulate = Color.WHITE
+	elif mode == Mode.WARNING:
+		sprite.self_modulate = attack_warning_color
+	elif mode not in [Mode.EXHAUSTED, Mode.STUNNED]:
+		sprite.self_modulate = original_sprite_color
+	if show_damage_hitbox or mode == Mode.WARNING:
 		queue_redraw()
 
 func _find_player() -> void:
@@ -501,7 +512,7 @@ func _start_attack_pattern() -> void:
 		if _pose_attack(opener):
 			var frame_count := sprite.sprite_frames.get_frame_count(sprite.animation)
 			warning_frame_count = clampi(_hit_frame(opener), 0, frame_count - 1)
-		sprite.self_modulate = original_sprite_color
+		sprite.self_modulate = attack_warning_color
 	recovery_remaining = maxf(0.01, warning_duration)
 
 func _warning_visible_at(world_position: Vector2) -> bool:
@@ -920,28 +931,67 @@ func _damage_contact_bounds() -> Rect2:
 
 
 func _draw() -> void:
+	if mode == Mode.WARNING and warning_duration > 0.0:
+		var t: float = clampf(1.0 - recovery_remaining / warning_duration, 0.0, 1.0)
+		var sign_x: float = 1.0 if facing_right else -1.0
+		var middle: Vector2 = body_shape.position + Vector2(31.0 * sign_x, -13.0)
+		var alpha: float = 0.35 + 0.58 * t
+		draw_arc(middle, 36.0 + t * 9.0, -1.2, 1.2, 22, Color(1.0, 0.36 + t * 0.4, 0.18, alpha), 4.0 + 2.0 * t, true)
+		draw_arc(middle, 47.0, -1.2, 1.2, 22, Color(1.0, 0.8, 0.45, alpha * 0.5), 2.0, true)
 	if show_damage_hitbox and mode != Mode.DEAD:
-		var bounds := _damage_contact_bounds()
-		draw_set_transform_matrix(global_transform.affine_inverse())
-		draw_rect(bounds, Color(0.2, 1.0, 0.5, 0.9), false, 1.0)
+		# Debug overlay matches the actual mirrored, animated, padded hit zone.
+		draw_set_transform_matrix(sprite.transform)
+		draw_rect(_current_body_damage_rect().grow(4.0),
+			Color(0.2, 1.0, 0.5, 0.9), false, 1.5)
 		if sprite.animation == animation_front or sprite.animation == animation_side:
-			draw_rect(_rear_torso_bounds(), Color(0.2, 1.0, 0.5, 0.9), false, 1.0)
+			draw_rect(rear_torso_rect.grow(4.0),
+				Color(0.2, 1.0, 0.5, 0.7), false, 1.5)
+		draw_set_transform_matrix(Transform2D.IDENTITY)
+
+
+func _attack_hits_visible_body_rect(attack_shape: CollisionShape2D, rect: Rect2) -> bool:
+	# The slash and target sprite have their own transforms. Testing a real
+	# rectangle through sprite.global_transform handles facing reflection,
+	# offsets and animation pose without expanding to a big world AABB.
+	var visible_body: RectangleShape2D = RectangleShape2D.new()
+	# Convert the mirrored sprite transform to an ordinary rotated rectangle:
+	# physics shapes should not receive a negative/reflected transform.
+	var sprite_pose: Transform2D = sprite.global_transform
+	var world_size: Vector2 = Vector2(
+		(sprite_pose.x.length()) * (rect.size.x + 8.0),
+		(sprite_pose.y.length()) * (rect.size.y + 8.0)
+	)
+	visible_body.size = world_size
+	var center_world: Vector2 = sprite_pose * rect.get_center()
+	var body_pose: Transform2D = Transform2D(sprite_pose.get_rotation(), center_world)
+	return attack_shape.shape.collide(
+		attack_shape.global_transform,
+		visible_body,
+		body_pose
+	)
 
 
 func attack_shape_hits_hurtbox(attack_shape: CollisionShape2D) -> bool:
-	if mode == Mode.DEAD or attack_shape.disabled or attack_shape.shape == null:
+	if mode == Mode.DEAD or attack_shape == null:
 		return false
-	var rectangle := attack_shape.shape as RectangleShape2D
-	if rectangle != null:
-		# Compare the world bounds directly so reflected and scaled sprites
-		# use the same contact test on both sides.
-		var sword := _world_bounds(Rect2(-rectangle.size * 0.5, rectangle.size), attack_shape.global_transform)
-		if sword.intersects(_damage_contact_bounds(), true):
+	if attack_shape.disabled or attack_shape.shape == null:
+		return false
+	if not is_instance_valid(sprite):
+		return false
+	# V16: The player tests this ART-ALIGNED hurtbox instead of the smaller,
+	# fixed movement collider. The animation-specific offsets already used
+	# by _current_body_damage_rect() finally matter during actual gameplay.
+	if _attack_hits_visible_body_rect(attack_shape, _current_body_damage_rect()):
+		return true
+	# During front/side attacks the torso stays hittable as the blade moves.
+	if sprite.animation == animation_front or sprite.animation == animation_side:
+		if _attack_hits_visible_body_rect(attack_shape, rear_torso_rect):
 			return true
-		# The swing pose shifts the front box, but the rear torso stays hittable.
-		return (sprite.animation == animation_front or sprite.animation == animation_side) and sword.intersects(_rear_torso_bounds(), true)
-	var hurtbox_transform := sprite.global_transform * Transform2D(0.0, _current_body_damage_rect().get_center())
-	return attack_shape.shape.collide(attack_shape.global_transform, hurtbox, hurtbox_transform)
+	# Always accept hits on the real body collider as well, including poses
+	# where the atlas sprite has shifted away from the centered collision.
+	if is_instance_valid(body_shape) and body_shape.shape != null and not body_shape.disabled:
+		return attack_shape.shape.collide(attack_shape.global_transform, body_shape.shape, body_shape.global_transform)
+	return false
 
 func tomar_dano(amount: int, _origin: Vector2 = Vector2.ZERO) -> void:
 	_apply_damage(amount)
@@ -963,19 +1013,13 @@ func _apply_damage(amount: int) -> void:
 	if hp <= 0:
 		_die()
 		return
-	# Always takes damage, but stun is limited by the configured immunity window.
-	if mode == Mode.EXHAUSTED or (mode == Mode.RECOVER and combo_pause_remaining <= 0.0):
-		return
-	if stun_cd <= 0.0:
-		stun_cd = stun_immunity_period
-		stun_remaining = stun_duration
-		mode = Mode.STUNNED
-		combo_index = 0
-		combo_pause_remaining = 0.0
-		velocity.x = 0.0
-		sprite.self_modulate = original_sprite_color
-		sprite.speed_scale = 1.0
-		_set_animation(animation_hurt)
+	# V18: HP is real; flash WHITE for 0.12s without resetting the attack.
+	damage_white_flash = 0.12
+	# V17: Damage DOES NOT interrupt his warning, slash, dash, or combo.
+	# This is super-armor against interruption, not immunity to HP damage.
+	# A successful timed parry still cancels the attack via _on_parried().
+	# Keep sprite pose/timers untouched so the planned attack finishes.
+
 
 func _die() -> void:
 	if mode == Mode.DEAD:
