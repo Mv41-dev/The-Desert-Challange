@@ -11,6 +11,8 @@
 [ext_resource type="PackedScene" uid="uid://bu1bbvi7k45pk" path="res://resetarea.tscn" id="9_j6qfn"]
 [ext_resource type="PackedScene" uid="uid://b2u6ab45n3lyn" path="res://portamovel.tscn" id="11_vw43l"]
 [ext_resource type="PackedScene" uid="uid://c4rohd8hefpig" path="res://artefato.tscn" id="12_jiqp1"]
+[ext_resource type="PackedScene" uid="uid://cml2juwqv24e6" path="res://necromancer.tscn" id="13_vcgqq"]
+[ext_resource type="PackedScene" uid="uid://bki42pmwj6agw" path="res://skeletonenemy.tscn" id="14_o1mlc"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="hud_fases"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hbghi"]
@@ -569,3 +571,12 @@ position = Vector2(3734, -367)
 
 [node name="artefato" parent="staticbody" unique_id=897673077 instance=ExtResource("12_jiqp1")]
 position = Vector2(-478, 116)
+
+[node name="charbody2d" parent="." unique_id=1828284636 instance=ExtResource("13_vcgqq")]
+position = Vector2(2916, -342)
+
+[node name="skeleton" parent="." unique_id=17897554 instance=ExtResource("14_o1mlc")]
+position = Vector2(1108, -281)
+
+[node name="skeleton2" parent="." unique_id=1774605584 instance=ExtResource("14_o1mlc")]
+position = Vector2(1395, -317)

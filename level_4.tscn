@@ -559,7 +559,7 @@ position = Vector2(-1248, 160)
 position = Vector2(-4013, 389)
 
 [node name="charbody2d" parent="." unique_id=1828284636 instance=ExtResource("12_lj1an")]
-position = Vector2(-3067, 24)
+position = Vector2(-2300, 98)
 
 [node name="charbody2d2" parent="." unique_id=868407206 instance=ExtResource("12_lj1an")]
 position = Vector2(2238, 16)
