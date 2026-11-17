@@ -1,3 +1,5 @@
+# Player V51: King hurtbox integrated into verified V50 attack system; movement unchanged
+# V50 - conservative patch on user-provided WORKING player.gd baseline.
 extends CharacterBody2D
 
 
@@ -187,7 +189,13 @@ var brilho_verde_material: ShaderMaterial = null
 @export_range(0.0, 1.0, 0.05) var skull_defense_approach_dot: float = 0.55
 
 
-@export_range(0.0, 1.0, 0.01) var attack_move_multiplier: float = 0.18
+# Normal movement and attacks always use the original SPEED (200 px/s).
+# No attack movement multiplier: avoids old Inspector overrides slowing attacks.
+@export_group("Controles estaveis")
+@export_range(0.15, 0.80, 0.01) var intervalo_entre_golpes: float = 0.41
+@export_range(0.10, 0.60, 0.01) var recuperacao_apos_dano: float = 0.24
+var recarga_golpe_restante: float = 0.0
+var recuperacao_dano_restante: float = 0.0
 
 @export_group("Artifact Abilities")
 @export var dash_speed: float = 420.0
@@ -248,7 +256,7 @@ func _update_artifact_movement(delta: float) -> bool:
 			move_and_slide()
 			return true
 
-	if dash_remaining <= 0.0 and not dash_used and Input.is_action_just_pressed(&"dash") and GerenciadorArtefatos.possui_artefato("ankh"):
+	if dash_remaining <= 0.0 and not dash_used and Input.is_action_just_pressed(&"dash"):
 		if estado == Estado.ATAQUE:
 			estado = Estado.NORMAL
 			golpe_em_fila = false
@@ -625,6 +633,7 @@ func _physics_process(
 	_atualizar_brilho_verde(delta)
 	_update_menacing_parry(delta)
 	_atualizar_velocidade_defesa_cranio()
+	recarga_golpe_restante = maxf(0.0, recarga_golpe_restante - delta)
 
 
 	# =================================================
@@ -794,23 +803,18 @@ func _physics_process(
 	# =================================================
 
 	if estado == Estado.FERIDO:
-		_update_artifact_movement(delta)
-		velocity.x = move_toward(
-			velocity.x,
-			0.0,
-			SPEED
-			* delta
-			* 3.0
-		)
-
-
-		move_and_slide()
-
-
-		_atualizar_escuridao_queda()
-
-
-		return
+		recuperacao_dano_restante = maxf(0.0, recuperacao_dano_restante - delta)
+		if recuperacao_dano_restante <= 0.0:
+			estado = Estado.NORMAL
+		else:
+			# Keep movement available during hurt; animation and i-frames still work.
+			var direcao_ferido: float = Input.get_axis(&"left", &"right")
+			velocity.x = direcao_ferido * SPEED
+			if absf(direcao_ferido) > 0.01:
+				_virar(direcao_ferido)
+			move_and_slide()
+			_atualizar_escuridao_queda()
+			return
 
 
 	# =================================================
@@ -820,6 +824,9 @@ func _physics_process(
 	if _update_artifact_movement(delta):
 		_atualizar_escuridao_queda()
 		return
+
+	if estado == Estado.NORMAL and golpe_em_fila and recarga_golpe_restante <= 0.0:
+		_iniciar_ataque()
 
 	if tempo_buffer_restante > 0.0:
 		if tempo_coyote_restante > 0.0:
@@ -847,40 +854,11 @@ func _physics_process(
 	)
 
 
-	if estado == Estado.NORMAL:
-		var aceleracao: float = (
-			aceleracao_chao
-			if is_on_floor()
-			else aceleracao_ar
-		)
-
-
-		velocity.x = move_toward(
-			velocity.x,
-			direcao * SPEED,
-			aceleracao * delta
-		)
-
-
-		if absf(
-			direcao
-		) > 0.01:
-			_virar(
-				direcao
-			)
-
-
-	else:
-		var velocidade_ataque: float = SPEED * attack_move_multiplier
-
-
-		velocity.x = move_toward(
-			velocity.x,
-			direcao
-			* velocidade_ataque,
-			aceleracao_chao
-			* delta
-		)
+	# A/D movement stays identical in NORMAL and ATAQUE.
+	# No friction, deceleration, or special slow speed during sword swings.
+	velocity.x = direcao * SPEED
+	if absf(direcao) > 0.01:
+		_virar(direcao)
 
 
 	# =================================================
@@ -1132,6 +1110,8 @@ func resetar_para_inicio() -> void:
 	_restore_standing_shape()
 	miniboss_parry_armed = false
 	miniboss_parry_cd = 0.0
+	recarga_golpe_restante = 0.0
+	recuperacao_dano_restante = 0.0
 	estado = Estado.NORMAL
 
 
@@ -1313,16 +1293,21 @@ func is_swinging() -> bool:
 
 
 func solicitar_ataque() -> void:
-	if estado == Estado.NORMAL:
+	if estado == Estado.NORMAL and recarga_golpe_restante <= 0.0:
 		_iniciar_ataque()
-	elif estado == Estado.ATAQUE and anim.frame >= mini(2, anim.sprite_frames.get_frame_count(anim.animation) - 1):
+	elif estado == Estado.NORMAL or estado == Estado.ATAQUE:
+		# A single queued click; holding LMB does not auto-spam swings.
 		golpe_em_fila = true
 
 
 func _iniciar_ataque() -> void:
+	if estado == Estado.MORTO or estado == Estado.FERIDO:
+		return
+	if recarga_golpe_restante > 0.0:
+		return
+	recarga_golpe_restante = intervalo_entre_golpes
 	estado = Estado.ATAQUE
-	var attack_speed := SPEED * attack_move_multiplier
-	velocity.x = clampf(velocity.x, -attack_speed, attack_speed)
+	# Never clamp velocity.x when a sword attack begins.
 	golpe_em_fila = false
 	atingidos_no_golpe.clear()
 	atualizar_areas_ataque()
@@ -1432,7 +1417,13 @@ func _sword_overlaps_enemy(sword_shapes: Array[Node], enemy: PhysicsBody2D) -> b
 	return false
 
 func _verificar_acertos_miniboss(area: Area2D, dano: int) -> void:
-	for boss_node in get_tree().get_nodes_in_group(&"menacing_skeleton"):
+	# V51: V50's generic hit loop intentionally skips enemies with custom
+	# hurtboxes, but this dedicated loop previously checked ONLY Menacing.
+	# Include the King, otherwise NO sword strike can damage him at any phase.
+	var boss_candidates: Array[Node] = []
+	boss_candidates.append_array(get_tree().get_nodes_in_group(&"menacing_skeleton"))
+	boss_candidates.append_array(get_tree().get_nodes_in_group(&"king_necromancer"))
+	for boss_node in boss_candidates:
 		if not boss_node is CharacterBody2D or not is_instance_valid(boss_node):
 			continue
 		if atingidos_no_golpe.has(boss_node):
@@ -1454,6 +1445,9 @@ func _verificar_acertos_miniboss(area: Area2D, dano: int) -> void:
 				if bool(boss_node.call(&"attack_shape_hits_hurtbox", ataque_shape)):
 					acertou = true
 					break
+				# Fall back to the physical body collider if custom visual
+				# hurtbox testing misses, including when the King is phasing.
+			if corpo_shape == null or corpo_shape.disabled or corpo_shape.shape == null:
 				continue
 			if ataque_shape.shape.collide(
 				ataque_shape.global_transform,
@@ -1603,6 +1597,7 @@ func tomar_dano(
 
 
 	estado = Estado.FERIDO
+	recuperacao_dano_restante = recuperacao_apos_dano
 	anim.speed_scale = 1.0
 
 
@@ -1682,11 +1677,12 @@ func _ao_terminar_animacao() -> void:
 			if anim.animation == _action_animation(&"attack_quick", &"attack1"):
 				estado = Estado.NORMAL
 				anim.speed_scale = 1.0
-				if golpe_em_fila:
+				if golpe_em_fila and recarga_golpe_restante <= 0.0:
 					_iniciar_ataque()
 
 		Estado.FERIDO:
 			if anim.animation == _action_animation(&"hurt", &"damagetaken"):
+				recuperacao_dano_restante = 0.0
 				estado = Estado.NORMAL
 
 

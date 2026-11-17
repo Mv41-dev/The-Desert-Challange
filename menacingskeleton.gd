@@ -1,3 +1,12 @@
+# Menacing Skeleton V27 - grounded ghost fade-in over corpse
+# Menacing Skeleton V26 - one-second genuine navigation-stall teleport to safe terrain
+# Menacing Skeleton V25 - larger resurrected body, matching hurtbox and modest sword scale
+# Menacing Skeleton V24: remove misleading front-circle warning; keep sprite-color and windup telegraphs
+# Menacing Skeleton V23: Menacing corpses/guards never stack; slash damage cannot hit far behind
+# Menacing Skeleton V22: 4.7s cinematic royal resurrection, fade + hold + reverse death
+# Menacing Skeleton V21: persistent corpses and ghost/reverse-death royal resurrection
+# Menacing Skeleton V20: purple resurrection gets extra dash/jump pressure and longer combos with fair warnings
+# Menacing Skeleton V19: readable telegraphs, independent tactical walk/backpedal AI
 # V17 - faster Menacing attack rhythms; regular hits deal damage without interrupting an already committed attack; parry still cancels
 # V15 - King Necromancer summon integration without artifact-mode side effects
 extends CharacterBody2D
@@ -26,30 +35,39 @@ enum Slash { FRONT, SIDE, DOWN }
 @export var attack_interval: float = 0.42
 @export var attack_interval_random: float = 0.10
 
+@export_group("Combat Movement AI")
+@export var tactical_min_range: float = 86.0
+@export var tactical_max_range: float = 155.0
+@export var tactical_decision_min: float = 0.75
+@export var tactical_decision_max: float = 1.65
+@export_range(0.0, 1.0) var tactical_retreat_chance: float = 0.35
+@export var tactical_backpedal_multiplier: float = 0.74
+@export var tactical_walk_pause_chance: float = 0.13
+
 @export_group("Sword Attacks")
 @export var dash_attack_distance: float = 310.0
-@export var attack_warning_seconds: float = 0.42
+@export var attack_warning_seconds: float = 1.00
 @export var attack_warning_color: Color = Color(1.0, 0.72, 0.32)
 @export var combo_swing_seconds: float = 0.15
 @export var combo_followup_pause: float = 0.020
 @export var combo_dash_seconds: float = 0.085
 @export var combo_dash_distance: float = 52.0
 @export var point_blank_distance: float = 60.0
-@export var point_blank_warning_seconds: float = 0.59
+@export var point_blank_warning_seconds: float = 1.15
 @export var point_blank_commit_seconds: float = 0.09
 @export var point_blank_followup_pause: float = 0.12
 @export var point_blank_swing_seconds: float = 0.18
 @export_range(0.0, 1.0) var alternate_combo_chance: float = 0.30
 @export var endlag: float = 0.72
 @export_range(0.0, 1.0) var advancing_slam_chance: float = 0.18
-@export var advancing_slam_warning_seconds: float = 0.54
+@export var advancing_slam_warning_seconds: float = 1.10
 @export var advancing_slam_distance: float = 104.0
 @export var advancing_slam_seconds: float = 0.30
 
 @export_group("Jump Slam and Evasion")
 @export_range(0.0, 1.0) var jump_slam_chance: float = 0.30
 @export var jump_slam_range: float = 155.0
-@export var jump_slam_warning_seconds: float = 0.46
+@export var jump_slam_warning_seconds: float = 1.05
 @export var jump_slam_launch_speed: float = 305.0
 @export var jump_slam_move_speed: float = 235.0
 @export_range(0.0, 1.0) var evade_chance: float = 0.24
@@ -59,7 +77,7 @@ enum Slash { FRONT, SIDE, DOWN }
 
 @export_group("Long Lunge")
 @export_range(0.0, 1.0) var close_lunge_chance: float = 0.23
-@export var lunge_warning_seconds: float = 0.56
+@export var lunge_warning_seconds: float = 1.10
 @export var lunge_retreat_distance: float = 34.0
 @export var lunge_retreat_speed: float = 160.0
 @export var lunge_speed: float = 850.0
@@ -89,6 +107,9 @@ enum Slash { FRONT, SIDE, DOWN }
 @export var upswing_body_shift_x: float = 16.0
 @export var rear_torso_rect: Rect2 = Rect2(-50.0, -29.0, 29.0, 47.0)
 @export_range(0.0, 8.0, 0.5) var sword_contact_margin: float = 3.0
+# Maximum distance the PLAYER body-center may be behind this skeleton
+# and still be struck. The frontal reach is unchanged.
+@export_range(0.0, 25.0, 1.0) var sword_rear_reach_tolerance: float = 8.0
 @export var show_damage_hitbox: bool = false
 @export var attack_hitboxes_face_right_by_default: bool = true
 @export var animation_idle: StringName = &"idle"
@@ -130,6 +151,12 @@ enum Slash { FRONT, SIDE, DOWN }
 @export var tall_jump_velocity: float = -535.0
 @export var jump_timeout: float = 1.85
 @export var obstacle_detection_cooldown_when_blocked: float = 0.65
+
+@export_group("Stuck Teleport")
+@export_range(0.5, 3.0, 0.1) var stuck_teleport_after_seconds: float = 1.0
+@export_range(1.0, 8.0, 0.5) var stuck_teleport_retry_cooldown: float = 3.0
+@export_range(5.0, 60.0, 1.0) var stuck_teleport_min_progress: float = 18.0
+@export_range(70.0, 200.0, 5.0) var stuck_teleport_min_player_distance: float = 135.0
 # Never change collision_mask to pass through terrain.
 
 
@@ -204,13 +231,55 @@ var obstacle_jump_committed: bool = false
 var pass_through_player: PhysicsBody2D = null
 var low_hp_phase_seen: bool = false
 var damage_white_flash: float = 0.0
+# Each skeleton owns its own tactic timer, so simultaneous King summons
+# do not mirror one another or always swing on the same frame.
+var tactical_timer: float = 0.0
+var tactical_choice: int = 0 # 0 approach, 1 backpedal, 2 hold, 3 circle/reposition
+var tactical_side: float = 1.0
+var walk_playing_backwards: bool = false
+var royal_guard_index: int = -1
+
+# Royal summons remain as corpses after their death animation, until the King
+# resurrects the SAME instance. Ordinary Menacing Skeletons still disappear.
+var royal_corpse_ready: bool = false
+var royal_reviving_stage: int = 0  # 0 corpse/none, 1 fade-in, 2 ghost hold, 3 reverse death
+var royal_revive_elapsed: float = 0.0
+var royal_revive_preview: AnimatedSprite2D = null
+@export_group("Purple Menacing Size")
+@export_range(1.05, 1.5, 0.05) var royal_reborn_visual_multiplier: float = 1.25
+@export_range(1.05, 1.5, 0.05) var royal_reborn_body_multiplier: float = 1.20
+@export_range(1.0, 1.3, 0.05) var royal_reborn_attack_multiplier: float = 1.10
+var royal_reborn_growth_applied: bool = false
+var royal_reborn_floor_lift: float = 0.0
+
+@export_group("Royal Resurrection Cinematic")
+@export_range(1.0, 5.0, 0.1) var royal_revive_ghost_seconds: float = 2.2
+@export_range(0.3, 3.0, 0.1) var royal_revive_hold_seconds: float = 0.9
+@export_range(0.5, 3.0, 0.1) var royal_revive_reverse_seconds: float = 1.6
+var royal_original_collision_layer: int = 0
+var royal_original_collision_mask: int = 0
+var stuck_timer: float = 0.0
+var stuck_anchor_x: float = 0.0
+var stuck_teleport_cooldown: float = 0.0
 
 func _ready() -> void:
+	royal_original_collision_layer = collision_layer
+	royal_original_collision_mask = collision_mask
 	hp = maxi(1, max_hp)
+	royal_guard_index = int(get_meta(&"king_guard_index", -1))
+	tactical_side = -1.0 if royal_guard_index == 0 else 1.0
+	if royal_guard_index < 0:
+		tactical_side = -1.0 if randf() < 0.5 else 1.0
+	tactical_timer = randf_range(0.25, 1.0) + maxf(0.0, float(royal_guard_index)) * 0.55
+	tactical_choice = 0 if royal_guard_index != 1 else 3
 	starting_position = global_position
+	stuck_anchor_x = global_position.x
 	add_to_group(&"inimigo")
 	add_to_group(&"enemy")
 	add_to_group(&"menacing_skeleton")
+	# Physical bodies should pass through other Menacing Skeletons, NOT the floor.
+	# Prevent one guard from being treated as another guard's platform.
+	_ignore_other_menacing_bodies()
 	# We use collisions through shape geometry, not touch damage.
 	attack_area.monitoring = true
 	original_sprite_color = sprite.self_modulate
@@ -232,6 +301,13 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if mode == Mode.DEAD:
+		if royal_reviving_stage > 0:
+			_update_royal_resurrection(delta)
+		elif bool(get_meta(&"king_necromancer_summon", false)) and not is_on_floor():
+			# A slain royal guard settles onto its platform as a persistent corpse.
+			velocity.x = 0.0
+			velocity.y = minf(maximum_fall_speed, velocity.y + gravity * delta)
+			move_and_slide()
 		return
 	_find_player()
 	_ensure_player_pass_through()
@@ -239,6 +315,7 @@ func _physics_process(delta: float) -> void:
 	evade_cd = maxf(0.0, evade_cd - delta)
 	stun_cd = maxf(0.0, stun_cd - delta)
 	obstacle_jump_cd = maxf(0.0, obstacle_jump_cd - delta)
+	stuck_teleport_cooldown = maxf(0.0, stuck_teleport_cooldown - delta)
 	damage_white_flash = maxf(0.0, damage_white_flash - delta)
 	if _is_desperate() and not low_hp_phase_seen:
 		low_hp_phase_seen = true
@@ -282,6 +359,7 @@ func _physics_process(delta: float) -> void:
 		_:
 			velocity.x = 0.0
 	move_and_slide()
+	_update_stuck_teleport(delta)
 	if mode == Mode.STRIKE:
 		_check_strike_hit_window()
 	# Preserve attack warning coloration, with a short white hit flash on damage.
@@ -291,8 +369,117 @@ func _physics_process(delta: float) -> void:
 		sprite.self_modulate = attack_warning_color
 	elif mode not in [Mode.EXHAUSTED, Mode.STUNNED]:
 		sprite.self_modulate = original_sprite_color
-	if show_damage_hitbox or mode == Mode.WARNING:
-		queue_redraw()
+	# Always repaint once after mode changes. Otherwise the LAST WARNING
+	# arc is cached and stays on screen throughout the next attack.
+	queue_redraw()
+
+func _update_stuck_teleport(delta: float) -> void:
+	# Count only genuine navigation stalls. Standing still to telegraph,
+	# attack, recover, evade or play the resurrection is intentional.
+	if not engaged or not is_instance_valid(target) or mode not in [Mode.CHASE, Mode.OBSTACLE_JUMP]:
+		stuck_timer = 0.0
+		stuck_anchor_x = global_position.x
+		return
+	if stuck_teleport_cooldown > 0.0:
+		stuck_timer = 0.0
+		stuck_anchor_x = global_position.x
+		return
+	var horizontal_gap: float = absf(target.global_position.x - global_position.x)
+	if horizontal_gap < stuck_teleport_min_player_distance:
+		stuck_timer = 0.0
+		stuck_anchor_x = global_position.x
+		return
+	# If the enemy has actually advanced, start a fresh 1-second window.
+	if absf(global_position.x - stuck_anchor_x) >= stuck_teleport_min_progress:
+		stuck_timer = 0.0
+		stuck_anchor_x = global_position.x
+		return
+	stuck_timer += delta
+	if stuck_timer < stuck_teleport_after_seconds:
+		return
+	stuck_timer = 0.0
+	stuck_anchor_x = global_position.x
+	# Delay the next attempt even if no suitable platform can be found.
+	stuck_teleport_cooldown = stuck_teleport_retry_cooldown
+	_try_safe_stuck_teleport()
+
+
+func _try_safe_stuck_teleport() -> void:
+	if not is_instance_valid(target) or body_shape.shape == null:
+		return
+	# Avoid teleporting onto the player or onto a second Menacing.
+	# The order is reversed for guard #2 to discourage synchronized TPs.
+	var offsets: Array[float] = [150.0, -150.0, 215.0, -215.0, 280.0, -280.0]
+	if royal_guard_index == 1:
+		offsets.reverse()
+	var half_height: float = _body_half_size().y
+	var shape_offset_y: float = body_shape.global_position.y - global_position.y
+	var ray_top_y: float = target.global_position.y - 140.0
+	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	for offset_x: float in offsets:
+		var sample_x: float = target.global_position.x + offset_x
+		var floor_hit: Dictionary = _terrain_hit(
+			Vector2(sample_x, ray_top_y),
+			Vector2(sample_x, target.global_position.y + 240.0)
+		)
+		if floor_hit.is_empty():
+			continue
+		var normal: Vector2 = floor_hit.get("normal", Vector2.UP)
+		if normal.y > -0.60:
+			continue
+		var floor_point: Vector2 = floor_hit["position"]
+		if absf(floor_point.y - target.global_position.y) > 195.0:
+			continue
+		var candidate: Vector2 = Vector2(
+			sample_x,
+			floor_point.y - half_height - shape_offset_y - 3.0
+		)
+		if candidate.distance_to(global_position) < 65.0:
+			continue
+		if candidate.distance_to(target.global_position) < 95.0:
+			continue
+		var colliding_guard: bool = false
+		for node in get_tree().get_nodes_in_group(&"menacing_skeleton"):
+			if node != self and is_instance_valid(node) and node is Node2D:
+				if candidate.distance_to((node as Node2D).global_position) < 85.0:
+					colliding_guard = true
+					break
+		if colliding_guard:
+			continue
+		# Reuse this enemy's REAL physics shape and terrain collision mask.
+		var check: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+		check.shape = body_shape.shape
+		var at_candidate: Transform2D = body_shape.global_transform
+		at_candidate.origin += candidate - global_position
+		check.transform = at_candidate
+		check.collision_mask = solid_terrain_mask
+		check.exclude = [get_rid()]
+		if not space.intersect_shape(check, 1).is_empty():
+			continue
+		global_position = candidate
+		velocity = Vector2.ZERO
+		mode = Mode.CHASE
+		attack_cd = maxf(attack_cd, 0.35) # Brief reaction grace after teleport.
+		obstacle_jump_time = 0.0
+		obstacle_jump_cd = 0.30
+		stuck_anchor_x = global_position.x
+		reset_physics_interpolation()
+		_face_player()
+		_set_animation(animation_idle)
+		return
+
+
+func _ignore_other_menacing_bodies() -> void:
+	# Godot collision exceptions are reciprocal, and also work when both
+	# skeletons are on the same collision layer as the TileMap.
+	# Do not remove their CollisionShape2D: sword/parry hit-testing needs it.
+	for node in get_tree().get_nodes_in_group(&"menacing_skeleton"):
+		if node == self or not is_instance_valid(node) or not node is PhysicsBody2D:
+			continue
+		var other: PhysicsBody2D = node as PhysicsBody2D
+		add_collision_exception_with(other)
+		other.add_collision_exception_with(self)
+
 
 func _find_player() -> void:
 	if is_instance_valid(target):
@@ -332,7 +519,7 @@ func _get_collected_artifacts() -> int:
 func _begin_fight() -> void:
 	engaged = true
 	mode = Mode.CHASE
-	attack_cd = 0.60
+	attack_cd = 0.60 + (0.70 * float(royal_guard_index) if royal_guard_index >= 0 else randf_range(0.0, 0.25))
 	# King's summons are elite guards, not independent artifact minibosses.
 	# Their attacks/parry behavior stays intact without changing Kris's buffs.
 	if not bool(get_meta(&"king_necromancer_summon", false)):
@@ -343,7 +530,41 @@ func _begin_fight() -> void:
 			)
 	fight_started.emit()
 
-func _update_chase(_delta: float) -> void:
+func _choose_tactical_action() -> void:
+	# Each enemy rolls independently. The two King's guards favour distinct
+	# rhythms: the first tends to engage, the second to flank/reposition.
+	tactical_timer = randf_range(tactical_decision_min, tactical_decision_max)
+	var roll: float = randf()
+	var retreat_probability: float = tactical_retreat_chance
+	if royal_guard_index == 1:
+		retreat_probability += 0.15
+	elif royal_guard_index == 0:
+		retreat_probability -= 0.13
+	if roll < retreat_probability:
+		tactical_choice = 1
+	elif roll < retreat_probability + tactical_walk_pause_chance:
+		tactical_choice = 2
+	elif roll < retreat_probability + tactical_walk_pause_chance + 0.24:
+		tactical_choice = 3
+		tactical_side *= -1.0
+	else:
+		tactical_choice = 0
+
+
+func _play_tactical_walk(backpedaling: bool) -> void:
+	if sprite.sprite_frames == null or not sprite.sprite_frames.has_animation(animation_walk):
+		_set_animation(animation_idle)
+		return
+	if sprite.animation != animation_walk or not sprite.is_playing() or walk_playing_backwards != backpedaling:
+		walk_playing_backwards = backpedaling
+		if backpedaling:
+			# Reverse the walk animation, NOT the facing direction.
+			sprite.play_backwards(animation_walk)
+		else:
+			sprite.play(animation_walk, 1.0)
+
+
+func _update_chase(delta: float) -> void:
 	if not is_instance_valid(target):
 		velocity.x = 0.0
 		_set_animation(animation_idle)
@@ -351,21 +572,52 @@ func _update_chase(_delta: float) -> void:
 	var dx: float = target.global_position.x - global_position.x
 	var dy: float = target.global_position.y - global_position.y
 	_face_player()
-	var direction := signf(dx)
-	var grounded := is_on_floor()
-	if absf(dx) > melee_reach * 0.72:
-		if grounded and _try_start_obstacle_jump(direction):
+	var direction: float = signf(dx)
+	var gap: float = absf(dx)
+	var grounded: bool = is_on_floor()
+	tactical_timer -= delta
+	if tactical_timer <= 0.0:
+		_choose_tactical_action()
+
+	var move_direction: float = 0.0
+	var retreating: bool = false
+	# Keep chasing if far away; use independently chosen near-range
+	# approaches, backsteps and brief holds to break mirrored behaviour.
+	if gap > tactical_max_range:
+		move_direction = direction
+	elif gap < tactical_min_range and tactical_choice == 1:
+		move_direction = -direction
+		retreating = true
+	elif gap < tactical_min_range * 0.65 and tactical_choice != 2:
+		move_direction = -direction if tactical_choice == 3 else direction
+		retreating = move_direction != direction
+	elif tactical_choice == 1:
+		move_direction = -direction
+		retreating = true
+	elif tactical_choice == 3:
+		# Brief flank/feint: the direction changes with each decision.
+		move_direction = tactical_side
+		retreating = move_direction != direction
+	elif tactical_choice == 0 and gap > melee_reach * 0.65:
+		move_direction = direction
+
+	velocity.x = 0.0
+	if absf(move_direction) > 0.5:
+		if grounded and not retreating and _try_start_obstacle_jump(move_direction):
 			return
-		velocity.x = direction * pursuit_speed * (desperation_walk_multiplier if _is_desperate() else 1.0)
-		if grounded and not _has_ground_ahead(direction):
-			velocity.x = 0.0
-		_set_animation(animation_walk if absf(velocity.x) > 0.0 else animation_idle)
+		if not grounded or _has_ground_ahead(move_direction):
+			var move_speed: float = pursuit_speed * (desperation_walk_multiplier if _is_desperate() else 1.0)
+			if retreating:
+				move_speed *= tactical_backpedal_multiplier
+			velocity.x = move_direction * move_speed
+	if absf(velocity.x) > 0.1:
+		_play_tactical_walk(retreating)
 	else:
-		velocity.x = 0.0
 		_set_animation(animation_idle)
+
 	if attack_cd > 0.0 or not grounded or absf(dy) > unreachable_vertical_gap:
 		return
-	if absf(dx) <= dash_attack_distance and _warning_visible_at(global_position):
+	if gap <= dash_attack_distance and _warning_visible_at(global_position):
 		if not _try_evade():
 			_start_attack_pattern()
 
@@ -390,7 +642,15 @@ func _has_ground_ahead(direction: float) -> bool:
 func _terrain_hit(from: Vector2, to: Vector2) -> Dictionary:
 	var query := PhysicsRayQueryParameters2D.create(from, to)
 	query.collision_mask = solid_terrain_mask
-	query.exclude = [get_rid()]
+	# Only actual terrain should count as a ledge or obstacle. In particular,
+	# another Menacing must NOT trigger obstacle-jumps or false ground checks.
+	var exclude_bodies: Array[RID] = [get_rid()]
+	for node in get_tree().get_nodes_in_group(&"menacing_skeleton"):
+		if node != self and is_instance_valid(node) and node is CollisionObject2D:
+			exclude_bodies.append((node as CollisionObject2D).get_rid())
+	if target is CollisionObject2D and is_instance_valid(target):
+		exclude_bodies.append((target as CollisionObject2D).get_rid())
+	query.exclude = exclude_bodies
 	return get_world_2d().direct_space_state.intersect_ray(query)
 
 
@@ -480,11 +740,23 @@ func _start_attack_pattern() -> void:
 	lunge_attack = not jump_slam and (not _target_in_melee_range() or (not point_blank_attack and randf() < close_lunge_chance))
 	advancing_slam = not jump_slam and not lunge_attack and not point_blank_attack and randf() < advancing_slam_chance
 	combo_order.assign([Slash.DOWN, Slash.SIDE, Slash.FRONT])
+	if bool(get_meta(&"king_reborn_elite", false)) and not jump_slam and not lunge_attack and not advancing_slam and not point_blank_attack:
+		# Purple resurrection earns five/six authored strikes, not faster
+		# invisible hits. The windup for the opener remains visible.
+		combo_order.append(Slash.SIDE)
+		combo_order.append(Slash.DOWN)
+		if randf() < 0.50:
+			combo_order.append(Slash.FRONT)
 	if not jump_slam and not point_blank_attack and not lunge_attack and not advancing_slam and randf() < alternate_combo_chance:
+		var previous_length: int = combo_order.size()
 		if randf() < 0.5:
 			combo_order.assign([Slash.DOWN, Slash.FRONT, Slash.SIDE])
 		else:
 			combo_order.assign([Slash.SIDE, Slash.DOWN, Slash.FRONT])
+		if bool(get_meta(&"king_reborn_elite", false)):
+			combo_order.append(Slash.FRONT)
+			if previous_length >= 5:
+				combo_order.append(Slash.SIDE)
 	velocity.x = 0.0
 	lunge_backstep_remaining = 0.0
 	_face_player()
@@ -513,6 +785,9 @@ func _start_attack_pattern() -> void:
 			var frame_count := sprite.sprite_frames.get_frame_count(sprite.animation)
 			warning_frame_count = clampi(_hit_frame(opener), 0, frame_count - 1)
 		sprite.self_modulate = attack_warning_color
+	# Keep the telegraph readable even if an existing .tscn Inspector override
+	# still contains the old short warning seconds. Strike speed is unchanged.
+	warning_duration = maxf(0.75 if bool(get_meta(&"king_reborn_elite", false)) else 0.95, warning_duration)
 	recovery_remaining = maxf(0.01, warning_duration)
 
 func _warning_visible_at(world_position: Vector2) -> bool:
@@ -718,7 +993,10 @@ func _check_strike_hit_window() -> void:
 func _on_animation_finished() -> void:
 	if mode == Mode.DEAD and death_animation_playing and sprite.animation == animation_death:
 		death_animation_playing = false
-		queue_free()
+		if bool(get_meta(&"king_necromancer_summon", false)):
+			_finish_royal_corpse()
+		else:
+			queue_free()
 
 
 func _end_strike() -> void:
@@ -841,12 +1119,19 @@ func _try_attack_hit() -> bool:
 	var hitbox: CollisionShape2D = front_hitbox if active_slash == Slash.FRONT else (side_hitbox if active_slash == Slash.SIDE else down_hitbox)
 	if not is_instance_valid(hitbox) or hitbox.disabled or hitbox.shape == null:
 		return false
-	# Check the authored attack hitboxes against the player's body hitbox.
+	# Check the authored attack CollisionShape2D against the PLAYER'S
+	# actual body CollisionShape2D, not a guessed sprite rectangle.
 	for child in target.find_children("*", "CollisionShape2D", true, false):
 		if not child is CollisionShape2D:
 			continue
 		var other: CollisionShape2D = child as CollisionShape2D
 		if other.disabled or other.shape == null or other.get_parent() != target:
+			continue
+		# The authored sword shape can extend well behind the attacking enemy.
+		# Leave its FORWARD reach intact, but prevent phantom back hits.
+		var facing_sign: float = 1.0 if facing_right else -1.0
+		var player_center_forward: float = (other.global_position.x - body_shape.global_position.x) * facing_sign
+		if player_center_forward < -sword_rear_reach_tolerance:
 			continue
 		if hitbox.shape.collide(hitbox.global_transform, other.shape, other.global_transform):
 			_apply_player_hit()
@@ -931,13 +1216,8 @@ func _damage_contact_bounds() -> Rect2:
 
 
 func _draw() -> void:
-	if mode == Mode.WARNING and warning_duration > 0.0:
-		var t: float = clampf(1.0 - recovery_remaining / warning_duration, 0.0, 1.0)
-		var sign_x: float = 1.0 if facing_right else -1.0
-		var middle: Vector2 = body_shape.position + Vector2(31.0 * sign_x, -13.0)
-		var alpha: float = 0.35 + 0.58 * t
-		draw_arc(middle, 36.0 + t * 9.0, -1.2, 1.2, 22, Color(1.0, 0.36 + t * 0.4, 0.18, alpha), 4.0 + 2.0 * t, true)
-		draw_arc(middle, 47.0, -1.2, 1.2, 22, Color(1.0, 0.8, 0.45, alpha * 0.5), 2.0, true)
+	# The old front-facing circle/arc warning was misleading and is gone.
+	# Actual telegraphs remain: orange/purple sprite flash and authored sword pose.
 	if show_damage_hitbox and mode != Mode.DEAD:
 		# Debug overlay matches the actual mirrored, animated, padded hit zone.
 		draw_set_transform_matrix(sprite.transform)
@@ -1025,13 +1305,22 @@ func _die() -> void:
 	if mode == Mode.DEAD:
 		return
 	mode = Mode.DEAD
-	if show_damage_hitbox:
-		queue_redraw()
+	royal_corpse_ready = false
+	royal_reviving_stage = 0
+	set_meta(&"king_royal_reviving", false)
+	# Clear the previous attack-warning drawing even if killed mid-telegraph.
+	queue_redraw()
 	engaged = false
 	velocity = Vector2.ZERO
 	collision_layer = 0
-	collision_mask = 0
-	body_shape.set_deferred("disabled", true)
+	if bool(get_meta(&"king_necromancer_summon", false)):
+		# Terrain-only collision lets the corpse fall onto its platform, while
+		# the player and other skeletons walk through its inert body.
+		collision_mask = solid_terrain_mask
+		body_shape.set_deferred("disabled", false)
+	else:
+		collision_mask = 0
+		body_shape.set_deferred("disabled", true)
 	attack_area.set_deferred("monitoring", false)
 	sprite.self_modulate = original_sprite_color
 	sprite.speed_scale = 1.0
@@ -1043,8 +1332,6 @@ func _die() -> void:
 		if target.has_method(&"on_enemy_killed"):
 			target.call(&"on_enemy_killed", self)
 	died.emit()
-	# In the screenshot the death animation was still named "new_animation".
-	# If renamed to "death", switch automatically.
 	if sprite.sprite_frames != null:
 		var death_name: StringName = animation_death
 		if not sprite.sprite_frames.has_animation(death_name):
@@ -1053,15 +1340,250 @@ func _die() -> void:
 			animation_death = death_name
 			sprite.play(death_name)
 			death_animation_playing = true
-			# Backup for a looping animation.
+			# Safety for looping animations: settle on the very last frame.
 			var frames: int = sprite.sprite_frames.get_frame_count(death_name)
 			var fps: float = maxf(1.0, sprite.sprite_frames.get_animation_speed(death_name))
+			var keep_corpse: bool = bool(get_meta(&"king_necromancer_summon", false))
 			get_tree().create_timer(float(frames) / fps + 0.15).timeout.connect(
 				func() -> void:
-					if is_instance_valid(self) and mode == Mode.DEAD:
-						queue_free()
+					if is_instance_valid(self) and mode == Mode.DEAD and royal_reviving_stage == 0:
+						if keep_corpse:
+							_finish_royal_corpse()
+						else:
+							queue_free()
 			)
 			return
-	var tween := create_tween()
-	tween.tween_property(sprite, "modulate:a", 0.0, death_fade_seconds)
-	tween.tween_callback(queue_free)
+	# Missing death sprite: keep an inert body at its last available pose.
+	if bool(get_meta(&"king_necromancer_summon", false)):
+		_finish_royal_corpse()
+	else:
+		var tween := create_tween()
+		tween.tween_property(sprite, "modulate:a", 0.0, death_fade_seconds)
+		tween.tween_callback(queue_free)
+
+
+
+
+# =====================================================
+# KING-OWNED MENACING: CORPSE -> GHOST -> REVERSE DEATH
+# =====================================================
+func _finish_royal_corpse() -> void:
+	if mode != Mode.DEAD or royal_reviving_stage != 0:
+		return
+	death_animation_playing = false
+	sprite.stop()
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_death):
+		var last_frame: int = maxi(0, sprite.sprite_frames.get_frame_count(animation_death) - 1)
+		sprite.animation = animation_death
+		sprite.set_frame_and_progress(last_frame, 0.0)
+	royal_corpse_ready = true
+	sprite.modulate.a = 1.0
+
+func can_be_royally_revived() -> bool:
+	return bool(get_meta(&"king_necromancer_summon", false)) and mode == Mode.DEAD and royal_corpse_ready and royal_reviving_stage == 0
+
+func begin_royal_resurrection(reborn_hp: int = 110) -> bool:
+	if not can_be_royally_revived():
+		return false
+	royal_corpse_ready = false
+	royal_reviving_stage = 1
+	royal_revive_elapsed = 0.0
+	set_meta(&"king_royal_reviving", true)
+	set_meta(&"king_reborn_elite", true)
+	set_meta(&"king_guard_buffed", true)
+	set_meta(&"king_royal_revive_count", int(get_meta(&"king_royal_revive_count", 0)) + 1)
+	# Reuses the SAME body and hitboxes. No duplicated active enemy node.
+	max_hp = maxi(90, reborn_hp)
+	hp = max_hp
+	pursuit_speed = 205.0
+	attack_interval = 0.22
+	attack_interval_random = 0.09
+	endlag = 0.32
+	dash_attack_distance = 420.0
+	close_lunge_chance = 0.62
+	alternate_combo_chance = 0.88
+	advancing_slam_chance = 0.38
+	jump_slam_chance = 0.67
+	jump_slam_range = 240.0
+	jump_slam_launch_speed = 425.0
+	jump_slam_move_speed = 350.0
+	# Shorter reaction time, but the purple warning is always readable.
+	melee_reach = 120.0
+	tactical_min_range = 65.0
+	tactical_max_range = 115.0
+	tactical_decision_min = 0.38
+	tactical_decision_max = 0.95
+	tactical_walk_pause_chance = 0.04
+	jump_slam_warning_seconds = 0.76
+	attack_warning_seconds = 0.84
+	point_blank_warning_seconds = 0.88
+	lunge_warning_seconds = 0.84
+	advancing_slam_warning_seconds = 0.86
+	attack_warning_color = Color(0.84, 0.43, 1.0)
+	combo_dash_distance = 86.0
+	combo_swing_seconds = 0.135
+	combo_followup_pause = 0.045
+	lunge_speed = 1010.0
+	obstacle_jump_cooldown = 0.62
+	small_jump_velocity = -430.0
+	tall_jump_velocity = -580.0
+	fatigue_after_min_attacks = 12
+	fatigue_after_max_attacks = 16
+	fatigue_duration_min = 1.25
+	fatigue_duration_max = 1.75
+	tactical_retreat_chance = 0.16
+	activation_radius = 1000.0
+	# Purple shading belongs to the resurrected skeleton, not the corpse.
+	original_sprite_color = Color(0.72, 0.38, 1.0)
+	sprite.self_modulate = Color(0.49, 0.24, 0.70)
+	if is_instance_valid(royal_revive_preview):
+		royal_revive_preview.queue_free()
+	royal_revive_preview = AnimatedSprite2D.new()
+	royal_revive_preview.name = "RoyalResurrectionGhost"
+	royal_revive_preview.sprite_frames = sprite.sprite_frames
+	royal_revive_preview.transform = sprite.transform
+	royal_revive_preview.flip_h = sprite.flip_h
+	royal_revive_preview.centered = sprite.centered
+	royal_revive_preview.offset = sprite.offset
+	royal_revive_preview.z_index = sprite.z_index + 2
+	royal_revive_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	royal_revive_preview.modulate = Color(0.74, 0.40, 1.0, 0.0)
+	add_child(royal_revive_preview)
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_idle):
+		royal_revive_preview.animation = animation_idle
+		royal_revive_preview.frame = 0
+	royal_revive_preview.stop()
+	royal_revive_preview.scale = sprite.scale * 1.12 * maxf(1.05, royal_reborn_visual_multiplier)
+	_align_royal_ghost_feet_to_corpse()
+	return true
+
+func _align_royal_ghost_feet_to_corpse() -> void:
+	# The idle-frame ghost is taller than the collapsed death-frame corpse.
+	# Align its bottom to the real collider's floor, not the corpse sprite's
+	# center. This is why the enlarged fade-in previously floated in midair.
+	if not is_instance_valid(royal_revive_preview):
+		return
+	if not body_shape.shape is RectangleShape2D:
+		royal_revive_preview.position = sprite.position
+		return
+	var body_rect: RectangleShape2D = body_shape.shape as RectangleShape2D
+	var feet_y: float = body_shape.position.y + body_rect.size.y * absf(body_shape.scale.y) * 0.5
+	var frame_texture: Texture2D = null
+	if (royal_revive_preview.sprite_frames != null
+		and royal_revive_preview.sprite_frames.has_animation(royal_revive_preview.animation)
+		and royal_revive_preview.sprite_frames.get_frame_count(royal_revive_preview.animation) > 0):
+		frame_texture = royal_revive_preview.sprite_frames.get_frame_texture(royal_revive_preview.animation, 0)
+	if frame_texture == null:
+		royal_revive_preview.position = sprite.position
+		return
+	var image_height: float = float(frame_texture.get_height())
+	var bottom_offset: float = (image_height * 0.5 if royal_revive_preview.centered else image_height)
+	bottom_offset += royal_revive_preview.offset.y
+	royal_revive_preview.position = Vector2(
+		body_shape.position.x - royal_revive_preview.offset.x * royal_revive_preview.scale.x,
+		feet_y - bottom_offset * absf(royal_revive_preview.scale.y) - 2.0
+	)
+
+
+func _apply_royal_reborn_growth() -> void:
+	# Enlarge the real sprite and PHYSICS hurtbox together, once per body.
+	# Updating both authored transforms is essential: _apply_facing()
+	# rebuilds the sprite/Area2D pose every time he turns.
+	if royal_reborn_growth_applied:
+		return
+	royal_reborn_growth_applied = true
+	var visual_factor: float = maxf(1.05, royal_reborn_visual_multiplier)
+	var body_factor: float = maxf(1.05, royal_reborn_body_multiplier)
+	var sword_factor: float = maxf(1.0, royal_reborn_attack_multiplier)
+	authored_sprite_transform = authored_sprite_transform.scaled_local(
+		Vector2.ONE * visual_factor)
+	authored_attack_area_transform = authored_attack_area_transform.scaled_local(
+		Vector2.ONE * sword_factor)
+	if body_shape.shape is RectangleShape2D:
+		var body_rect: RectangleShape2D = body_shape.shape as RectangleShape2D
+		royal_reborn_floor_lift = (body_rect.size.y * absf(body_shape.scale.y)
+			* (body_factor - 1.0) * 0.5)
+	body_shape.scale *= body_factor
+	_apply_facing()
+	queue_redraw()
+
+
+func _update_royal_resurrection(delta: float) -> void:
+	royal_revive_elapsed += delta
+	if royal_reviving_stage == 1:
+		# 2.2 seconds: a transparent purple ghost slowly forms ABOVE the corpse.
+		var progress: float = clampf(royal_revive_elapsed / maxf(0.05, royal_revive_ghost_seconds), 0.0, 1.0)
+		if is_instance_valid(royal_revive_preview):
+			royal_revive_preview.modulate.a = 0.88 * progress
+			royal_revive_preview.scale = sprite.scale * maxf(1.05, royal_reborn_visual_multiplier) * lerpf(1.12, 1.0, progress)
+			_align_royal_ghost_feet_to_corpse()
+		if progress >= 1.0:
+			royal_reviving_stage = 2
+			royal_revive_elapsed = 0.0
+		return
+	if royal_reviving_stage == 2:
+		# 0.9 seconds: hold the visible ghost before the body moves at all.
+		var hold_progress: float = clampf(royal_revive_elapsed / maxf(0.05, royal_revive_hold_seconds), 0.0, 1.0)
+		if is_instance_valid(royal_revive_preview):
+			royal_revive_preview.modulate.a = 0.88 * (1.0 - 0.15 * hold_progress)
+			_align_royal_ghost_feet_to_corpse()
+		if hold_progress >= 1.0:
+			if is_instance_valid(royal_revive_preview):
+				royal_revive_preview.queue_free()
+			royal_revive_preview = null
+			royal_reviving_stage = 3
+			royal_revive_elapsed = 0.0
+			# The ghost merges into a larger, physically hittable royal body.
+			_apply_royal_reborn_growth()
+			# Now the enlarged body plays its death frames backward.
+			sprite.stop()
+			sprite.self_modulate = original_sprite_color
+		return
+	if royal_reviving_stage == 3:
+		# 1.6 seconds: clearly visible reversed death animation.
+		var reverse_progress: float = clampf(royal_revive_elapsed / maxf(0.05, royal_revive_reverse_seconds), 0.0, 1.0)
+		if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_death):
+			var last: int = maxi(0, sprite.sprite_frames.get_frame_count(animation_death) - 1)
+			sprite.animation = animation_death
+			sprite.set_frame_and_progress(clampi(int(floor(float(last) * (1.0 - reverse_progress))), 0, last), 0.0)
+		if reverse_progress >= 1.0:
+			_finish_royal_resurrection()
+
+func _finish_royal_resurrection() -> void:
+	if royal_reviving_stage != 3 or mode != Mode.DEAD:
+		return
+	royal_reviving_stage = 0
+	royal_revive_elapsed = 0.0
+	set_meta(&"king_royal_reviving", false)
+	royal_corpse_ready = false
+	# Lift half of the physical height increase once, preserving feet-on-floor.
+	if royal_reborn_floor_lift > 0.0:
+		global_position.y -= royal_reborn_floor_lift
+		royal_reborn_floor_lift = 0.0
+	collision_layer = royal_original_collision_layer
+	collision_mask = royal_original_collision_mask
+	_ignore_other_menacing_bodies()
+	body_shape.set_deferred("disabled", false)
+	attack_area.set_deferred("monitoring", true)
+	death_animation_playing = false
+	sprite.speed_scale = 1.0
+	sprite.modulate.a = 1.0
+	sprite.self_modulate = original_sprite_color
+	velocity = Vector2.ZERO
+	engaged = true
+	mode = Mode.CHASE
+	stuck_timer = 0.0
+	stuck_anchor_x = global_position.x
+	stuck_teleport_cooldown = 1.5
+	attack_cd = 0.80
+	recovery_remaining = 0.0
+	combo_index = 0
+	combo_pause_remaining = 0.0
+	attacks_since_fatigue = 0
+	fatigue_threshold = _roll_fatigue_threshold()
+	_find_player()
+	_ensure_player_pass_through()
+	_face_player()
+	_set_animation(animation_idle)
+	queue_redraw()
+	health_changed.emit(hp, max_hp)

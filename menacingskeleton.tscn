@@ -438,6 +438,7 @@ shape = SubResource("RectangleShape2D_q45od")
 
 [node name="Area2D" type="Area2D" parent="." unique_id=2127672532]
 position = Vector2(0, 1)
+scale = Vector2(0.84324366, 0.8724744)
 
 [node name="frontswing" type="CollisionShape2D" parent="Area2D" unique_id=302556904]
 position = Vector2(14.000004, 1.0000002)
