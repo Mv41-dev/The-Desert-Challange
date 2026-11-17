@@ -1,6 +1,12 @@
+# V30 - teleports run on their own 4-second clock even during long royal laser sequences; robust collision-only perch search
+# V29 - restore reliable perches: reject underground teleport but allow giant art above camera; hold/attack cadence fixed
+# V24 - aerial prowling, reflected X-slashes, combo patterns, shorter purple guards
 # V23 - keep massive King visually above/outside guard fights; exposed slash storm; preserve V16 damage
 # V22 - keep boss high, compact shield visuals, active post-shield attacks, verified V16 damage
 # V21 - restored verified V16 damage/hurtbox path, with high natural guard hover
+# V27 - Actual teleports in tight zoomed-in arenas: physical-ground safety, not whole-art screen fit
+# V26 - Reliable multi-perch Radiance teleports, with wider safe destination search
+# V25 - Radiance-style 4-second teleport perches with reversed death reveal; long infinite-looking ricochets
 # V16 - independent King patrol (no player X/Y tracking); fixed-position guard retreat
 # V15 - King retreats to the far edge while his Menacing guards fight; no new teleports or player changes
 # V14 - 1% royal ward with hit repulsion; slash-heavy Last Stand; slower rarer skull volleys
@@ -99,13 +105,13 @@ const MAX_BUFFED_SKELETONS := 2
 # The first two guards are NORMAL Menacing Skeletons. Only the one revived
 # after shield break becomes the purple, high-powered version.
 @export_range(15, 80, 5) var king_normal_guard_hp: int = 25
-@export_range(50, 200, 5) var king_reborn_guard_hp: int = 110
+@export_range(45, 130, 5) var king_reborn_guard_hp: int = 70
 @export_range(4.0, 20.0, 0.5) var king_revival_after_shield_seconds: float = 7.0
 @export_range(3.0, 20.0, 0.5) var king_reborn_boss_spell_interval: float = 5.8
 @export_range(1, 8, 1) var king_max_total_resurrections: int = 4
 # V12 caps active resurrected guards at one, even if a saved scene overrides this value.
 @export_range(1, 3, 1) var king_max_active_purple_guards: int = 1
-@export_range(6.0, 30.0, 0.5) var king_repeat_revival_delay: float = 16.0
+@export_range(6.0, 30.0, 0.5) var king_repeat_revival_delay: float = 11.5
 @export_range(25, 120, 5) var king_elite_hp: int = 55 # legacy setting, no longer forces normal guards to be elite
 @export_range(5.0, 15.0, 0.5) var king_shield_appear_delay: float = 10.0
 @export_range(6.0, 20.0, 0.5) var king_guard_attack_interval: float = 10.0
@@ -142,6 +148,18 @@ const MAX_BUFFED_SKELETONS := 2
 @export_range(0.18, 0.42, 0.01) var king_solo_hover_height_ratio: float = 0.30
 @export_range(0.07, 0.28, 0.01) var king_guard_hover_height_ratio: float = 0.13
 @export_range(5, 9, 1) var king_exposed_spells_before_revival: int = 5
+@export_group("King Aerial Prowl and Ricochet")
+@export_range(115.0, 300.0, 5.0) var king_solo_travel_speed: float = 205.0
+@export_range(2.5, 5.5, 0.1) var king_solo_reposition_seconds: float = 3.5
+@export_range(0.70, 1.1, 0.05) var king_ricochet_warning_seconds: float = 0.90
+@export_group("King Radiance Teleportation")
+@export_range(2.0, 6.0, 0.25) var king_teleport_hold_seconds: float = 4.0
+@export_range(0.12, 0.65, 0.01) var king_teleport_vanish_seconds: float = 0.26
+@export_range(0.20, 0.80, 0.01) var king_teleport_reappear_seconds: float = 0.42
+@export_range(3, 8, 1) var king_ricochet_bounces: int = 5
+@export_range(2.0, 5.0, 0.25) var king_laser_screen_reach_multiplier: float = 3.0
+@export_group("Royal Casting Before Laser Waves")
+@export_range(0.40, 1.30, 0.05) var king_attack_cast_seconds: float = 0.75
 
 @export_group("King 1% Royal Ward")
 @export_range(35.0, 160.0, 5.0) var king_ward_repel_distance: float = 95.0
@@ -195,6 +213,7 @@ class RoyalSlash:
 	var warning: float = 0.85
 	var elapsed: float = 0.0
 	var fired: bool = false
+	var ricochet: bool = false
 
 
 
@@ -306,6 +325,23 @@ var king_guard_flight_velocity: Vector2 = Vector2.ZERO
 var king_solo_hover_anchor: Vector2 = Vector2.ZERO
 var king_solo_hover_anchor_set: bool = false
 var king_exposed_spells_since_break: int = 0
+var king_solo_attacks_since_guard: int = 0
+var king_solo_reposition_timer: float = 0.0
+var king_solo_flight_velocity: Vector2 = Vector2.ZERO
+var king_solo_perch_index: int = -1
+# 0=visible/holding; 1=vanish with death frames; 2=reappear with reverse death frames.
+var king_tp_phase: int = 0
+var king_tp_elapsed: float = 0.0
+var king_tp_hold_remaining: float = 4.0
+var king_tp_destination: Vector2 = Vector2.ZERO
+var king_tp_guard_mode: bool = false
+var king_tp_last_perch: int = -1
+var king_tp_failed_attempts: int = 0
+# During normal/purple guard battles the King teleports away ONE time,
+# then stays on that distant safe perch until the guards are defeated.
+var king_tp_guard_perch_locked: bool = false
+var king_attack_cast_remaining: float = 0.0
+var king_attack_cast_total: float = 0.0
 
 
 func _activate_king_mode() -> void:
@@ -344,6 +380,16 @@ func _activate_king_mode() -> void:
 	king_solo_hover_anchor_set = false
 	king_solo_hover_anchor = Vector2.ZERO
 	king_exposed_spells_since_break = 0
+	king_tp_phase = 0
+	king_tp_elapsed = 0.0
+	king_tp_hold_remaining = maxf(2.0, king_teleport_hold_seconds)
+	king_tp_destination = global_position
+	king_tp_guard_mode = false
+	king_tp_last_perch = -1
+	king_tp_failed_attempts = 0
+	king_tp_guard_perch_locked = false
+	king_attack_cast_remaining = 0.0
+	king_attack_cast_total = 0.0
 	king_dead_guard_position_known = false
 	add_to_group(&"king_necromancer")
 	king_skull_volley_timer = 1.2
@@ -562,7 +608,11 @@ func _update_king_hp_label() -> void:
 		elif king_special_kind == 7:
 			king_hud_status.text = "ROYAL SPEARFALL  |  Shift between the columns"
 		elif king_special_kind == 8:
-			king_hud_status.text = "ROYAL CROSSWEAVE  |  Dodge the staggered blades"
+			king_hud_status.text = "ROYAL CROSSWEAVE  |  Dodge the crossing blades"
+		elif king_special_kind == 9:
+			king_hud_status.text = "RICHOCHET X  |  Watch the reflected warnings"
+		elif king_special_kind == 10:
+			king_hud_status.text = "ROYAL CASCADE  |  Lances, then crossed cuts"
 		elif king_exposure_timer > 0.0:
 			king_hud_status.text = "SHIELD BROKEN  |  STRIKE NOW"
 		else:
@@ -590,8 +640,49 @@ func _queue_king_slash(
 	# In Last Stand, a faster warning is fair because the blade lane is exact.
 	# Each line still has at least 0.52s to react before it can deal damage.
 	slash.warning = maxf(0.52, warning_time * minf(0.78, king_last_stand_warning_factor)) if king_last_stand_started else maxf(0.34, warning_time)
+	# The King's authored summoning/casting animation must finish BEFORE the
+	# warning starts. Each staggered laser still receives its own full warning.
 	slash.delay = maxf(0.0, delay_time)
+	if king_attack_cast_remaining > 0.0:
+		slash.delay += king_attack_cast_total
 	king_royal_slashes.append(slash)
+
+
+func _begin_king_attack_cast() -> void:
+	# One clear, non-looping authored cast before an entire laser sequence.
+	# Do not alter the separate, longer resurrection animation.
+	if king_tp_phase != 0 or king_revival_cast_fx > 0.0:
+		return
+	king_attack_cast_total = maxf(0.45, king_attack_cast_seconds)
+	king_attack_cast_remaining = king_attack_cast_total
+	_update_king_attack_cast_pose(0.0)
+
+
+func _update_king_attack_cast_pose(delta: float) -> void:
+	if king_attack_cast_remaining <= 0.0:
+		return
+	if king_tp_phase != 0 or king_revival_cast_fx > 0.0:
+		return
+	king_attack_cast_remaining = maxf(0.0, king_attack_cast_remaining - delta)
+	if king_attack_cast_remaining <= 0.0:
+		_play(&"idle", true)
+		return
+	if not is_instance_valid(sprite) or sprite.sprite_frames == null:
+		return
+	var cast_animation: StringName = REVIVE_ANIMATION
+	if not sprite.sprite_frames.has_animation(cast_animation):
+		cast_animation = &"spawnenemies"
+	if not sprite.sprite_frames.has_animation(cast_animation):
+		return
+	var frames: int = sprite.sprite_frames.get_frame_count(cast_animation)
+	if frames <= 0:
+		return
+	var progress: float = 1.0 - king_attack_cast_remaining / maxf(0.01, king_attack_cast_total)
+	var frame: int = clampi(int(floor(progress * float(frames))), 0, frames - 1)
+	# Explicitly stop SpriteFrames' own loop: show each casting sprite once.
+	sprite.animation = cast_animation
+	sprite.stop()
+	sprite.set_frame_and_progress(frame, 0.0)
 
 
 func _king_royal_slash_hits_player(slash: RoyalSlash) -> bool:
@@ -672,6 +763,11 @@ func _draw_king_royal_slashes() -> void:
 			draw_line(a, b, Color(0.48, 0.05, 0.90, alpha * 0.22), king_slash_hitbox_width * 1.15, true)
 			draw_line(a, b, Color(0.85, 0.31, 1.0, alpha * 0.78), king_slash_hitbox_width, true)
 			draw_line(a, b, Color(1.0, 0.84, 1.0, alpha * 0.75), maxf(1.5, king_slash_hitbox_width * 0.18), true)
+			if slash.ricochet:
+				# The rebound point glows during the entire new path warning.
+				draw_arc(a, 15.0 + 3.0 * sin(t * TAU * 2.0), 0.0, TAU, 24,
+					Color(0.98, 0.64, 1.0, alpha), 3.0, true)
+				draw_circle(a, 5.0, Color(1.0, 0.87, 1.0, alpha * 0.8))
 			continue
 		# On the damage frame the slash EXPANDS in ~60ms, then quickly
 		# shrinks and fades, instead of vanishing abruptly.
@@ -707,6 +803,13 @@ func _king_visible_world_rect() -> Rect2:
 	return Rect2(top_left, bottom_right - top_left).abs()
 
 
+func _king_laser_reach(view: Rect2) -> float:
+	# Every straight royal beam extends multiple FULL viewport diagonals
+	# beyond the arena so its ends never look abruptly cropped on camera.
+	return maxf(view.size.length() * maxf(2.0, king_laser_screen_reach_multiplier),
+		view.size.length() + 1800.0)
+
+
 func _start_king_gravefall() -> void:
 	king_special_kind = 1
 	king_gravefall_active = true
@@ -715,13 +818,18 @@ func _start_king_gravefall() -> void:
 	var view: Rect2 = _king_visible_world_rect()
 	# Full-screen rows of purple blades, with navigable corridors in between.
 	var center_x: float = clampf(target.global_position.x, view.position.x + 120.0, view.end.x - 120.0)
+	var wave: int = 0
 	for offset: float in [-330.0, -165.0, 0.0, 165.0, 330.0]:
 		var x: float = center_x + offset
 		if x < view.position.x - 20.0 or x > view.end.x + 20.0:
 			continue
 		king_gravefall_columns.append(x)
-		_queue_king_slash(Vector2(x, view.position.y - 500.0),
-			Vector2(x, view.end.y + 500.0), king_gravefall_warning_timer)
+		_queue_king_slash(Vector2(x, view.position.y - _king_laser_reach(view)),
+			Vector2(x, view.end.y + _king_laser_reach(view)),
+			maxf(0.72, king_gravefall_warning_time), float(wave) * 0.38)
+		wave += 1
+	king_gravefall_warning_timer = maxf(king_gravefall_warning_timer,
+		maxf(0.72, king_gravefall_warning_time) + float(maxi(0, wave - 1)) * 0.38 + 0.32)
 	queue_redraw()
 
 
@@ -733,13 +841,16 @@ func _start_king_sweep() -> void:
 	var view: Rect2 = _king_visible_world_rect()
 	var player_y: float = clampf(target.global_position.y, view.position.y + 110.0, view.end.y - 110.0)
 	# Full-width blades. The separation remains large enough to dodge.
+	var wave: int = 0
 	for offset: float in [-220.0, -110.0, 0.0, 110.0, 220.0]:
 		var y: float = player_y + offset
 		if y < view.position.y - 20.0 or y > view.end.y + 20.0:
 			continue
 		king_sweep_y.append(y)
-		_queue_king_slash(Vector2(view.position.x - 500.0, y),
-			Vector2(view.end.x + 500.0, y), king_gravefall_warning_timer)
+		_queue_king_slash(Vector2(view.position.x - _king_laser_reach(view), y),
+			Vector2(view.end.x + _king_laser_reach(view), y), 0.85, float(wave) * 0.38)
+		wave += 1
+	king_gravefall_warning_timer = maxf(0.92, 0.85 + float(maxi(0, wave - 1)) * 0.38 + 0.32)
 	queue_redraw()
 
 
@@ -762,23 +873,15 @@ func _start_king_heavens_lances() -> void:
 			var x: float = center_x + offset + (offset_shift if wave % 2 == 0 else -offset_shift)
 			if x < view.position.x + 20.0 or x > view.end.x - 20.0:
 				continue
-			_queue_king_slash(Vector2(x, view.position.y - 500.0),
-					Vector2(x, view.end.y + 500.0), 0.95, float(wave) * 0.32)
+			_queue_king_slash(Vector2(x, view.position.y - _king_laser_reach(view)),
+					Vector2(x, view.end.y + _king_laser_reach(view)), 0.95, float(wave) * 0.32)
 	queue_redraw()
 
 
 func _start_king_eclipse_judgment() -> void:
-	king_special_kind = 5
-	king_gravefall_active = true
-	king_gravefall_warning_timer = 1.72
-	var view: Rect2 = _king_visible_world_rect()
-	var center: Vector2 = view.get_center()
-	var reach: float = view.size.length() * 1.40
-	for i: int in range(2):
-		var angle: float = deg_to_rad(35.0 if i == 0 else 145.0)
-		var ray: Vector2 = Vector2.RIGHT.rotated(angle) * reach
-		_queue_king_slash(center - ray, center + ray, 0.95, 0.45 * float(i))
-	queue_redraw()
+	# The original crossing-X pattern now uses the same genuinely reflected
+	# geometry and secondary warnings, rather than silently staying unmodified.
+	_start_king_ricochet_x()
 
 
 func _start_king_royal_crossweave() -> void:
@@ -795,7 +898,7 @@ func _start_king_royal_crossweave() -> void:
 			clampf(target.global_position.x, view.position.x + 180.0, view.end.x - 180.0),
 			clampf(target.global_position.y, view.position.y + 120.0, view.end.y - 120.0)
 		)
-	var reach: float = view.size.length() * 1.30 + 500.0
+	var reach: float = _king_laser_reach(view)
 	for wave: int in range(4):
 		var theta: float = deg_to_rad(35.0 if wave % 2 == 0 else 145.0)
 		var direction: Vector2 = Vector2.RIGHT.rotated(theta)
@@ -807,6 +910,116 @@ func _start_king_royal_crossweave() -> void:
 	queue_redraw()
 
 
+func _king_ray_to_arena_edge(origin: Vector2, direction: Vector2, arena: Rect2) -> Dictionary:
+	# Analytic ray/arena intersection. Both warning and damage use these exact
+	# segment endpoints; bouncing does not retarget onto the player later.
+	var d: Vector2 = direction.normalized()
+	var tx: float = INF
+	var ty: float = INF
+	if d.x > 0.0001:
+		tx = (arena.end.x - origin.x) / d.x
+	elif d.x < -0.0001:
+		tx = (arena.position.x - origin.x) / d.x
+	if d.y > 0.0001:
+		ty = (arena.end.y - origin.y) / d.y
+	elif d.y < -0.0001:
+		ty = (arena.position.y - origin.y) / d.y
+	var distance: float = maxf(0.0, minf(tx, ty))
+	var endpoint: Vector2 = origin + d * distance
+	var reflected: Vector2 = d
+	if absf(tx - distance) < 0.1:
+		reflected.x = -reflected.x
+	if absf(ty - distance) < 0.1:
+		reflected.y = -reflected.y
+	return {"end": endpoint, "direction": reflected.normalized()}
+
+
+func _start_king_ricochet_x() -> void:
+	# True long-distance mirror attack: each of TWO enormous X blades crosses
+	# the whole arena, then ricochets FIVE times from wall to wall. The
+	# cumulative reflected travel is many times the original beam length.
+	# Every bounce has a fresh warning BEFORE its own damage frame.
+	king_special_kind = 9
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect().grow(-16.0)
+	if view.size.x < 150.0 or view.size.y < 150.0:
+		_start_king_grave_shears()
+		return
+	var center: Vector2 = view.get_center()
+	if is_instance_valid(target):
+		center = Vector2(
+			clampf(target.global_position.x, view.position.x + view.size.x * 0.35,
+				view.end.x - view.size.x * 0.35),
+			clampf(target.global_position.y, view.position.y + view.size.y * 0.30,
+				view.end.y - view.size.y * 0.30))
+	var deviation: float = randf_range(-6.0, 6.0)
+	var bounce_count: int = clampi(king_ricochet_bounces, 3, 8)
+	var warn: float = maxf(0.76, king_ricochet_warning_seconds)
+	var bounce_warn: float = maxf(0.68, warn * 0.85)
+	var bounce_step: float = 0.86
+	var first_bounce_delay: float = warn + 0.14
+	var beam_overshoot: float = _king_laser_reach(view)
+	for arm: int in range(2):
+		var theta: float = deg_to_rad((35.0 if arm == 0 else 145.0) + deviation)
+		var direction: Vector2 = Vector2.RIGHT.rotated(theta)
+		var behind: Dictionary = _king_ray_to_arena_edge(center, -direction, view)
+		var ahead: Dictionary = _king_ray_to_arena_edge(center, direction, view)
+		var first_wall: Vector2 = ahead["end"]
+		# Main beam continues MULTIPLE screens past both edges of the arena.
+		_queue_king_slash((behind["end"] as Vector2) - direction * beam_overshoot,
+			first_wall + direction * beam_overshoot, warn, float(arm) * 0.12)
+		var bounce_origin: Vector2 = first_wall
+		var bounce_direction: Vector2 = ahead["direction"]
+		for bounce_index: int in range(bounce_count):
+			# Step half a pixel INTO the arena to avoid immediate zero-length
+			# collisions at the same wall on successive reflections.
+			var reflected: Dictionary = _king_ray_to_arena_edge(
+				bounce_origin + bounce_direction * 0.75, bounce_direction, view)
+			var next_wall: Vector2 = reflected["end"]
+			if bounce_origin.distance_to(next_wall) < 12.0:
+				break
+			var hit_end: Vector2 = next_wall
+			if bounce_index == bounce_count - 1:
+				# Final ricochet disappears far OFFSCREEN instead of ending in
+				# the visible arena with a tiny, abruptly cut-off laser.
+				hit_end += bounce_direction * beam_overshoot
+			var delay: float = (first_bounce_delay + float(bounce_index) * bounce_step
+				+ float(arm) * 0.12)
+			_queue_king_slash(bounce_origin, hit_end, bounce_warn, delay)
+			king_royal_slashes[king_royal_slashes.size() - 1].ricochet = true
+			bounce_origin = next_wall
+			bounce_direction = reflected["direction"]
+	# Keep the spell active through the very last rebound warning and hit.
+	king_gravefall_warning_timer = (first_bounce_delay
+		+ float(bounce_count - 1) * bounce_step + bounce_warn
+		+ king_slash_expand_seconds + king_slash_fade_seconds + 0.18)
+	queue_redraw()
+
+
+func _start_king_cascade_combo() -> void:
+	# Two-stage Radiance combo: a pair of vertical lances, then two staggered
+	# diagonal cuts. Stage two telegraphs before it deals damage. They never
+	# spawn instantly, and the overall spell still has a recovery afterward.
+	king_special_kind = 10
+	king_gravefall_active = true
+	king_gravefall_warning_timer = 2.75
+	var view: Rect2 = _king_visible_world_rect()
+	var middle: Vector2 = view.get_center()
+	if is_instance_valid(target):
+		middle.x = clampf(target.global_position.x, view.position.x + 170.0, view.end.x - 170.0)
+		middle.y = clampf(target.global_position.y, view.position.y + 100.0, view.end.y - 100.0)
+	for side: int in [-1, 1]:
+		var column_x: float = middle.x + float(side) * 132.0
+		_queue_king_slash(Vector2(column_x, view.position.y - _king_laser_reach(view)),
+			Vector2(column_x, view.end.y + _king_laser_reach(view)), 0.86, 0.12 if side > 0 else 0.0)
+	var span: float = _king_laser_reach(view)
+	var right_up: Vector2 = Vector2(span, -span)
+	var right_down: Vector2 = Vector2(span, span)
+	_queue_king_slash(middle - right_down, middle + right_down, 0.82, 1.05)
+	_queue_king_slash(middle - right_up, middle + right_up, 0.82, 1.30)
+	queue_redraw()
+
+
 func _start_king_grave_shears() -> void:
 	# LAST STAND: three staggered diagonal cuts, not simultaneous crosses.
 	# Each warning belongs to the exact collision blade, with time to move.
@@ -814,7 +1027,7 @@ func _start_king_grave_shears() -> void:
 	king_gravefall_active = true
 	king_gravefall_warning_timer = 1.90
 	var view: Rect2 = _king_visible_world_rect()
-	var reach: float = view.size.length() * 1.2 + 500.0
+	var reach: float = _king_laser_reach(view)
 	var center: Vector2 = view.get_center()
 	for wave: int in range(3):
 		var theta: float = deg_to_rad(-37.0 if wave % 2 == 0 else 37.0)
@@ -840,8 +1053,8 @@ func _start_king_royal_spearfall() -> void:
 			var x: float = anchor_x + offset + shift
 			if x < view.position.x - 18.0 or x > view.end.x + 18.0:
 				continue
-			_queue_king_slash(Vector2(x, view.position.y - 500.0),
-				Vector2(x, view.end.y + 500.0), 0.82, float(wave) * 0.44)
+			_queue_king_slash(Vector2(x, view.position.y - _king_laser_reach(view)),
+				Vector2(x, view.end.y + _king_laser_reach(view)), 0.82, float(wave) * 0.44)
 	queue_redraw()
 
 
@@ -876,8 +1089,8 @@ func _update_king_specials(delta: float) -> void:
 		return
 	if not is_king or not is_instance_valid(target):
 		return
-	# The King attacks rarely while both Menacing guards occupy the player.
-	# Existing, fully warned slash attack can continue to completion.
+	# Let a Menacing fight on its own. Only very occasional fully warned
+	# gravefall when the initial two normal guards are present.
 	if king_shield_phase == KingShieldPhase.SHIELDED and not king_gravefall_active:
 		if not king_shield_elite_spawned or not _king_elite_is_alive():
 			return
@@ -885,12 +1098,10 @@ func _update_king_specials(delta: float) -> void:
 			return
 		king_guard_attack_timer -= delta
 		if king_guard_attack_timer <= 0.0:
-			king_guard_attack_timer = maxf(7.0, king_guard_attack_interval)
+			king_guard_attack_timer = maxf(8.0, king_guard_attack_interval)
+			_begin_king_attack_cast()
 			_start_king_gravefall()
 		return
-	# V12: a purple Menacing is its OWN boss encounter. The King pauses ALL
-	# new spells while the corpse reanimates and until that purple guard dies.
-	# The existing spell sequence resumes after the guard is defeated.
 	if king_shield_phase == KingShieldPhase.EXPOSED and _king_active_purple_count() > 0:
 		return
 	king_exposure_timer = maxf(0.0, king_exposure_timer - delta)
@@ -904,94 +1115,100 @@ func _update_king_specials(delta: float) -> void:
 					_fire_king_sweep()
 				3:
 					_fire_king_crown()
-				4, 5, 6, 7, 8:
+				4, 5, 6, 7, 8, 9, 10:
 					_finish_king_spell()
 				_:
 					_clear_king_gravefall()
 		_update_king_hp_label()
 		return
-	# An entire skull volley counts as one attack; it may not overlap
-	# the Royal Slash patterns, and the shared recovery is mandatory.
+	# An entire skull volley is a single attack. Never overlap its projectiles
+	# with slash warnings, and preserve the minimum 1s global between patterns.
 	if king_skull_spawns_remaining > 0 or not king_royal_slashes.is_empty():
 		return
-	if king_post_attack_timer > 0.0:
+	if king_post_attack_timer > 0.0 or king_tp_phase != 0 or king_attack_cast_remaining > 0.0:
+		return
+	# Let a scheduled teleport get its turn before another long attack chain.
+	# _update_hover() runs earlier in this frame and starts the teleport when
+	# safe. If no perch exists, it sets a retry timer rather than freezing AI.
+	if king_tp_hold_remaining <= 0.0 and king_tp_failed_attempts < 3:
 		return
 	king_gravefall_cooldown_timer -= delta
-	if king_gravefall_cooldown_timer <= 0.0:
-		king_special_round += 1
-		if king_shield_phase == KingShieldPhase.EXPOSED and king_total_resurrections == 0:
+	if king_gravefall_cooldown_timer > 0.0:
+		return
+	king_special_round += 1
+	_begin_king_attack_cast()
+	if king_shield_phase == KingShieldPhase.EXPOSED:
+		king_solo_attacks_since_guard += 1
+		if king_total_resurrections == 0:
 			king_exposed_spells_since_break += 1
-		if (king_shield_phase == KingShieldPhase.EXPOSED
-			and king_total_resurrections == 0):
-			# The King is genuinely dangerous without his army: five complete
-			# damaging slash patterns before the first purple resurrection.
-			# Skull volleys are disabled in this interval, not mixed between slashes.
-			match king_exposed_spells_since_break % 5:
-				1:
-					_start_king_grave_shears()
-				2:
-					_start_king_royal_spearfall()
-				3:
-					_start_king_royal_crossweave()
-				4:
-					_start_king_heavens_lances()
-				_:
-					_start_king_eclipse_judgment()
-		elif king_last_stand_started:
-			# Slash-heavy finale, no wall of skulls or hollow warning-only attacks.
-			# The full 1s global rest still applies AFTER each complete pattern.
-			match king_special_round % 9:
-				1:
-					_start_king_gravefall()
-				2:
-					_start_king_grave_shears()
-				3:
-					_start_king_sweep()
-				4:
-					_start_king_royal_spearfall()
-				5:
-					_start_king_heavens_lances()
-				6:
-					_start_king_eclipse_judgment()
-				7:
-					_start_king_grave_shears()
-				8:
-					_start_king_royal_crossweave()
-				_:
-					_start_king_sweep()
-		else:
-			# Preserve the readable pre-finale attack cycle.
-			match king_special_round % 7:
-				1:
-					_start_king_gravefall()
-				2:
-					_start_king_sweep()
-				3:
-					_start_king_grave_shears()
-				4:
-					_start_king_heavens_lances()
-				5:
-					_start_king_sweep()
-				6:
-					_start_king_eclipse_judgment()
-				_:
-					_start_king_gravefall()
-		var spell_factor: float = (
-			minf(king_last_stand_spell_cooldown_factor, 0.50)
-			if king_last_stand_started
-			else (0.78 if hp <= max_hp / 2 else 1.0)
-		)
-		if king_shield_phase == KingShieldPhase.EXPOSED and king_total_resurrections == 0:
-			# Global one-second post-attack pause already ensures a readable break.
-			# Do not add another 1+ second spell delay on top of that.
-			king_gravefall_cooldown_timer = 0.10
-		elif king_last_stand_started:
-			king_gravefall_cooldown_timer = 0.20
-		else:
-			king_gravefall_cooldown_timer = maxf(1.0, king_gravefall_cooldown * spell_factor)
+	if king_shield_phase == KingShieldPhase.EXPOSED and king_total_resurrections == 0:
+		# The King demonstrates his spells before resurrecting the first purple
+		# guard: five DIFFERENT patterns with combo and ricochet mixed in.
+		match king_exposed_spells_since_break % 7:
+			1:
+				_start_king_grave_shears()
+			2:
+				_start_king_ricochet_x()
+			3:
+				_start_king_royal_spearfall()
+			4:
+				_start_king_cascade_combo()
+			5:
+				_start_king_royal_crossweave()
+			6:
+				_start_king_heavens_lances()
+			_:
+				_start_king_eclipse_judgment()
+	elif king_last_stand_started:
+		match king_special_round % 11:
+			1:
+				_start_king_ricochet_x()
+			2:
+				_start_king_gravefall()
+			3:
+				_start_king_cascade_combo()
+			4:
+				_start_king_royal_spearfall()
+			5:
+				_start_king_sweep()
+			6:
+				_start_king_royal_crossweave()
+			7:
+				_start_king_eclipse_judgment()
+			8:
+				_start_king_grave_shears()
+			9:
+				_start_king_heavens_lances()
+			10:
+				_start_king_ricochet_x()
+			_:
+				_start_king_cascade_combo()
+	else:
+		# Phase-one solo also cycles real attacks instead of returning to the
+		# same basic sweep every few seconds. Every pattern is warned.
+		match king_special_round % 9:
+			1:
+				_start_king_gravefall()
+			2:
+				_start_king_ricochet_x()
+			3:
+				_start_king_sweep()
+			4:
+				_start_king_grave_shears()
+			5:
+				_start_king_cascade_combo()
+			6:
+				_start_king_heavens_lances()
+			7:
+				_start_king_royal_crossweave()
+			8:
+				_start_king_eclipse_judgment()
+			_:
+				_start_king_royal_spearfall()
+	# The existing one-second recovery already controls pacing: do not add a
+	# second full idle second on top of it. Last Stand is faster but readable.
+	king_gravefall_cooldown_timer = 0.12 if king_shield_phase == KingShieldPhase.EXPOSED else 0.22
 	_update_king_hp_label()
-
-
 
 
 func _start_king_skull_walls(from_side: bool) -> void:
@@ -1330,12 +1547,13 @@ func _begin_king_elite_revive() -> bool:
 	king_royal_slashes.clear()
 	_clear_king_gravefall()
 	king_post_attack_timer = maxf(king_post_attack_timer, king_post_attack_pause)
-	if not bool(best_guard.call(&"begin_royal_resurrection", king_reborn_guard_hp)):
+	if not bool(best_guard.call(&"begin_royal_resurrection", mini(70, king_reborn_guard_hp))):
 		return false
 	king_last_revived_id = best_guard.get_instance_id()
 	king_total_resurrections += 1
 	king_revival_started = true
 	king_revival_completed = true
+	king_solo_attacks_since_guard = 0
 	king_reborn_guard = best_guard
 	if not king_reborn_guards.has(best_guard):
 		king_reborn_guards.append(best_guard)
@@ -1347,6 +1565,7 @@ func _begin_king_elite_revive() -> bool:
 		+ float(best_guard.get("royal_revive_reverse_seconds"))
 	)
 	king_revival_cast_fx = maxf(0.5, king_revival_cast_total)
+	king_attack_cast_remaining = 0.0
 	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(REVIVE_ANIMATION):
 		_play(REVIVE_ANIMATION, true)
 	# The cooldown is measured AFTER the revived guard is defeated, not
@@ -1393,6 +1612,7 @@ func _begin_king_shield_phase() -> void:
 		return
 	king_shield_phase = KingShieldPhase.SHIELDED
 	king_shield_elite_spawned = false
+	king_attack_cast_remaining = 0.0
 	king_shield_spawn_retry = 0.0
 	king_shield_hit_fx = king_shield_hit_pulse_duration
 	king_elite_waves_spawned = 0
@@ -1418,6 +1638,7 @@ func _begin_king_shield_break() -> void:
 	if king_elite_waves_spawned < king_elite_total_waves or _king_elite_is_alive():
 		return
 	king_shield_phase = KingShieldPhase.BREAKING
+	king_attack_cast_remaining = 0.0
 	king_shield_break_fx = maxf(0.2, king_shield_break_duration)
 	king_shield_hit_fx = 0.0
 	# Freeze spells ONLY while the shield shatters. Afterwards the King
@@ -1437,6 +1658,9 @@ func _begin_king_shield_break() -> void:
 	# The exposed phase will use real slash patterns until the first revival.
 	king_skull_volley_timer = maxf(24.0, king_skull_volley_timer)
 	king_solo_hover_anchor_set = false
+	king_solo_reposition_timer = 0.0
+	king_solo_flight_velocity = Vector2.ZERO
+	king_solo_attacks_since_guard = 0
 	_play(&"idle", true)
 	_update_king_hp_label()
 	queue_redraw()
@@ -1475,6 +1699,7 @@ func _begin_king_last_stand() -> void:
 		return
 	king_last_stand_started = true
 	king_last_stand_intro_timer = king_last_stand_intro_seconds
+	king_attack_cast_remaining = 0.0
 	king_revival_cast_fx = 0.0
 	king_revival_cast_total = 0.0
 	hp = maxi(hp, int(ceil(float(max_hp) * king_last_stand_heal_ratio)))
@@ -1528,16 +1753,22 @@ func _update_king_phase_visuals(delta: float) -> void:
 			king_was_purple_guard_active = false
 			# First purple victory triggers a separate King final combat phase.
 			_begin_king_last_stand()
-			king_revival_timer = maxf(king_revival_timer, king_repeat_revival_delay)
+			king_revival_timer = minf(12.0, king_repeat_revival_delay)
+			king_solo_attacks_since_guard = 0
 			king_post_attack_timer = maxf(king_post_attack_timer, king_post_attack_pause)
 			king_gravefall_cooldown_timer = maxf(king_gravefall_cooldown_timer, king_post_attack_pause)
 		if (not purple_present
 			and king_total_resurrections < king_max_total_resurrections
 			and king_exposed_spells_since_break >= maxi(5, king_exposed_spells_before_revival)):
-			# Finish a meaningful stretch of Radiance-style fighting before revival.
 			king_revival_timer -= delta
 			king_revival_attempt_cooldown = maxf(0.0, king_revival_attempt_cooldown - delta)
-			if king_revival_timer <= 0.0 and king_revival_attempt_cooldown <= 0.0:
+			var needed_solo_attacks: int = 5 if king_total_resurrections == 0 else 3
+			# No mid-warning cancellation: revive only between complete patterns.
+			if (king_solo_attacks_since_guard >= needed_solo_attacks
+				and king_revival_timer <= 0.0 and king_revival_attempt_cooldown <= 0.0
+				and king_royal_slashes.is_empty() and not king_gravefall_active
+				and king_skull_spawns_remaining == 0 and king_post_attack_timer <= 0.0
+				and king_tp_phase == 0):
 				if not _begin_king_elite_revive():
 					king_revival_attempt_cooldown = 0.75
 	if is_instance_valid(sprite):
@@ -1595,6 +1826,7 @@ func _physics_process(delta: float) -> void:
 		_update_king_specials(delta)
 		_update_king_elite_reinforcements(delta)
 	if is_king:
+		_update_king_attack_cast_pose(delta)
 		_update_king_crown(delta)
 		if not is_instance_valid(king_hud):
 			_create_king_boss_hud()
@@ -1618,6 +1850,9 @@ func _begin_encounter() -> void:
 		king_gravefall_cooldown_timer = 0.30
 		king_elite_timer = 0.0 # No guard during phase one.
 		king_shield_countdown = clampf(king_shield_appear_delay, 5.0, 15.0)
+		# Establish the first teleport perch soon after entering the arena.
+		# Each subsequent location is held for about four full seconds.
+		king_tp_hold_remaining = 0.75
 		_create_king_boss_hud()
 		_update_king_hp_label()
 		_play(&"idle")
@@ -1875,103 +2110,246 @@ func _update_hover(delta: float) -> void:
 	if not is_king:
 		_fly_toward(home, hover_speed, delta)
 		return
-	if (king_shield_phase == KingShieldPhase.SHIELDED
-		or _king_active_purple_count() > 0 or king_revival_cast_fx > 0.0):
-		_update_king_guard_standoff(delta)
-		return
-	king_guard_standoff_active = false
-	king_guard_flight_velocity = Vector2.ZERO
-	var view: Rect2 = _king_visible_world_rect()
-	if view.size.x < 20.0 or view.size.y < 20.0:
-		return
-	# Solo: hovering is high, but low enough that the player's sword can
-	# still reach the boss using arena platforms. No following player X/Y.
-	if (not king_solo_hover_anchor_set
-		or king_solo_hover_anchor.x < view.position.x - 90.0
-		or king_solo_hover_anchor.x > view.end.x + 90.0):
-		king_solo_hover_anchor_set = true
-		var side: float = 1.0 if target.global_position.x < view.get_center().x else -1.0
-		king_solo_hover_anchor = Vector2(
-			view.position.x + view.size.x * (0.73 if side > 0.0 else 0.27),
-			view.position.y + view.size.y * 0.49 - _king_visible_bottom_offset()
-		)
-	hover_time += delta
-	var goal: Vector2 = king_solo_hover_anchor + Vector2(
-		sin(hover_time * 0.47) * 7.0,
-		sin(hover_time * 0.63) * 8.0
-	)
-	_fly_toward(goal, hover_speed * 1.30, delta)
-	hover_center_x = global_position.x
-
-
-func _update_king_guard_standoff(delta: float) -> void:
-	# The KING and his huge sprite must be visually far away from the active
-	# Menacing's melee lane. V22 put the ROOT at the top but left the sprite
-	# hanging into the floor fight. This positions the visible bottom instead.
-	var view: Rect2 = _king_visible_world_rect()
-	if view.size.x <= 20.0 or view.size.y <= 20.0:
-		return
-	king_guard_retarget_timer = maxf(0.0, king_guard_retarget_timer - delta)
-	var half_art_width: float = _king_visual_half_width()
-	var outer_margin: float = minf(46.0, half_art_width * 0.22)
-	var left_x: float = view.position.x + outer_margin
-	var right_x: float = view.end.x - outer_margin
-	# King's visible FEET stay in the top ~20% of the camera while guards
-	# fight below. Part of the boss remains visible along the far side.
-	var safe_visual_bottom: float = (
-		view.position.y + clampf(view.size.y * 0.19, 96.0, 138.0)
-	)
-	var high_root_y: float = safe_visual_bottom - _king_visible_bottom_offset()
-	var need_anchor: bool = not king_guard_standoff_active
-	var chased: bool = false
-	if king_guard_standoff_active and king_guard_retarget_timer <= 0.0:
-		# Change sides only if the player really climbs toward the king.
-		chased = is_instance_valid(target) and (
-			sprite.global_position.distance_to(target.global_position) < 150.0
-		)
-		var camera_moved_far: bool = (
-			king_guard_standoff_anchor.x < view.position.x - half_art_width
-			or king_guard_standoff_anchor.x > view.end.x + half_art_width
-		)
-		need_anchor = chased or camera_moved_far
-	if need_anchor:
-		var was_anchored: bool = king_guard_standoff_active
-		king_guard_standoff_active = true
-		if chased and was_anchored and king_guard_standoff_side != 0.0:
-			king_guard_standoff_side = -king_guard_standoff_side
-		elif not was_anchored or king_guard_standoff_side == 0.0:
-			king_guard_standoff_side = (
-				1.0 if target.global_position.x < view.get_center().x else -1.0
-			)
-		king_guard_standoff_anchor = Vector2(
-			right_x if king_guard_standoff_side > 0.0 else left_x,
-			high_root_y
-		)
-		king_guard_retarget_timer = maxf(3.0, king_guard_retarget_cooldown)
-	else:
-		# Don't track the player's jump/camera Y every frame. Only adjust
-		# the long-lived anchor when the camera has genuinely changed floors.
-		if absf(king_guard_standoff_anchor.y - high_root_y) > view.size.y * 0.24:
-			king_guard_standoff_anchor.y = high_root_y
-	hover_time += delta
-	var goal: Vector2 = king_guard_standoff_anchor + Vector2(
-		0.0, sin(hover_time * 0.62) * 4.0
-	)
-	var offset: Vector2 = goal - global_position
-	# Immediately prioritise rising away from a skeleton when entering this
-	# phase, but interpolate velocity rather than teleport or snap.
-	var flight_speed: float = king_guard_retreat_speed
-	if global_position.y > high_root_y + 95.0:
-		flight_speed = maxf(flight_speed, 455.0)
-	var desired_velocity: Vector2 = Vector2.ZERO
-	if offset.length_squared() > 0.01:
-		desired_velocity = offset.normalized() * minf(flight_speed, offset.length() * 3.6)
-	king_guard_flight_velocity = king_guard_flight_velocity.move_toward(
-		desired_velocity, maxf(king_guard_flight_acceleration, 720.0) * delta
-	)
-	global_position += king_guard_flight_velocity * delta
+	# Radiance-style stationary perches: no flying between destinations.
 	velocity = Vector2.ZERO
-	hover_center_x = global_position.x
+	hover_time += delta
+	if king_tp_phase != 0:
+		_update_king_teleport_animation(delta)
+		return
+	var guard_active: bool = (king_shield_phase == KingShieldPhase.SHIELDED
+		or _king_active_purple_count() > 0 or king_revival_cast_fx > 0.0)
+	if guard_active != king_tp_guard_mode:
+		king_tp_guard_mode = guard_active
+		king_tp_guard_perch_locked = false
+		king_tp_last_perch = -1
+		# Retreat only ONCE when guards arrive; resume normal teleports when gone.
+		king_tp_hold_remaining = 0.0 if guard_active else 0.6
+	var view: Rect2 = _king_visible_world_rect()
+	if view.size.x < 120.0 or view.size.y < 120.0:
+		return
+	if guard_active:
+		# Keep the resurrection and laser-casting poses readable: do not
+		# overwrite spawnenemies2 with death frames during an active cast.
+		# Once the cast finishes, make ONE retreat teleport and stay there.
+		if king_revival_cast_fx > 0.0 or king_attack_cast_remaining > 0.0:
+			return
+		if king_tp_guard_perch_locked:
+			return
+		king_tp_hold_remaining -= delta
+		if king_tp_hold_remaining <= 0.0:
+			if _begin_king_teleport(view, true):
+				king_tp_guard_perch_locked = true
+				king_tp_failed_attempts = 0
+			else:
+				king_tp_failed_attempts += 1
+				king_tp_hold_remaining = 0.60
+				if king_tp_failed_attempts == 1 or king_tp_failed_attempts % 8 == 0:
+					push_warning("KING V30: no safe GUARD retreat perch. Retrying.")
+		return
+	# V30: This is an INDEPENDENT clock. Long staggered laser waves and
+	# ricochet slashes are world-space attacks and must NOT lock the King in
+	# one spot forever. Teleport after 4s even if an existing warned beam
+	# is still finishing, but never interrupt the casting or revival pose.
+	king_tp_hold_remaining -= delta
+	if (king_attack_cast_remaining > 0.0
+		or king_revival_cast_fx > 0.0 or king_last_stand_intro_timer > 0.0):
+		return
+	if king_tp_hold_remaining <= 0.0:
+		if _begin_king_teleport(view, false):
+			king_tp_failed_attempts = 0
+		else:
+			king_tp_failed_attempts += 1
+			king_tp_hold_remaining = 0.65
+			if king_tp_failed_attempts == 1 or king_tp_failed_attempts % 8 == 0:
+				push_warning("KING V30: no safe SOLO perch. Retrying.")
+
+
+func _king_teleport_ground_safe(candidate: Vector2, view: Rect2) -> Dictionary:
+	# V30: Check the King's actual COLLISION against terrain, not whether
+	# there is an overhead platform/ceiling in the upper part of the camera.
+	# In Level 5, the latter can wrongly mark every visible perch as unsafe.
+	# A teleport must stay above the player's floor level and out of tiles.
+	if not is_instance_valid(body_shape) or body_shape.shape == null:
+		return {"valid": false}
+	var half_height: float = 22.0
+	var half_width: float = 20.0
+	if body_shape.shape is RectangleShape2D:
+		var rect: RectangleShape2D = body_shape.shape as RectangleShape2D
+		half_height = maxf(12.0, rect.size.y * absf(body_shape.global_scale.y) * 0.5)
+		half_width = maxf(12.0, rect.size.x * absf(body_shape.global_scale.x) * 0.5)
+	var visual_bottom: float = maxf(40.0, _king_visible_bottom_offset())
+	var max_y: float = view.position.y + view.size.y * 0.64
+	if is_instance_valid(target):
+		max_y = minf(max_y, target.global_position.y - maxf(half_height + 28.0, 48.0))
+	var min_y: float = view.position.y - maxf(100.0, minf(165.0, visual_bottom * 0.95))
+	if max_y < min_y:
+		max_y = min_y
+	var physics: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var excluded: Array[RID] = _excluded_bodies()
+	var probe_bottom: float = maxf(view.end.y + 380.0, candidate.y + 380.0)
+	# Scan vertical positions on both sides of the proposed perch.
+	# This allows room below an overhead platform, while never placing the
+	# physical body inside it. No solid-terrain exemption is introduced.
+	var offsets: Array[float] = [0.0, -35.0, 35.0, -70.0, 70.0, -110.0, 105.0, -155.0]
+	for offset: float in offsets:
+		var probe: Vector2 = Vector2(candidate.x, clampf(candidate.y + offset, min_y, max_y))
+		if is_instance_valid(target) and probe.distance_to(target.global_position) < 82.0:
+			continue
+		# Find the first REAL floor surface BELOW this body, not the ceiling
+		# above it. Keep the King's collider and most of his art clear of it.
+		var next_floor_y: float = INF
+		for dx: float in [-half_width * 0.55, 0.0, half_width * 0.55]:
+			var ray: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(
+				Vector2(probe.x + dx, probe.y + half_height + 4.0),
+				Vector2(probe.x + dx, probe_bottom), terrain_mask, excluded)
+			var hit: Dictionary = physics.intersect_ray(ray)
+			if hit.is_empty():
+				continue
+			if (hit["normal"] as Vector2).y > -0.55:
+				continue
+			next_floor_y = minf(next_floor_y, (hit["position"] as Vector2).y)
+		if next_floor_y != INF:
+			var floor_clearance: float = maxf(half_height + 12.0, minf(visual_bottom + 8.0, 120.0))
+			probe.y = minf(probe.y, next_floor_y - floor_clearance)
+		# The player could be on the arena floor and the ray could miss a
+		# one-way platform. Never put the King below the player's feet.
+		if is_instance_valid(target):
+			probe.y = minf(probe.y, target.global_position.y - maxf(half_height + 28.0, 48.0))
+		if probe.y < min_y - 25.0:
+			continue
+		# This test uses the physics geometry at the proposed WORLD position.
+		# Even though his movement collision mask is zero, solid tiles still
+		# reject the teleport. No blind fallback into the ground.
+		var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+		query.shape = body_shape.shape
+		var proposed: Transform2D = body_shape.global_transform
+		proposed.origin += probe - global_position
+		query.transform = proposed
+		query.collision_mask = terrain_mask
+		query.exclude = excluded
+		query.margin = 1.0
+		if not physics.intersect_shape(query, 1).is_empty():
+			continue
+		return {"valid": true, "position": probe}
+	return {"valid": false}
+
+
+func _king_pick_teleport_destination(view: Rect2, guard_active: bool) -> Dictionary:
+	var best: Dictionary = {"valid": false}
+	var best_score: float = -INF
+	var margin_x: float = clampf(view.size.x * 0.08, 18.0, 52.0)
+	var left_x: float = view.position.x + margin_x
+	var right_x: float = view.end.x - margin_x
+	if right_x - left_x < 70.0:
+		return best
+	# Several horizontal and vertical candidates, including an upper perch
+	# and positions just below raised platforms/ceilings. All get the SAME
+	# actual terrain overlap validation.
+	var y_ratios: Array[float] = [-0.14, 0.04, 0.19, 0.35, 0.50]
+	if guard_active:
+		y_ratios = [-0.18, -0.06, 0.07, 0.18, 0.30]
+	for i: int in range(11):
+		var x: float = lerpf(left_x, right_x, float(i) / 10.0)
+		for ratio: float in y_ratios:
+			var tested: Dictionary = _king_teleport_ground_safe(
+				Vector2(x, view.position.y + view.size.y * ratio), view)
+			if not bool(tested.get("valid", false)):
+				continue
+			var pos: Vector2 = tested["position"]
+			var travel: float = pos.distance_to(global_position)
+			if travel < maxf(58.0, view.size.x * 0.14):
+				continue
+			var score: float = randf_range(0.0, 15.0) + minf(travel, 350.0) * 0.16
+			if i == king_tp_last_perch:
+				score -= 220.0
+			if is_instance_valid(target):
+				var player_distance: float = pos.distance_to(target.global_position)
+				if guard_active:
+					score += player_distance * 3.8
+					if absf(pos.x - target.global_position.x) < view.size.x * 0.25:
+						score -= 300.0
+				else:
+					score -= absf(player_distance - view.size.x * 0.38) * 0.60
+			if guard_active:
+				score += absf(float(i) / 10.0 - 0.5) * 380.0
+				for guard: CharacterBody2D in king_elite_guards:
+					if not is_instance_valid(guard) or guard.is_queued_for_deletion():
+						continue
+					if guard.has_method(&"is_dead") and bool(guard.call(&"is_dead")):
+						continue
+					score += minf(330.0, pos.distance_to(guard.global_position)) * 1.6
+			# Prefer at least some sprite visible; never turn this into a hard
+			# requirement because the roof in Level 5 may block every high spot.
+			var art_center_y: float = pos.y + sprite.position.y
+			if art_center_y < view.position.y - 40.0:
+				score -= (view.position.y - 40.0 - art_center_y) * 1.4
+			if score > best_score:
+				best_score = score
+				best = {"valid": true, "position": pos, "index": i}
+	return best
+
+
+func _begin_king_teleport(view: Rect2, guard_active: bool) -> bool:
+	var candidate: Dictionary = _king_pick_teleport_destination(view, guard_active)
+	if not bool(candidate.get("valid", false)):
+		return false
+	king_tp_destination = candidate["position"]
+	king_tp_last_perch = int(candidate["index"])
+	print("KING V30 TELEPORT START: ", global_position, " -> ", king_tp_destination,
+		" | guard=", guard_active)
+	king_tp_phase = 1
+	king_tp_elapsed = 0.0
+	# Keep all attacks and their warning geometry active in WORLD coordinates.
+	# Only the King's body/appearance is relocating.
+	_king_set_teleport_death_frame(0.0)
+	if is_instance_valid(king_crown_root):
+		king_crown_root.visible = false
+	return true
+
+
+func _king_set_teleport_death_frame(progress: float) -> void:
+	if not is_instance_valid(sprite) or sprite.sprite_frames == null:
+		return
+	if not sprite.sprite_frames.has_animation(&"death"):
+		return
+	var frame_count: int = sprite.sprite_frames.get_frame_count(&"death")
+	if frame_count <= 0:
+		return
+	sprite.stop()
+	sprite.animation = &"death"
+	var frame_index: int = clampi(int(round(clampf(progress, 0.0, 1.0) * float(frame_count - 1))), 0, frame_count - 1)
+	sprite.set_frame_and_progress(frame_index, 0.0)
+
+
+func _update_king_teleport_animation(delta: float) -> void:
+	if king_tp_phase == 1:
+		king_tp_elapsed += delta
+		var t: float = clampf(king_tp_elapsed / maxf(0.12, king_teleport_vanish_seconds), 0.0, 1.0)
+		_king_set_teleport_death_frame(t)
+		if t >= 1.0:
+			# The last death frame is the invisible/vanished state.
+			# Only after it finishes do we change the King's position.
+			global_position = king_tp_destination
+			# Keep physics interpolation from drawing a one-frame flight path.
+			reset_physics_interpolation()
+			sprite.reset_physics_interpolation()
+			king_tp_phase = 2
+			king_tp_elapsed = 0.0
+			_king_set_teleport_death_frame(1.0)
+		return
+	if king_tp_phase == 2:
+		king_tp_elapsed += delta
+		var t: float = clampf(king_tp_elapsed / maxf(0.20, king_teleport_reappear_seconds), 0.0, 1.0)
+		_king_set_teleport_death_frame(1.0 - t)
+		if t >= 1.0:
+			king_tp_phase = 0
+			king_tp_elapsed = 0.0
+			king_tp_hold_remaining = maxf(3.8, king_teleport_hold_seconds)
+			print("KING V30 TELEPORT FINISHED at ", global_position)
+			if is_instance_valid(king_crown_root):
+				king_crown_root.visible = true
+			_play(&"idle", true)
+			queue_redraw()
 
 
 func _update_barrage(delta: float) -> void:
@@ -1990,7 +2368,7 @@ func _update_barrage(delta: float) -> void:
 				and king_post_attack_timer <= 0.0
 				and not king_gravefall_active
 				and king_royal_slashes.is_empty()):
-				king_skull_spawns_remaining = 3 if king_last_stand_started else 4
+				king_skull_spawns_remaining = 2 if king_last_stand_started else 3
 				king_skull_interval_timer = 0.0
 				king_skull_volley_timer = (
 					maxf(27.0, king_last_stand_skull_volley_cooldown)

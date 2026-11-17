@@ -1,3 +1,5 @@
+# Menacing Skeleton V28 - varied royal two/three-hit strings and lower reborn HP
+# Menacing Skeleton V29 - no fake alive ghost; corpse itself revives frame by frame
 # Menacing Skeleton V27 - grounded ghost fade-in over corpse
 # Menacing Skeleton V26 - one-second genuine navigation-stall teleport to safe terrain
 # Menacing Skeleton V25 - larger resurrected body, matching hurtbox and modest sword scale
@@ -208,6 +210,8 @@ var warning_frame_count: int = 0
 var strike_commit_remaining: float = 0.0
 var combo_order: Array[Slash] = [Slash.DOWN, Slash.SIDE, Slash.FRONT]
 var combo_pause_remaining: float = 0.0
+var royal_combo_active: bool = false
+var royal_combo_lockout_attacks: int = 0
 var death_animation_playing: bool = false
 var authored_attack_area_transform: Transform2D
 var authored_sprite_transform: Transform2D
@@ -249,6 +253,9 @@ var royal_revive_preview: AnimatedSprite2D = null
 @export_range(1.05, 1.5, 0.05) var royal_reborn_visual_multiplier: float = 1.25
 @export_range(1.05, 1.5, 0.05) var royal_reborn_body_multiplier: float = 1.20
 @export_range(1.0, 1.3, 0.05) var royal_reborn_attack_multiplier: float = 1.10
+@export_group("Royal Reborn Combo Rhythm")
+@export_range(0.2, 0.85, 0.05) var royal_combo_opener_chance: float = 0.58
+@export_range(0.14, 0.40, 0.01) var royal_combo_followup_warning: float = 0.23
 var royal_reborn_growth_applied: bool = false
 var royal_reborn_floor_lift: float = 0.0
 
@@ -365,7 +372,7 @@ func _physics_process(delta: float) -> void:
 	# Preserve attack warning coloration, with a short white hit flash on damage.
 	if damage_white_flash > 0.0:
 		sprite.self_modulate = Color.WHITE
-	elif mode == Mode.WARNING:
+	elif mode == Mode.WARNING or (royal_combo_active and mode == Mode.RECOVER and combo_pause_remaining > 0.0):
 		sprite.self_modulate = attack_warning_color
 	elif mode not in [Mode.EXHAUSTED, Mode.STUNNED]:
 		sprite.self_modulate = original_sprite_color
@@ -734,44 +741,60 @@ func _start_attack_pattern() -> void:
 	mode = Mode.WARNING
 	combo_index = 0
 	combo_pause_remaining = 0.0
-	point_blank_attack = _target_at_point_blank()
-	var gap := absf(target.global_position.x - global_position.x)
-	jump_slam = gap <= jump_slam_range and randf() < jump_slam_chance and not test_move(global_transform, Vector2(0.0, -48.0))
-	lunge_attack = not jump_slam and (not _target_in_melee_range() or (not point_blank_attack and randf() < close_lunge_chance))
-	advancing_slam = not jump_slam and not lunge_attack and not point_blank_attack and randf() < advancing_slam_chance
+	var purple: bool = bool(get_meta(&"king_reborn_elite", false))
+	# Previous tuning gave the purple version huge jump/lunge probabilities,
+	# so almost every swing was a one-hit special. Choose a real 2-3 swing
+	# string on some openings, then FORCE 1-2 noncombo attacks afterward.
+	royal_combo_active = false
+	var eligible_combo: bool = purple and _target_in_melee_range()
+	if purple and royal_combo_lockout_attacks > 0:
+		royal_combo_lockout_attacks -= 1
+	elif eligible_combo and randf() < royal_combo_opener_chance:
+		royal_combo_active = true
+		royal_combo_lockout_attacks = randi_range(1, 2)
+	point_blank_attack = _target_at_point_blank() and not royal_combo_active
+	var gap: float = absf(target.global_position.x - global_position.x)
+	jump_slam = not royal_combo_active and gap <= jump_slam_range and randf() < jump_slam_chance and not test_move(global_transform, Vector2(0.0, -48.0))
+	lunge_attack = not royal_combo_active and not jump_slam and (not _target_in_melee_range() or (not point_blank_attack and randf() < close_lunge_chance))
+	advancing_slam = not royal_combo_active and not jump_slam and not lunge_attack and not point_blank_attack and randf() < advancing_slam_chance
 	combo_order.assign([Slash.DOWN, Slash.SIDE, Slash.FRONT])
-	if bool(get_meta(&"king_reborn_elite", false)) and not jump_slam and not lunge_attack and not advancing_slam and not point_blank_attack:
-		# Purple resurrection earns five/six authored strikes, not faster
-		# invisible hits. The windup for the opener remains visible.
-		combo_order.append(Slash.SIDE)
-		combo_order.append(Slash.DOWN)
-		if randf() < 0.50:
-			combo_order.append(Slash.FRONT)
-	if not jump_slam and not point_blank_attack and not lunge_attack and not advancing_slam and randf() < alternate_combo_chance:
-		var previous_length: int = combo_order.size()
+	if royal_combo_active:
+		# Real authored hit frames for every swing, not a damage simulation.
+		# Mostly 2-hit strings, occasionally 3; don't chain one after another.
+		match randi_range(0, 2):
+			0:
+				combo_order.assign([Slash.DOWN, Slash.FRONT])
+			1:
+				combo_order.assign([Slash.SIDE, Slash.DOWN])
+			_:
+				combo_order.assign([Slash.FRONT, Slash.SIDE])
+		if randf() < 0.40:
+			combo_order.append(Slash.SIDE if combo_order[0] == Slash.DOWN else Slash.FRONT)
+	elif purple:
+		# Between combo sequences, purple uses one clean special or normal
+		# slash; it shouldn't sneak in a second 3-swing string immediately.
+		var single_options: Array[Slash] = [Slash.DOWN, Slash.SIDE, Slash.FRONT]
+		combo_order.assign([single_options[randi_range(0, 2)]])
+	elif not jump_slam and not point_blank_attack and not lunge_attack and not advancing_slam and randf() < alternate_combo_chance:
 		if randf() < 0.5:
 			combo_order.assign([Slash.DOWN, Slash.FRONT, Slash.SIDE])
 		else:
 			combo_order.assign([Slash.SIDE, Slash.DOWN, Slash.FRONT])
-		if bool(get_meta(&"king_reborn_elite", false)):
-			combo_order.append(Slash.FRONT)
-			if previous_length >= 5:
-				combo_order.append(Slash.SIDE)
 	velocity.x = 0.0
 	lunge_backstep_remaining = 0.0
 	_face_player()
 	committed_target_x = target.global_position.x
 
 	if lunge_attack:
-		var direction := 1.0 if facing_right else -1.0
-		var retreat := clampf(lunge_max_distance - gap - lunge_past_target, 0.0, lunge_retreat_distance)
+		var direction: float = 1.0 if facing_right else -1.0
+		var retreat: float = clampf(lunge_max_distance - gap - lunge_past_target, 0.0, lunge_retreat_distance)
 		lunge_backstep_direction = -direction
 		lunge_backstep_remaining = _safe_backstep_distance(lunge_backstep_direction, retreat)
 		warning_duration = lunge_warning_seconds
 		warning_frame_count = 1 if _pose_attack(Slash.FRONT) else 0
 		sprite.self_modulate = attack_warning_color
 	else:
-		var opener := combo_order[0]
+		var opener: Slash = combo_order[0]
 		if point_blank_attack and not jump_slam:
 			opener = [Slash.DOWN, Slash.SIDE, Slash.FRONT][randi_range(0, 2)]
 			combo_order[0] = opener
@@ -782,13 +805,12 @@ func _start_attack_pattern() -> void:
 			warning_duration = maxf(warning_duration, point_blank_warning_seconds)
 		warning_frame_count = 0
 		if _pose_attack(opener):
-			var frame_count := sprite.sprite_frames.get_frame_count(sprite.animation)
+			var frame_count: int = sprite.sprite_frames.get_frame_count(sprite.animation)
 			warning_frame_count = clampi(_hit_frame(opener), 0, frame_count - 1)
 		sprite.self_modulate = attack_warning_color
-	# Keep the telegraph readable even if an existing .tscn Inspector override
-	# still contains the old short warning seconds. Strike speed is unchanged.
-	warning_duration = maxf(0.75 if bool(get_meta(&"king_reborn_elite", false)) else 0.95, warning_duration)
+	warning_duration = maxf(0.78 if purple else 0.95, warning_duration)
 	recovery_remaining = maxf(0.01, warning_duration)
+
 
 func _warning_visible_at(world_position: Vector2) -> bool:
 	var visible_area := get_viewport_rect().grow(-12.0)
@@ -1006,12 +1028,18 @@ func _end_strike() -> void:
 	if jump_slam or point_blank_attack or lunge_attack or advancing_slam or combo_index >= combo_order.size():
 		_finish_attack_pattern()
 		return
-	var followup_pause := point_blank_followup_pause if point_blank_attack else combo_followup_pause
+	var followup_pause: float = (royal_combo_followup_warning if royal_combo_active
+		else (point_blank_followup_pause if point_blank_attack else combo_followup_pause))
 	combo_pause_remaining = maxf(0.01, followup_pause)
+	# Show the upcoming swing pose throughout the short follow-up tell.
+	if royal_combo_active and combo_index < combo_order.size():
+		_pose_attack(combo_order[combo_index])
+		sprite.self_modulate = attack_warning_color
 	mode = Mode.RECOVER
 
 
 func _finish_attack_pattern() -> void:
+	royal_combo_active = false
 	sprite.self_modulate = original_sprite_color
 	if attacks_since_fatigue >= fatigue_threshold:
 		_start_exhausted()
@@ -1386,15 +1414,19 @@ func begin_royal_resurrection(reborn_hp: int = 110) -> bool:
 	if not can_be_royally_revived():
 		return false
 	royal_corpse_ready = false
-	royal_reviving_stage = 1
+	# Stage 3 now means the corpse itself plays its authored death frames
+	# backward. Stages 1/2 and their misleading fully-alive ghost are gone.
+	royal_reviving_stage = 3
 	royal_revive_elapsed = 0.0
 	set_meta(&"king_royal_reviving", true)
 	set_meta(&"king_reborn_elite", true)
 	set_meta(&"king_guard_buffed", true)
 	set_meta(&"king_royal_revive_count", int(get_meta(&"king_royal_revive_count", 0)) + 1)
 	# Reuses the SAME body and hitboxes. No duplicated active enemy node.
-	max_hp = maxi(90, reborn_hp)
-	hp = max_hp
+	max_hp = maxi(45, reborn_hp)
+	# The body gradually regains HP as it reconstructs. It cannot fight or
+	# be hit until the last reverse-death frame is complete.
+	hp = 1
 	pursuit_speed = 205.0
 	attack_interval = 0.22
 	attack_interval_random = 0.09
@@ -1433,56 +1465,21 @@ func begin_royal_resurrection(reborn_hp: int = 110) -> bool:
 	fatigue_duration_max = 1.75
 	tactical_retreat_chance = 0.16
 	activation_radius = 1000.0
-	# Purple shading belongs to the resurrected skeleton, not the corpse.
+	# Absolutely NO separate fully-formed ghost or clone during resurrection.
+	# Keep this same dead sprite, start on the final death frame, and reverse
+	# each frame slowly until its living appearance is reached.
 	original_sprite_color = Color(0.72, 0.38, 1.0)
-	sprite.self_modulate = Color(0.49, 0.24, 0.70)
 	if is_instance_valid(royal_revive_preview):
 		royal_revive_preview.queue_free()
-	royal_revive_preview = AnimatedSprite2D.new()
-	royal_revive_preview.name = "RoyalResurrectionGhost"
-	royal_revive_preview.sprite_frames = sprite.sprite_frames
-	royal_revive_preview.transform = sprite.transform
-	royal_revive_preview.flip_h = sprite.flip_h
-	royal_revive_preview.centered = sprite.centered
-	royal_revive_preview.offset = sprite.offset
-	royal_revive_preview.z_index = sprite.z_index + 2
-	royal_revive_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	royal_revive_preview.modulate = Color(0.74, 0.40, 1.0, 0.0)
-	add_child(royal_revive_preview)
-	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_idle):
-		royal_revive_preview.animation = animation_idle
-		royal_revive_preview.frame = 0
-	royal_revive_preview.stop()
-	royal_revive_preview.scale = sprite.scale * 1.12 * maxf(1.05, royal_reborn_visual_multiplier)
-	_align_royal_ghost_feet_to_corpse()
+	royal_revive_preview = null
+	sprite.stop()
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_death):
+		var final_frame: int = maxi(0, sprite.sprite_frames.get_frame_count(animation_death) - 1)
+		sprite.animation = animation_death
+		sprite.set_frame_and_progress(final_frame, 0.0)
+	# Subtle color recovery on the original body, not an apparition above it.
+	sprite.self_modulate = Color(0.49, 0.24, 0.70)
 	return true
-
-func _align_royal_ghost_feet_to_corpse() -> void:
-	# The idle-frame ghost is taller than the collapsed death-frame corpse.
-	# Align its bottom to the real collider's floor, not the corpse sprite's
-	# center. This is why the enlarged fade-in previously floated in midair.
-	if not is_instance_valid(royal_revive_preview):
-		return
-	if not body_shape.shape is RectangleShape2D:
-		royal_revive_preview.position = sprite.position
-		return
-	var body_rect: RectangleShape2D = body_shape.shape as RectangleShape2D
-	var feet_y: float = body_shape.position.y + body_rect.size.y * absf(body_shape.scale.y) * 0.5
-	var frame_texture: Texture2D = null
-	if (royal_revive_preview.sprite_frames != null
-		and royal_revive_preview.sprite_frames.has_animation(royal_revive_preview.animation)
-		and royal_revive_preview.sprite_frames.get_frame_count(royal_revive_preview.animation) > 0):
-		frame_texture = royal_revive_preview.sprite_frames.get_frame_texture(royal_revive_preview.animation, 0)
-	if frame_texture == null:
-		royal_revive_preview.position = sprite.position
-		return
-	var image_height: float = float(frame_texture.get_height())
-	var bottom_offset: float = (image_height * 0.5 if royal_revive_preview.centered else image_height)
-	bottom_offset += royal_revive_preview.offset.y
-	royal_revive_preview.position = Vector2(
-		body_shape.position.x - royal_revive_preview.offset.x * royal_revive_preview.scale.x,
-		feet_y - bottom_offset * absf(royal_revive_preview.scale.y) - 2.0
-	)
 
 
 func _apply_royal_reborn_growth() -> void:
@@ -1509,45 +1506,31 @@ func _apply_royal_reborn_growth() -> void:
 
 
 func _update_royal_resurrection(delta: float) -> void:
+	# The resurrected Menacing IS the corpse on the floor. Do not create a
+	# complete idle sprite and fade it in ahead of the real resurrection.
+	if royal_reviving_stage != 3:
+		return
 	royal_revive_elapsed += delta
-	if royal_reviving_stage == 1:
-		# 2.2 seconds: a transparent purple ghost slowly forms ABOVE the corpse.
-		var progress: float = clampf(royal_revive_elapsed / maxf(0.05, royal_revive_ghost_seconds), 0.0, 1.0)
-		if is_instance_valid(royal_revive_preview):
-			royal_revive_preview.modulate.a = 0.88 * progress
-			royal_revive_preview.scale = sprite.scale * maxf(1.05, royal_reborn_visual_multiplier) * lerpf(1.12, 1.0, progress)
-			_align_royal_ghost_feet_to_corpse()
-		if progress >= 1.0:
-			royal_reviving_stage = 2
-			royal_revive_elapsed = 0.0
-		return
-	if royal_reviving_stage == 2:
-		# 0.9 seconds: hold the visible ghost before the body moves at all.
-		var hold_progress: float = clampf(royal_revive_elapsed / maxf(0.05, royal_revive_hold_seconds), 0.0, 1.0)
-		if is_instance_valid(royal_revive_preview):
-			royal_revive_preview.modulate.a = 0.88 * (1.0 - 0.15 * hold_progress)
-			_align_royal_ghost_feet_to_corpse()
-		if hold_progress >= 1.0:
-			if is_instance_valid(royal_revive_preview):
-				royal_revive_preview.queue_free()
-			royal_revive_preview = null
-			royal_reviving_stage = 3
-			royal_revive_elapsed = 0.0
-			# The ghost merges into a larger, physically hittable royal body.
-			_apply_royal_reborn_growth()
-			# Now the enlarged body plays its death frames backward.
-			sprite.stop()
-			sprite.self_modulate = original_sprite_color
-		return
-	if royal_reviving_stage == 3:
-		# 1.6 seconds: clearly visible reversed death animation.
-		var reverse_progress: float = clampf(royal_revive_elapsed / maxf(0.05, royal_revive_reverse_seconds), 0.0, 1.0)
-		if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_death):
-			var last: int = maxi(0, sprite.sprite_frames.get_frame_count(animation_death) - 1)
+	# Preserve the King's existing casting timer: old ghost/hold/reverse
+	# durations now all contribute to ONE gradual reverse-death sequence.
+	var resurrection_duration: float = maxf(3.2,
+		royal_revive_ghost_seconds + royal_revive_hold_seconds + royal_revive_reverse_seconds)
+	var progress: float = clampf(royal_revive_elapsed / resurrection_duration, 0.0, 1.0)
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_death):
+		var frame_total: int = sprite.sprite_frames.get_frame_count(animation_death)
+		if frame_total > 0:
+			# Reverse through EVERY authored death frame, including both ends.
+			var reverse_step: int = mini(frame_total - 1, int(floor(progress * float(frame_total))))
+			var reverse_frame: int = frame_total - 1 - reverse_step
 			sprite.animation = animation_death
-			sprite.set_frame_and_progress(clampi(int(floor(float(last) * (1.0 - reverse_progress))), 0, last), 0.0)
-		if reverse_progress >= 1.0:
-			_finish_royal_resurrection()
+			sprite.stop()
+			sprite.set_frame_and_progress(reverse_frame, 0.0)
+	hp = clampi(int(round(lerpf(1.0, float(max_hp), progress))), 1, max_hp)
+	# Gradually restore the body's royal purple, keeping the same visible sprite.
+	sprite.self_modulate = Color(0.49, 0.24, 0.70).lerp(original_sprite_color, progress)
+	if progress >= 1.0:
+		_finish_royal_resurrection()
+
 
 func _finish_royal_resurrection() -> void:
 	if royal_reviving_stage != 3 or mode != Mode.DEAD:
@@ -1556,6 +1539,8 @@ func _finish_royal_resurrection() -> void:
 	royal_revive_elapsed = 0.0
 	set_meta(&"king_royal_reviving", false)
 	royal_corpse_ready = false
+	# Grow the restored living body only after the last reverse-death frame.
+	_apply_royal_reborn_growth()
 	# Lift half of the physical height increase once, preserving feet-on-floor.
 	if royal_reborn_floor_lift > 0.0:
 		global_position.y -= royal_reborn_floor_lift
