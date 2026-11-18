@@ -1,4 +1,4 @@
-# NORMAL NECROMANCER - V2 wall phasing/platform revival (no king code)
+# NORMAL NECROMANCER V7 - very slow swarm pursuit; horizontal laser patterns removed
 extends CharacterBody2D
 
 signal health_changed(current: int, maximum: int)
@@ -7,7 +7,6 @@ signal died
 enum State { DORMANT, OPENING, SUMMONING, GUARDED, DESCENDING, REVIVING, DEAD }
 
 const SKELETON_SCENE := preload("res://skeletonenemy.tscn")
-const SKULL_TEXTURE := preload("res://miniboss/Skeleton head.png")
 const REVIVE_ANIMATION := &"spawnenemies2"
 const REVIVE_LOOP_FIRST := 4
 const REVIVE_LOOP_LAST := 7
@@ -26,8 +25,23 @@ const MAX_BUFFED_SKELETONS := 2
 @export var hover_speed: float = 105.0
 @export var keep_distance: float = 105.0
 @export var arena_roam_distance: float = 155.0
-@export var skull_speed: float = 245.0
-@export var skull_damage: int = 1
+@export_group("Normal Necromancer Red Lasers")
+@export_range(3.0, 10.0, 0.25) var laser_cooldown_seconds: float = 5.0
+@export_range(0.5, 1.6, 0.05) var laser_warning_seconds: float = 0.95
+@export_range(6.0, 24.0, 1.0) var laser_width: float = 12.0
+@export_range(0.15, 0.65, 0.05) var laser_strike_spacing: float = 0.38
+@export var laser_damage: int = 1
+
+@export_group("Final Run: Necromancer Swarm")
+@export_range(2, 20, 1) var swarm_minimum_necromancers: int = 6
+@export_range(180.0, 900.0, 20.0) var swarm_cluster_radius: float = 440.0
+@export_range(20.0, 100.0, 5.0) var swarm_chase_speed: float = 45.0
+@export_range(0.0, 160.0, 10.0) var swarm_hover_above_player: float = 80.0
+@export_range(3.0, 12.0, 0.25) var swarm_level_up_seconds: float = 8.0
+@export_range(2.5, 6.0, 0.25) var swarm_min_attack_cooldown: float = 3.5
+@export_group("Final Run: Hidden Ambush")
+@export_range(90.0, 420.0, 10.0) var swarm_ambush_proximity: float = 225.0
+@export_range(50.0, 300.0, 10.0) var swarm_ambush_pass_margin: float = 100.0
 
 # Platform arena support: fly through solid walls/floors, but land on a REAL
 # platform via a downward terrain raycast before reviving a skeleton.
@@ -47,10 +61,13 @@ class SummonSlot:
 	var floor_position: Vector2
 
 
-class Skull:
-	var visual: Sprite2D
-	var direction: Vector2
-	var lifetime: float = 3.0
+class RedLaser:
+	var from_world: Vector2 = Vector2.ZERO
+	var to_world: Vector2 = Vector2.ZERO
+	var delay: float = 0.0
+	var elapsed: float = 0.0
+	var warning: float = 0.95
+	var fired: bool = false
 
 
 var state: State = State.DORMANT
@@ -60,7 +77,8 @@ var home: Vector2
 var hover_center_x: float
 var hover_time: float = 0.0
 var slots: Array[SummonSlot] = []
-var skulls: Array[Skull] = []
+var red_lasers: Array[RedLaser] = []
+var laser_hit_cooldown: float = 0.0
 var revive_slot: SummonSlot
 var revive_destination: Vector2
 var revive_timer: float = 0.0
@@ -78,6 +96,17 @@ var flash_timer: float = 0.0
 var hover_side: float = 1.0
 var sprite_tint: Color
 var original_collision_mask: int = 0
+var swarm_active: bool = false
+var swarm_elapsed: float = 0.0
+var swarm_check_timer: float = 0.0
+var swarm_level: int = 0
+var swarm_attack_round: int = 0
+var swarm_ambush_hidden: bool = false
+var swarm_ambush_revealed: bool = false
+var swarm_ambush_ready: bool = false
+var swarm_ambush_center: Vector2 = Vector2.ZERO
+var swarm_approach_direction: float = 1.0
+var swarm_original_collision_layer: int = 0
 
 
 func _set_flight_collision(landing: bool) -> void:
@@ -95,6 +124,7 @@ func _set_flight_collision(landing: bool) -> void:
 
 func _ready() -> void:
 	original_collision_mask = collision_mask
+	swarm_original_collision_layer = collision_layer
 	hp = maxi(1, max_hp)
 	home = global_position
 	hover_center_x = home.x
@@ -105,6 +135,7 @@ func _ready() -> void:
 	add_to_group(&"necromancer")
 	_play(&"idle")
 	health_changed.emit(hp, max_hp)
+	call_deferred("_initialize_swarm_ambush")
 
 
 func _physics_process(delta: float) -> void:
@@ -117,11 +148,17 @@ func _physics_process(delta: float) -> void:
 			target.add_collision_exception_with(self)
 	if not is_instance_valid(target):
 		return
+	if not swarm_ambush_ready:
+		return
 	var dx_to_player := target.global_position.x - global_position.x
 	if absf(dx_to_player) > 3.0:
 		sprite.flip_h = (dx_to_player > 0.0) != sprite_faces_right_by_default
+	if swarm_ambush_hidden:
+		_check_swarm_ambush_trigger()
+		return
 	flash_timer = maxf(0.0, flash_timer - delta)
-	_update_skulls(delta)
+	_update_swarm_mode(delta)
+	_update_red_lasers(delta)
 	match state:
 		State.DORMANT:
 			if global_position.distance_to(target.global_position) <= activation_range:
@@ -141,7 +178,155 @@ func _physics_process(delta: float) -> void:
 		queue_redraw()
 
 
+
+func _ambush_members() -> Array[CharacterBody2D]:
+	# Use original spawn points, not current chasing positions.
+	var members: Array[CharacterBody2D] = []
+	var distance_sq: float = swarm_cluster_radius * swarm_cluster_radius
+	for node: Node in get_tree().get_nodes_in_group(&"necromancer"):
+		if not node is CharacterBody2D or node.get_script() != get_script():
+			continue
+		if node.is_in_group(&"king_necromancer") or node.is_queued_for_deletion():
+			continue
+		if node.has_method(&"is_dead") and bool(node.call(&"is_dead")):
+			continue
+		if home.distance_squared_to((node as CharacterBody2D).get("home")) <= distance_sq:
+			members.append(node as CharacterBody2D)
+	return members
+
+
+func _initialize_swarm_ambush() -> void:
+	if state == State.DEAD or swarm_ambush_revealed:
+		return
+	var members: Array[CharacterBody2D] = _ambush_members()
+	if members.size() < swarm_minimum_necromancers:
+		swarm_ambush_ready = true
+		return
+	var center: Vector2 = Vector2.ZERO
+	for necro: CharacterBody2D in members:
+		center += necro.get("home")
+	center /= float(members.size())
+	swarm_ambush_center = center
+	if is_instance_valid(target):
+		swarm_approach_direction = 1.0 if target.global_position.x <= center.x else -1.0
+	else:
+		var player_node: Node = get_tree().get_first_node_in_group(&"player")
+		if player_node is Node2D:
+			swarm_approach_direction = 1.0 if (player_node as Node2D).global_position.x <= center.x else -1.0
+	# Hide the entire clustered group before it starts an encounter.
+	swarm_ambush_ready = true
+	swarm_ambush_hidden = true
+	swarm_active = false
+	state = State.DORMANT
+	velocity = Vector2.ZERO
+	collision_layer = 0
+	visible = false
+	_clear_red_lasers()
+
+
+func _check_swarm_ambush_trigger() -> void:
+	if not swarm_ambush_hidden or not is_instance_valid(target):
+		return
+	var close: bool = target.global_position.distance_to(swarm_ambush_center) <= swarm_ambush_proximity
+	var passed_x: bool = (target.global_position.x - swarm_ambush_center.x) * swarm_approach_direction >= -swarm_ambush_pass_margin
+	var nearby_y: bool = absf(target.global_position.y - swarm_ambush_center.y) < maxf(280.0, swarm_cluster_radius)
+	if not close and not (passed_x and nearby_y):
+		return
+	# Reveal every member simultaneously, including members outside this
+	# individual Necromancer's player-detection radius.
+	for necro: CharacterBody2D in _ambush_members():
+		if necro.has_method(&"_reveal_swarm_ambush"):
+			necro.call("_reveal_swarm_ambush")
+
+
+func _reveal_swarm_ambush() -> void:
+	if swarm_ambush_revealed or state == State.DEAD:
+		return
+	swarm_ambush_hidden = false
+	swarm_ambush_revealed = true
+	visible = true
+	collision_layer = swarm_original_collision_layer
+	_enter_swarm_mode()
+	# Give the player a brief opportunity to react to the reveal.
+	barrage_timer = 1.10 + float(get_instance_id() % 7) * 0.24
+	queue_redraw()
+
+
+func _nearby_normal_necromancers(radius: float) -> int:
+	# Only other instances of THIS ordinary Necromancer. Never count the King.
+	var total: int = 1
+	var radius_sq: float = radius * radius
+	for node: Node in get_tree().get_nodes_in_group(&"necromancer"):
+		if node == self or not node is CharacterBody2D:
+			continue
+		if node.is_in_group(&"king_necromancer") or node.get_script() != get_script():
+			continue
+		if node.has_method(&"is_dead") and bool(node.call(&"is_dead")):
+			continue
+		if global_position.distance_squared_to((node as CharacterBody2D).global_position) <= radius_sq:
+			total += 1
+	return total
+
+
+func _update_swarm_mode(delta: float) -> void:
+	# Revealed final-run ambush remains active even when the formation spreads.
+	if swarm_ambush_revealed:
+		swarm_elapsed += delta
+		swarm_level = mini(4, int(swarm_elapsed / maxf(3.0, swarm_level_up_seconds)))
+		return
+	# Check only a few times per second even when many necromancers exist.
+	swarm_check_timer -= delta
+	if swarm_check_timer <= 0.0:
+		swarm_check_timer = 0.35 + float(get_instance_id() % 7) * 0.035
+		var radius: float = swarm_cluster_radius * (1.35 if swarm_active else 1.0)
+		var should_swarm: bool = _nearby_normal_necromancers(radius) >= swarm_minimum_necromancers
+		if should_swarm and not swarm_active:
+			_enter_swarm_mode()
+		elif not should_swarm and swarm_active:
+			_exit_swarm_mode()
+	if swarm_active:
+		swarm_elapsed += delta
+		swarm_level = mini(4, int(swarm_elapsed / maxf(3.0, swarm_level_up_seconds)))
+
+
+func _enter_swarm_mode() -> void:
+	swarm_active = true
+	swarm_elapsed = 0.0
+	swarm_level = 0
+	swarm_attack_round = 0
+	# No skeleton summons, descents, or revivals during the final run.
+	# Existing skeletons are left intact; this only prevents new spawns.
+	casting_slot = null
+	revive_slot = null
+	_clear_revive_preview()
+	_clear_red_lasers()
+	state = State.GUARDED
+	opening_complete = true
+	_set_flight_collision(false)
+	barrage_timer = 0.85 + float(get_instance_id() % 9) * 0.27
+	_play(&"idle", true)
+
+
+func _exit_swarm_mode() -> void:
+	swarm_active = false
+	swarm_elapsed = 0.0
+	swarm_level = 0
+	# Resume ordinary summon behavior if the formation breaks up.
+	# The next guard check will decide whether surviving summons remain.
+	if slots.is_empty():
+		state = State.DORMANT
+		opening_complete = false
+	else:
+		state = State.GUARDED
+	barrage_timer = maxf(1.5, barrage_timer)
+
+
 func _begin_encounter() -> void:
+	if swarm_active:
+		state = State.GUARDED
+		opening_complete = true
+		barrage_timer = maxf(0.5, barrage_timer)
+		return
 	# Narrow, separated platforms often have no ground at exactly +/-72px.
 	# Sample the nearby ledges before abandoning the summon encounter.
 	var desired_count: int = clampi(skeleton_count, 1, 2)
@@ -192,13 +377,16 @@ func _update_opening(delta: float) -> void:
 			_begin_summoning()
 		return
 	_update_barrage(delta)
-	if shots_left == 0 and barrage_timer > 2.0:
+	if shots_left == 0 and barrage_timer > 2.0 and red_lasers.is_empty():
 		opening_complete = true
 		barrage_timer = 0.55
 
 
 func _begin_summoning() -> void:
-	_clear_skulls()
+	if swarm_active:
+		state = State.GUARDED
+		return
+	_clear_red_lasers()
 	state = State.SUMMONING
 	shots_left = 0
 	summon_slot_index = 0
@@ -207,6 +395,9 @@ func _begin_summoning() -> void:
 
 
 func _next_summon_cast() -> void:
+	if swarm_active:
+		state = State.GUARDED
+		return
 	while summon_slot_index < slots.size():
 		var slot := slots[summon_slot_index]
 		summon_slot_index += 1
@@ -303,6 +494,8 @@ func _living_buffed_count() -> int:
 
 
 func _spawn_skeleton(slot: SummonSlot, request_buff: bool) -> void:
+	if swarm_active:
+		return
 	var buffed := request_buff and _living_buffed_count() < MAX_BUFFED_SKELETONS
 	slot.buffed = buffed
 	var skeleton := SKELETON_SCENE.instantiate() as CharacterBody2D
@@ -347,6 +540,10 @@ func _spawn_skeleton(slot: SummonSlot, request_buff: bool) -> void:
 
 
 func _update_guarded(delta: float) -> void:
+	if swarm_active:
+		_update_hover(delta)
+		_update_barrage(delta)
+		return
 	var living_count := 0
 	for slot in slots:
 		if not is_instance_valid(slot.skeleton):
@@ -367,8 +564,8 @@ func _update_guarded(delta: float) -> void:
 
 	_update_hover(delta)
 	if living_count >= 2:
-		if shots_left > 0 or not skulls.is_empty():
-			_clear_skulls()
+		if shots_left > 0 or not red_lasers.is_empty():
+			_clear_red_lasers()
 			shots_left = 0
 		barrage_timer = maxf(barrage_timer, 1.1)
 		return
@@ -376,6 +573,18 @@ func _update_guarded(delta: float) -> void:
 
 
 func _update_hover(delta: float) -> void:
+	if swarm_active:
+		# Pursue the player across the arena, without clamping to the spawn point.
+		# A gentle oscillation keeps clustered enemies from occupying one pixel.
+		hover_time += delta * 2.8
+		var spacing: float = sin(hover_time + float(get_instance_id() % 11)) * 24.0
+		var destination: Vector2 = target.global_position + Vector2(spacing, -swarm_hover_above_player)
+		# Hard-cap speed: older .tscn scenes may retain the old 165px/s
+		# Inspector value even after this script changes its default.
+		# Difficulty progression affects laser patterns, not movement speed.
+		var speed: float = clampf(swarm_chase_speed, 20.0, 55.0)
+		_fly_toward(destination, speed, delta)
+		return
 	var dx := global_position.x - target.global_position.x
 	if absf(dx) > 45.0:
 		hover_side = signf(dx)
@@ -387,21 +596,144 @@ func _update_hover(delta: float) -> void:
 
 
 func _update_barrage(delta: float) -> void:
+	# One three-laser combination, then five seconds before the next one.
+	# Never start another attack before the previous three warning lanes vanish.
 	barrage_timer -= delta
-	if barrage_timer > 0.0:
+	if barrage_timer > 0.0 or not red_lasers.is_empty():
 		return
-	if shots_left > 0:
-		_launch_skull()
-		shots_left -= 1
-		barrage_timer = 0.20 if shots_left > 0 else 2.8
+	_start_red_laser_combo()
+	if swarm_active:
+		barrage_timer = maxf(swarm_min_attack_cooldown,
+			laser_cooldown_seconds - float(swarm_level) * 0.35)
+		# Small per-necromancer stagger stops an entire swarm firing in sync.
+		barrage_timer += float(get_instance_id() % 5) * 0.12
 	else:
-		_play(&"spawnenemies2", true)
-		shots_left = 4
-		barrage_timer = 0.60
+		barrage_timer = maxf(3.0, laser_cooldown_seconds)
+
+
+func _laser_visible_rect() -> Rect2:
+	var size: Vector2 = get_viewport_rect().size
+	var inverse: Transform2D = get_viewport().get_canvas_transform().affine_inverse()
+	var first: Vector2 = inverse * Vector2.ZERO
+	var last: Vector2 = inverse * size
+	return Rect2(first, last - first).abs()
+
+
+func _queue_red_laser(center: Vector2, direction: Vector2, delay: float, view: Rect2) -> void:
+	var shot: RedLaser = RedLaser.new()
+	var reach: float = maxf(view.size.length() * 2.2, 800.0)
+	shot.from_world = center - direction.normalized() * reach
+	shot.to_world = center + direction.normalized() * reach
+	shot.delay = delay
+	shot.warning = maxf(0.55, laser_warning_seconds)
+	red_lasers.append(shot)
+
+
+func _start_red_laser_combo() -> void:
+	if not is_instance_valid(target):
+		return
+	_play(&"spawnenemies2", true)
+	var view: Rect2 = _laser_visible_rect()
+	# Aim is locked when the warning appears, never tracks after being shown.
+	var point: Vector2 = target.global_position
+	# No horizontal beams. With many Necromancers even 2% causes
+	# frequent horizontal screens, so choose only vertical/X/mixed diagonals.
+	var pattern: int = [0, 2, 3][randi_range(0, 2)]
+	# More precise combinations at higher levels, but never more damage per hit.
+	var count: int = 3 + (1 if swarm_active and swarm_level >= 2 else 0)
+	for index: int in range(count):
+		var angle: float = 0.0
+		match pattern:
+			0: # Three vertical strikes, lightly offset for dodging.
+				angle = PI * 0.5
+			2: # X, and a third follow-up diagonal.
+				angle = PI * 0.25 if index != 1 else PI * 0.75
+			_: # Mixed vertical and diagonal, avoiding additional horizontal lasers.
+				angle = [PI * 0.5, PI * 0.75, PI * 0.25][index % 3]
+		var center: Vector2 = point
+		if swarm_active and swarm_level >= 1:
+			# Predict only a short distance ahead; warning position remains locked.
+			var lead: float = minf(0.22, 0.07 * float(swarm_level))
+			center += target.velocity * lead
+		if pattern == 0:
+			center.x += float(index - 1) * 52.0
+		elif index >= 2:
+			center += Vector2(40.0 * float(index - 1), -35.0 * float(index - 1))
+		# Swarm progression makes the timing less predictable, not instant.
+		var interval: float = laser_strike_spacing
+		if swarm_active:
+			interval = maxf(0.26, laser_strike_spacing - float(swarm_level) * 0.025)
+		_queue_red_laser(center, Vector2.RIGHT.rotated(angle),
+			float(index) * interval, view)
+	queue_redraw()
+
+
+func _red_laser_hits_player(shot: RedLaser) -> bool:
+	if not is_instance_valid(target):
+		return false
+	var length_vec: Vector2 = shot.to_world - shot.from_world
+	if length_vec.length_squared() < 1.0:
+		return false
+	var rectangle: RectangleShape2D = RectangleShape2D.new()
+	rectangle.size = Vector2(length_vec.length(), laser_width)
+	var pose: Transform2D = Transform2D(length_vec.angle(),
+		(shot.from_world + shot.to_world) * 0.5)
+	for child: Node in target.get_children():
+		if child is CollisionShape2D:
+			var hitbox: CollisionShape2D = child as CollisionShape2D
+			if not hitbox.disabled and hitbox.shape != null:
+				if rectangle.collide(pose, hitbox.shape, hitbox.global_transform):
+					return true
+	return false
+
+
+func _update_red_lasers(delta: float) -> void:
+	laser_hit_cooldown = maxf(0.0, laser_hit_cooldown - delta)
+	for index: int in range(red_lasers.size() - 1, -1, -1):
+		var shot: RedLaser = red_lasers[index]
+		shot.elapsed += delta
+		var fire_at: float = shot.delay + shot.warning
+		if not shot.fired and shot.elapsed >= fire_at:
+			shot.fired = true
+			if laser_hit_cooldown <= 0.0 and _red_laser_hits_player(shot):
+				laser_hit_cooldown = 0.30
+				if target.has_method(&"tomar_dano"):
+					target.call(&"tomar_dano", laser_damage, shot.from_world)
+				elif target.has_method(&"take_damage"):
+					target.call(&"take_damage", laser_damage, shot.from_world)
+		if shot.elapsed >= fire_at + 0.27:
+			red_lasers.remove_at(index)
+	if not red_lasers.is_empty():
+		queue_redraw()
+
+
+func _clear_red_lasers() -> void:
+	red_lasers.clear()
+	queue_redraw()
+
+
+func _draw_red_lasers() -> void:
+	for shot: RedLaser in red_lasers:
+		if shot.elapsed < shot.delay:
+			continue
+		var a: Vector2 = to_local(shot.from_world)
+		var b: Vector2 = to_local(shot.to_world)
+		if not shot.fired:
+			var t: float = clampf((shot.elapsed - shot.delay) / shot.warning, 0.0, 1.0)
+			draw_line(a, b, Color(0.9, 0.03, 0.08, 0.15 + 0.50 * t), laser_width, true)
+			draw_line(a, b, Color(1.0, 0.45, 0.38, 0.25 + 0.50 * t), 2.5, true)
+		else:
+			var fade: float = 1.0 - clampf((shot.elapsed - shot.delay - shot.warning) / 0.27, 0.0, 1.0)
+			draw_line(a, b, Color(0.70, 0.0, 0.06, fade * 0.25), laser_width * 1.45, true)
+			draw_line(a, b, Color(1.0, 0.10, 0.13, fade), laser_width, true)
+			draw_line(a, b, Color(1.0, 0.87, 0.79, fade), 3.0, true)
 
 
 func _begin_descent() -> void:
-	_clear_skulls()
+	if swarm_active:
+		state = State.GUARDED
+		return
+	_clear_red_lasers()
 	shots_left = 0
 	revive_slot = null
 	for slot in slots:
@@ -550,57 +882,9 @@ func _fly_toward(destination: Vector2, speed: float, delta: float) -> void:
 		move_and_slide()
 
 
-func _launch_skull() -> void:
-	var skull := Skull.new()
-	var visual := Sprite2D.new()
-	visual.texture = SKULL_TEXTURE
-	visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	visual.modulate = Color(1.0, 0.20, 0.26)
-	visual.top_level = true
-	var texture_size := SKULL_TEXTURE.get_size()
-	visual.scale = Vector2.ONE * (18.0 / maxf(texture_size.x, texture_size.y))
-	add_child(visual)
-	visual.global_position = body_shape.global_position
-	var aim := target.global_position
-	var player_body := target.get_node_or_null("CollisionShape2D") as CollisionShape2D
-	if player_body != null:
-		aim = player_body.global_position
-	skull.direction = visual.global_position.direction_to(aim)
-	visual.rotation = skull.direction.angle() + PI
-	skull.visual = visual
-	skulls.append(skull)
-
-
-func _update_skulls(delta: float) -> void:
-	if skulls.is_empty():
-		return
-	var excluded := _excluded_bodies()
-	excluded.erase(target.get_rid())
-	for index in range(skulls.size() - 1, -1, -1):
-		var skull := skulls[index]
-		var start := skull.visual.global_position
-		var finish := start + skull.direction * skull_speed * delta
-		var query := PhysicsRayQueryParameters2D.create(start, finish, terrain_mask | target.collision_layer, excluded)
-		query.hit_from_inside = true
-		var hit := get_world_2d().direct_space_state.intersect_ray(query)
-		skull.lifetime -= delta
-		if not hit.is_empty() or skull.lifetime <= 0.0:
-			if hit.get("collider") == target and target.has_method(&"tomar_dano"):
-				target.call(&"tomar_dano", skull_damage, start)
-			skull.visual.queue_free()
-			skulls.remove_at(index)
-		else:
-			skull.visual.global_position = finish
-
-
-func _clear_skulls() -> void:
-	for skull in skulls:
-		skull.visual.queue_free()
-	skulls.clear()
-
-
 func can_receive_player_hit() -> bool:
-	return state == State.DESCENDING or state == State.REVIVING
+	# Hidden ambush enemies cannot be damaged before they appear.
+	return (not swarm_ambush_hidden) and (swarm_active or state == State.DESCENDING or state == State.REVIVING)
 
 
 func is_reviving() -> bool:
@@ -622,7 +906,7 @@ func tomar_dano(amount: int, _origin: Vector2 = Vector2.ZERO) -> void:
 	state = State.DEAD
 	_clear_revive_preview()
 	velocity = Vector2.ZERO
-	_clear_skulls()
+	_clear_red_lasers()
 	queue_redraw()
 	collision_layer = 0
 	collision_mask = 0
@@ -645,6 +929,7 @@ func _play(animation: StringName, restart: bool = false) -> void:
 func _draw() -> void:
 	if state == State.DEAD:
 		return
+	_draw_red_lasers()
 	if state == State.REVIVING and is_instance_valid(revive_preview):
 		var start := body_shape.position
 		var finish := to_local(revive_preview.global_position)
@@ -656,5 +941,3 @@ func _draw() -> void:
 			draw_circle(point, 2.0, Color(1.0, 0.85, 0.92))
 	elif state == State.GUARDED:
 		draw_arc(body_shape.position, 25.0, 0.0, TAU, 32, Color(0.60, 0.36, 0.90, 0.48), 1.5)
-	if (state == State.GUARDED or state == State.OPENING) and shots_left > 0:
-		draw_arc(body_shape.position, 13.0, 0.0, TAU, 24, Color(1.0, 0.23, 0.30, 0.85), 2.0)

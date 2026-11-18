@@ -1,3 +1,8 @@
+# V34 - smaller King body and sword hurtbox; full-screen alternating laser/safe-space columns with offset shifting over three waves
+# V33 - bosscolider / BossNoSpawnZone protection for King teleports and spectral skull origins; lasers and skeletons unchanged
+# V32 - +100 HP, three shifting-safe-lane pillar waves, new combo patterns, moving distant guard perches, 1s skull phasing
+# V31 - +100 boss HP, new post-guard finale attacks, strong arena-spanning five-bounce ricochets and uncropped beam visuals
+# V35 - +0.22s extra visible warning on every royal laser before its damage frame
 # V30 - teleports run on their own 4-second clock even during long royal laser sequences; robust collision-only perch search
 # V29 - restore reliable perches: reject underground teleport but allow giant art above camera; hold/attack cadence fixed
 # V24 - aerial prowling, reflected X-slashes, combo patterns, shorter purple guards
@@ -62,7 +67,7 @@ const MAX_BUFFED_SKELETONS := 2
 # This script is ONLY for the kingnecro.tscn scene; every instance is the King.
 # Normal necromancers continue using necromancer.gd and never become Kings.
 @export_group("King Necromancer")
-@export_range(40, 300, 5) var king_max_hp: int = 140
+@export_range(40, 600, 5) var king_max_hp: int = 340
 # Multiplies this scene's original sprite scale to make the King imposing.
 @export_range(3.5, 7.0, 0.1) var king_visual_scale: float = 4.6
 @export_range(1.0, 2.0, 0.05) var king_hover_speed_multiplier: float = 1.45
@@ -76,6 +81,7 @@ const MAX_BUFFED_SKELETONS := 2
 @export_range(0.03, 0.15, 0.01) var king_slash_expand_seconds: float = 0.055
 @export_range(0.12, 0.55, 0.01) var king_slash_fade_seconds: float = 0.28
 @export_range(0.10, 0.7, 0.05) var king_slash_hit_cooldown: float = 0.34
+@export_range(0.0, 0.6, 0.01) var king_extra_laser_warning_seconds: float = 0.22
 
 @export_group("King Global Attack Recovery")
 @export_range(0.5, 3.0, 0.1) var king_post_attack_pause: float = 1.0
@@ -84,7 +90,7 @@ const MAX_BUFFED_SKELETONS := 2
 @export_range(0.8, 2.5, 0.05) var king_skull_spawn_interval: float = 1.35
 @export_range(10.0, 40.0, 0.5) var king_skull_volley_cooldown: float = 20.0
 @export_range(0.25, 0.8, 0.05) var king_skull_charge_duration: float = 0.50
-@export_range(1.0, 4.0, 0.1) var king_skull_terrain_phase_time: float = 2.0
+@export_range(0.5, 4.0, 0.1) var king_skull_terrain_phase_time: float = 1.0
 # Stronger but still rate-limited pursuit: no instantaneous 180-degree turns.
 @export_range(0.7, 5.0, 0.1) var king_skull_turn_rate: float = 2.15
 @export_range(170.0, 420.0, 10.0) var king_skull_min_spawn_distance: float = 260.0
@@ -132,6 +138,8 @@ const MAX_BUFFED_SKELETONS := 2
 @export_range(0.35, 1.0, 0.05) var king_last_stand_spell_cooldown_factor: float = 0.50
 @export_range(18.0, 40.0, 0.5) var king_last_stand_skull_volley_cooldown: float = 27.0
 @export_range(0.60, 0.95, 0.05) var king_last_stand_warning_factor: float = 0.78
+@export_range(0.0, 1.0, 0.05) var king_repeat_revival_chance: float = 0.80
+@export_range(3.0, 9.0, 0.25) var king_guard_teleport_interval: float = 5.5
 @export_group("King Standoff While Guards Fight")
 # Guard encounters should feel like a fight against the skeletons, not a
 # simultaneous melee with the King's enormous shield/hurtbox.
@@ -214,6 +222,7 @@ class RoyalSlash:
 	var elapsed: float = 0.0
 	var fired: bool = false
 	var ricochet: bool = false
+	var bounce_impact: bool = false
 
 
 
@@ -340,8 +349,13 @@ var king_tp_failed_attempts: int = 0
 # During normal/purple guard battles the King teleports away ONE time,
 # then stays on that distant safe perch until the guards are defeated.
 var king_tp_guard_perch_locked: bool = false
+# Level 5 protected spawn shapes, collected from named Area2D nodes or group.
+var king_no_spawn_shapes: Array[CollisionShape2D] = []
+var king_no_spawn_scanned: bool = false
+var king_guard_perch_clock: float = 0.0
 var king_attack_cast_remaining: float = 0.0
 var king_attack_cast_total: float = 0.0
+var king_final_pattern_round: int = 0
 
 
 func _activate_king_mode() -> void:
@@ -388,14 +402,16 @@ func _activate_king_mode() -> void:
 	king_tp_last_perch = -1
 	king_tp_failed_attempts = 0
 	king_tp_guard_perch_locked = false
+	king_guard_perch_clock = 0.0
 	king_attack_cast_remaining = 0.0
 	king_attack_cast_total = 0.0
+	king_final_pattern_round = 0
 	king_dead_guard_position_known = false
 	add_to_group(&"king_necromancer")
 	king_skull_volley_timer = 1.2
 	king_skull_spawns_remaining = 0
 	# Guarantee this dedicated boss scene starts with proper boss HP.
-	max_hp = maxi(maxi(max_hp, king_max_hp), 140)
+	max_hp = maxi(max_hp, maxi(340, king_max_hp))
 	hp = max_hp
 	activation_range = maxf(activation_range, 600.0)
 	hover_speed *= king_hover_speed_multiplier
@@ -410,7 +426,7 @@ func _activate_king_mode() -> void:
 	# Respect a smaller boss size even if level_5.tscn retained its old
 	# Inspector value (5.2) from V9.3. This version caps the effective scale.
 	sprite.scale = king_base_sprite_scale * clampf(king_visual_scale, 3.5, 4.6)
-	body_shape.scale *= 1.30
+	body_shape.scale *= 1.12
 	sprite_tint = Color(0.92, 0.61, 1.0, 1.0)
 	sprite.self_modulate = sprite_tint
 	_build_king_crown()
@@ -587,11 +603,11 @@ func _update_king_hp_label() -> void:
 			king_hud_status.text = "FINAL PHASE  |  THE KING ABSORBS THE FALLEN GUARD"
 		elif king_shield_phase == KingShieldPhase.EXPOSED and _king_active_purple_count() > 0:
 			king_hud_status.text = "PURPLE GUARD ACTIVE  |  DEFEAT IT TO REACH THE LAST STAND"
-		elif king_last_stand_started:
+		elif king_last_stand_started and not king_gravefall_active:
 			king_hud_status.text = "LAST STAND  |  THE GRAVE MONARCH UNLEASHED"
 		elif king_shield_phase == KingShieldPhase.EXPOSED and hp <= 1:
 			king_hud_status.text = "THE KING CLINGS TO LIFE  |  PURPLE REVIVAL INCOMING"
-		elif king_shield_phase == KingShieldPhase.EXPOSED:
+		elif king_shield_phase == KingShieldPhase.EXPOSED and not king_gravefall_active:
 			king_hud_status.text = "SHIELD SHATTERED  |  THE KING KEEPS FIGHTING"
 		elif king_special_kind == 1:
 			king_hud_status.text = "ROYAL GRAVEFALL  |  Dodge the marked columns"
@@ -613,6 +629,20 @@ func _update_king_hp_label() -> void:
 			king_hud_status.text = "RICHOCHET X  |  Watch the reflected warnings"
 		elif king_special_kind == 10:
 			king_hud_status.text = "ROYAL CASCADE  |  Lances, then crossed cuts"
+		elif king_special_kind == 11:
+			king_hud_status.text = "GRAVE GUILLOTINE  |  Three descending cuts"
+		elif king_special_kind == 12:
+			king_hud_status.text = "BONE CATHEDRAL  |  Shifting columns of death"
+		elif king_special_kind == 13:
+			king_hud_status.text = "ROYAL CROSSFIRE  |  The third line closes the gap"
+		elif king_special_kind == 14:
+			king_hud_status.text = "PHANTOM EXECUTION  |  Follow the warned lanes"
+		elif king_special_kind == 15:
+			king_hud_status.text = "MOURNING BELLS  |  Horizontal rows, then a vertical strike"
+		elif king_special_kind == 16:
+			king_hud_status.text = "SHATTERED THRONE  |  Find the center and move"
+		elif king_special_kind == 17:
+			king_hud_status.text = "THORN PROCESSION  |  Follow the staggered warnings"
 		elif king_exposure_timer > 0.0:
 			king_hud_status.text = "SHIELD BROKEN  |  STRIKE NOW"
 		else:
@@ -637,9 +667,10 @@ func _queue_king_slash(
 	var slash: RoyalSlash = RoyalSlash.new()
 	slash.from_world = from_world
 	slash.to_world = to_world
-	# In Last Stand, a faster warning is fair because the blade lane is exact.
-	# Each line still has at least 0.52s to react before it can deal damage.
-	slash.warning = maxf(0.52, warning_time * minf(0.78, king_last_stand_warning_factor)) if king_last_stand_started else maxf(0.34, warning_time)
+	# V35: every laser keeps its warning visible a little longer BEFORE
+	# the actual damaging slash. This applies to each staggered wave too.
+	var original_warning: float = maxf(0.52, warning_time * minf(0.78, king_last_stand_warning_factor)) if king_last_stand_started else maxf(0.34, warning_time)
+	slash.warning = original_warning + king_extra_laser_warning_seconds
 	# The King's authored summoning/casting animation must finish BEFORE the
 	# warning starts. Each staggered laser still receives its own full warning.
 	slash.delay = maxf(0.0, delay_time)
@@ -737,7 +768,8 @@ func _update_king_royal_slashes(delta: float) -> void:
 	# All warning, impact, expansion and fade-out frames must be over before
 	# any other attack can start its own warning.
 	if was_slashing and king_royal_slashes.is_empty():
-		king_post_attack_timer = maxf(king_post_attack_timer, king_post_attack_pause)
+		king_post_attack_timer = maxf(king_post_attack_timer,
+			king_post_attack_pause * (0.65 if king_last_stand_started else 1.0))
 
 
 func _draw_king_royal_slashes() -> void:
@@ -764,6 +796,13 @@ func _draw_king_royal_slashes() -> void:
 			draw_line(a, b, Color(0.85, 0.31, 1.0, alpha * 0.78), king_slash_hitbox_width, true)
 			draw_line(a, b, Color(1.0, 0.84, 1.0, alpha * 0.75), maxf(1.5, king_slash_hitbox_width * 0.18), true)
 			if slash.ricochet:
+				# Visual caps overlap at each junction; no flat cropped line endings.
+				for end_point: Vector2 in [a, b]:
+					draw_circle(end_point, king_slash_hitbox_width * 0.51,
+						Color(0.80, 0.30, 1.0, alpha * 0.62))
+					draw_circle(end_point, king_slash_hitbox_width * 0.16,
+						Color(1.0, 0.91, 1.0, alpha * 0.8))
+			if slash.ricochet:
 				# The rebound point glows during the entire new path warning.
 				draw_arc(a, 15.0 + 3.0 * sin(t * TAU * 2.0), 0.0, TAU, 24,
 					Color(0.98, 0.64, 1.0, alpha), 3.0, true)
@@ -786,6 +825,12 @@ func _draw_king_royal_slashes() -> void:
 		draw_line(a, b, Color(0.58, 0.06, 0.95, alpha * 0.24), width * 1.15, true)
 		draw_line(a, b, Color(0.88, 0.34, 1.0, alpha * 0.90), width, true)
 		draw_line(a, b, Color(1.0, 0.95, 1.0, alpha), maxf(0.6, width * 0.30), true)
+		if slash.ricochet:
+			for end_point: Vector2 in [a, b]:
+				draw_circle(end_point, maxf(1.0, width * 0.52),
+					Color(0.88, 0.37, 1.0, alpha * 0.85))
+				draw_circle(end_point, maxf(0.6, width * 0.17),
+					Color(1.0, 0.96, 1.0, alpha))
 		# Small shimmering cross sparks along the blade: zero extra nodes.
 		for spark_i: int in range(1, 6):
 			var p: Vector2 = a.lerp(b, float(spark_i) / 6.0)
@@ -935,64 +980,69 @@ func _king_ray_to_arena_edge(origin: Vector2, direction: Vector2, arena: Rect2) 
 
 
 func _start_king_ricochet_x() -> void:
-	# True long-distance mirror attack: each of TWO enormous X blades crosses
-	# the whole arena, then ricochets FIVE times from wall to wall. The
-	# cumulative reflected travel is many times the original beam length.
-	# Every bounce has a fresh warning BEFORE its own damage frame.
+	# V31: genuine five-reflection laser labyrinth. The old pattern drew one
+	# overextended first beam but stopped the following beams AT the viewport
+	# walls; their flat endpoints were visible and the rebounds looked tiny.
+	# Each segment now crosses a sizeable portion of the camera and the line
+	# continues beyond the camera at the beginning/end of the whole sequence.
 	king_special_kind = 9
 	king_gravefall_active = true
-	var view: Rect2 = _king_visible_world_rect().grow(-16.0)
+	var view: Rect2 = _king_visible_world_rect()
 	if view.size.x < 150.0 or view.size.y < 150.0:
 		_start_king_grave_shears()
 		return
-	var center: Vector2 = view.get_center()
+	var arena: Rect2 = view.grow(12.0)
+	var center: Vector2 = arena.get_center()
 	if is_instance_valid(target):
 		center = Vector2(
-			clampf(target.global_position.x, view.position.x + view.size.x * 0.35,
-				view.end.x - view.size.x * 0.35),
-			clampf(target.global_position.y, view.position.y + view.size.y * 0.30,
-				view.end.y - view.size.y * 0.30))
-	var deviation: float = randf_range(-6.0, 6.0)
-	var bounce_count: int = clampi(king_ricochet_bounces, 3, 8)
-	var warn: float = maxf(0.76, king_ricochet_warning_seconds)
-	var bounce_warn: float = maxf(0.68, warn * 0.85)
-	var bounce_step: float = 0.86
+			clampf(target.global_position.x, arena.position.x + arena.size.x * 0.36,
+				arena.end.x - arena.size.x * 0.36),
+			clampf(target.global_position.y, arena.position.y + arena.size.y * 0.35,
+				arena.end.y - arena.size.y * 0.35))
+	var bounce_count: int = clampi(king_ricochet_bounces, 5, 8)
+	var warn: float = maxf(0.78, king_ricochet_warning_seconds)
+	var bounce_warn: float = maxf(0.67, warn * 0.80)
+	var bounce_step: float = 0.80
 	var first_bounce_delay: float = warn + 0.14
-	var beam_overshoot: float = _king_laser_reach(view)
+	var overshoot: float = _king_laser_reach(view)
+	# Steeper than old 35/145 degree pair, so the ray traverses longer
+	# stretches of this narrow platform arena instead of bouncing in corners.
+	var deviation: float = randf_range(-3.0, 3.0)
 	for arm: int in range(2):
-		var theta: float = deg_to_rad((35.0 if arm == 0 else 145.0) + deviation)
+		var theta: float = deg_to_rad((28.0 if arm == 0 else 152.0) + deviation)
 		var direction: Vector2 = Vector2.RIGHT.rotated(theta)
-		var behind: Dictionary = _king_ray_to_arena_edge(center, -direction, view)
-		var ahead: Dictionary = _king_ray_to_arena_edge(center, direction, view)
+		var behind: Dictionary = _king_ray_to_arena_edge(center, -direction, arena)
+		var ahead: Dictionary = _king_ray_to_arena_edge(center, direction, arena)
 		var first_wall: Vector2 = ahead["end"]
-		# Main beam continues MULTIPLE screens past both edges of the arena.
-		_queue_king_slash((behind["end"] as Vector2) - direction * beam_overshoot,
-			first_wall + direction * beam_overshoot, warn, float(arm) * 0.12)
+		# Draw from outside the entire screen right through the first wall.
+		_queue_king_slash((behind["end"] as Vector2) - direction * overshoot,
+			first_wall + direction * 26.0, warn, float(arm) * 0.11)
+		king_royal_slashes[king_royal_slashes.size() - 1].ricochet = true
 		var bounce_origin: Vector2 = first_wall
 		var bounce_direction: Vector2 = ahead["direction"]
 		for bounce_index: int in range(bounce_count):
-			# Step half a pixel INTO the arena to avoid immediate zero-length
-			# collisions at the same wall on successive reflections.
 			var reflected: Dictionary = _king_ray_to_arena_edge(
-				bounce_origin + bounce_direction * 0.75, bounce_direction, view)
+				bounce_origin + bounce_direction * 1.2, bounce_direction, arena)
 			var next_wall: Vector2 = reflected["end"]
-			if bounce_origin.distance_to(next_wall) < 12.0:
-				break
-			var hit_end: Vector2 = next_wall
+			# On the occasional grazing corner a microscopic reflection would
+			# look like a cropped stub. Re-aim slightly toward the arena center.
+			if bounce_origin.distance_to(next_wall) < minf(arena.size.x, arena.size.y) * 0.30:
+				bounce_direction = (arena.get_center() - bounce_origin).normalized()
+				reflected = _king_ray_to_arena_edge(
+					bounce_origin + bounce_direction * 1.2, bounce_direction, arena)
+				next_wall = reflected["end"]
+			var hit_end: Vector2 = next_wall + bounce_direction * 26.0
 			if bounce_index == bounce_count - 1:
-				# Final ricochet disappears far OFFSCREEN instead of ending in
-				# the visible arena with a tiny, abruptly cut-off laser.
-				hit_end += bounce_direction * beam_overshoot
-			var delay: float = (first_bounce_delay + float(bounce_index) * bounce_step
-				+ float(arm) * 0.12)
-			_queue_king_slash(bounce_origin, hit_end, bounce_warn, delay)
+				hit_end = next_wall + bounce_direction * overshoot
+			var delay: float = first_bounce_delay + float(bounce_index) * bounce_step + float(arm) * 0.11
+			_queue_king_slash(bounce_origin - bounce_direction * 26.0,
+				hit_end, bounce_warn, delay)
 			king_royal_slashes[king_royal_slashes.size() - 1].ricochet = true
 			bounce_origin = next_wall
 			bounce_direction = reflected["direction"]
-	# Keep the spell active through the very last rebound warning and hit.
 	king_gravefall_warning_timer = (first_bounce_delay
 		+ float(bounce_count - 1) * bounce_step + bounce_warn
-		+ king_slash_expand_seconds + king_slash_fade_seconds + 0.18)
+		+ king_slash_expand_seconds + king_slash_fade_seconds + 0.32)
 	queue_redraw()
 
 
@@ -1058,6 +1108,151 @@ func _start_king_royal_spearfall() -> void:
 	queue_redraw()
 
 
+func _start_king_grave_guillotine() -> void:
+	# Final phase only: crossing diagonals with generous independent warnings.
+	king_special_kind = 11
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	var pivot: Vector2 = view.get_center()
+	if is_instance_valid(target):
+		pivot = target.global_position
+	for i: int in range(3):
+		var direction: Vector2 = Vector2.RIGHT.rotated(deg_to_rad(55.0 if i % 2 == 0 else -55.0))
+		var p: Vector2 = pivot + Vector2(float(i - 1) * 100.0, -40.0 + float(i) * 35.0)
+		_queue_king_slash(p - direction * reach, p + direction * reach, 0.75, float(i) * 0.34)
+	king_gravefall_warning_timer = 2.20
+	queue_redraw()
+
+
+func _start_king_bone_cathedral() -> void:
+	# Three full-screen interleaved waves: LASER / SAFE SPACE / LASER / SAFE SPACE.
+	# There are no clustered walls with just two safe columns anymore.
+	# Every laser is separated by a movement-sized, completely safe corridor.
+	# The lanes shift BETWEEN waves, giving a readable new dodge each time.
+	king_special_kind = 12
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	# A ~125px pitch leaves >=90px clear even with the default 34px hitbox.
+	# Adapt to zoom so narrow cameras don't create impossible tiny gaps.
+	var columns: int = clampi(int(floor(view.size.x / 125.0)), 5, 12)
+	var spacing: float = view.size.x / float(columns)
+	# A fractional shift makes different safe corridors available each wave.
+	# +/-45% of one pitch means the nearest opening remains reachable.
+	var direction: float = -1.0 if randf() < 0.5 else 1.0
+	var shifts: Array[float] = [0.0, 0.43 * direction, -0.43 * direction]
+	for wave: int in range(3):
+		var offset: float = shifts[wave] * spacing
+		# Include an offscreen guard column so the edges aren't a cheesy safe spot.
+		for column: int in range(-1, columns + 2):
+			var x: float = view.position.x + (float(column) + 0.5) * spacing + offset
+			if x < view.position.x - king_slash_hitbox_width or x > view.end.x + king_slash_hitbox_width:
+				continue
+			_queue_king_slash(Vector2(x, view.position.y - reach),
+				Vector2(x, view.end.y + reach), 0.85, float(wave) * 1.14)
+	# Keep this attack active until the third wave fades out.
+	king_gravefall_warning_timer = 3.85
+	queue_redraw()
+
+
+func _start_king_royal_crossfire() -> void:
+	# A third aimed line after two fixed cross lanes; never changes aim later.
+	king_special_kind = 13
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	var anchor: Vector2 = target.global_position if is_instance_valid(target) else view.get_center()
+	for i: int in range(3):
+		var angle: float = [35.0, -35.0, 90.0][i]
+		var direction: Vector2 = Vector2.RIGHT.rotated(deg_to_rad(angle))
+		var offset: Vector2 = Vector2(0.0, 0.0) if i < 2 else Vector2(92.0, 0.0)
+		_queue_king_slash(anchor + offset - direction * reach,
+			anchor + offset + direction * reach, 0.82, float(i) * 0.43)
+	king_gravefall_warning_timer = 2.65
+	queue_redraw()
+
+
+func _start_king_phantom_execution() -> void:
+	# The King's existing 4-second teleport clock still controls movement;
+	# these cuts originate from his CURRENT perch and stay fixed in world-space.
+	king_special_kind = 14
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	var origin: Vector2 = global_position
+	var anchor: Vector2 = target.global_position if is_instance_valid(target) else view.get_center()
+	for i: int in range(4):
+		var delta_to_target: Vector2 = anchor - origin + Vector2(float(i - 2) * 105.0, 0.0)
+		var direction: Vector2 = delta_to_target.normalized()
+		if direction.length_squared() < 0.5:
+			direction = Vector2.RIGHT
+		var lane_center: Vector2 = anchor + Vector2(float(i - 2) * 70.0, 0.0)
+		_queue_king_slash(lane_center - direction * reach,
+			lane_center + direction * reach, 0.80, float(i) * 0.34)
+	king_gravefall_warning_timer = 2.70
+	queue_redraw()
+
+
+func _start_king_mourning_bells() -> void:
+	# Horizontal staggered rows followed by ONE delayed vertical cut.
+	# This forces vertical repositioning before the follow-up, not another X.
+	king_special_kind = 15
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	var base_y: float = view.position.y + view.size.y * 0.30
+	for wave: int in range(3):
+		var y: float = base_y + view.size.y * 0.20 * float(wave)
+		_queue_king_slash(Vector2(view.position.x - reach, y),
+			Vector2(view.end.x + reach, y), 0.82, float(wave) * 0.55)
+	var x: float = target.global_position.x if is_instance_valid(target) else view.get_center().x
+	_queue_king_slash(Vector2(x, view.position.y - reach),
+		Vector2(x, view.end.y + reach), 0.80, 2.06)
+	king_gravefall_warning_timer = 3.50
+	queue_redraw()
+
+
+func _start_king_shattered_throne() -> void:
+	# Four vertical lances with a center escape lane, then opposing horizontal
+	# lines on their own timers. Different movement problem than an X pattern.
+	king_special_kind = 16
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	for lane: int in range(6):
+		if lane == 2 or lane == 3:
+			continue
+		var x: float = view.position.x + view.size.x * (float(lane) + 0.5) / 6.0
+		_queue_king_slash(Vector2(x, view.position.y - reach),
+			Vector2(x, view.end.y + reach), 0.85, 0.0)
+	for wave: int in range(2):
+		var y: float = view.position.y + view.size.y * (0.27 if wave == 0 else 0.73)
+		_queue_king_slash(Vector2(view.position.x - reach, y),
+			Vector2(view.end.x + reach, y), 0.82, 1.15 + float(wave) * 0.55)
+	king_gravefall_warning_timer = 3.25
+	queue_redraw()
+
+
+func _start_king_thorn_procession() -> void:
+	# Alternating narrow floor-to-ceiling sweeps, then one diagonal finisher.
+	# Each danger lane is precommitted and shows its warning first.
+	king_special_kind = 17
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	for wave: int in range(4):
+		var lane: int = [1, 5, 2, 4][wave]
+		var x: float = view.position.x + view.size.x * (float(lane) + 0.5) / 7.0
+		_queue_king_slash(Vector2(x, view.position.y - reach),
+			Vector2(x, view.end.y + reach), 0.70, float(wave) * 0.52)
+	var diagonal: Vector2 = Vector2.RIGHT.rotated(deg_to_rad(-28.0))
+	var anchor: Vector2 = view.get_center()
+	_queue_king_slash(anchor - diagonal * reach, anchor + diagonal * reach, 0.82, 2.30)
+	king_gravefall_warning_timer = 3.65
+	queue_redraw()
+
+
 func _fire_king_gravefall() -> void:
 	# V6: actual animated purple slashes own the damage now. Do not also
 	# spawn overlapping invisible skull hits in the same warned lanes.
@@ -1115,7 +1310,7 @@ func _update_king_specials(delta: float) -> void:
 					_fire_king_sweep()
 				3:
 					_fire_king_crown()
-				4, 5, 6, 7, 8, 9, 10:
+				4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17:
 					_finish_king_spell()
 				_:
 					_clear_king_gravefall()
@@ -1160,29 +1355,46 @@ func _update_king_specials(delta: float) -> void:
 			_:
 				_start_king_eclipse_judgment()
 	elif king_last_stand_started:
-		match king_special_round % 11:
+		# Rotating 18-beat repertoire: pillars, sweeps, ricochets and mixed combos.
+		# No repeated X-spam. Every attack is a distinct movement challenge.
+		king_final_pattern_round += 1
+		match king_final_pattern_round % 18:
 			1:
-				_start_king_ricochet_x()
+				_start_king_bone_cathedral()
 			2:
-				_start_king_gravefall()
+				_start_king_mourning_bells()
 			3:
-				_start_king_cascade_combo()
+				_start_king_grave_guillotine()
 			4:
-				_start_king_royal_spearfall()
+				_start_king_shattered_throne()
 			5:
-				_start_king_sweep()
+				_start_king_ricochet_x()
 			6:
-				_start_king_royal_crossweave()
+				_start_king_thorn_procession()
 			7:
-				_start_king_eclipse_judgment()
+				_start_king_royal_spearfall()
 			8:
-				_start_king_grave_shears()
+				_start_king_phantom_execution()
 			9:
-				_start_king_heavens_lances()
+				_start_king_bone_cathedral()
 			10:
+				_start_king_sweep()
+			11:
+				_start_king_cascade_combo()
+			12:
+				_start_king_mourning_bells()
+			13:
+				_start_king_heavens_lances()
+			14:
+				_start_king_shattered_throne()
+			15:
+				_start_king_royal_crossfire()
+			16:
+				_start_king_thorn_procession()
+			17:
 				_start_king_ricochet_x()
 			_:
-				_start_king_cascade_combo()
+				_start_king_royal_crossweave()
 	else:
 		# Phase-one solo also cycles real attacks instead of returning to the
 		# same basic sweep every few seconds. Every pattern is warned.
@@ -1207,7 +1419,7 @@ func _update_king_specials(delta: float) -> void:
 				_start_king_royal_spearfall()
 	# The existing one-second recovery already controls pacing: do not add a
 	# second full idle second on top of it. Last Stand is faster but readable.
-	king_gravefall_cooldown_timer = 0.12 if king_shield_phase == KingShieldPhase.EXPOSED else 0.22
+	king_gravefall_cooldown_timer = 0.07 if king_last_stand_started else (0.12 if king_shield_phase == KingShieldPhase.EXPOSED else 0.22)
 	_update_king_hp_label()
 
 
@@ -1702,7 +1914,7 @@ func _begin_king_last_stand() -> void:
 	king_attack_cast_remaining = 0.0
 	king_revival_cast_fx = 0.0
 	king_revival_cast_total = 0.0
-	hp = maxi(hp, int(ceil(float(max_hp) * king_last_stand_heal_ratio)))
+	hp = mini(max_hp, maxi(hp + 100, int(ceil(float(max_hp) * king_last_stand_heal_ratio))))
 	sprite_tint = Color(1.0, 0.47, 0.98, 1.0)
 	# Clear all leftover projectiles; the player can read the phase change.
 	_clear_skulls()
@@ -1769,7 +1981,12 @@ func _update_king_phase_visuals(delta: float) -> void:
 				and king_royal_slashes.is_empty() and not king_gravefall_active
 				and king_skull_spawns_remaining == 0 and king_post_attack_timer <= 0.0
 				and king_tp_phase == 0):
-				if not _begin_king_elite_revive():
+				# Later purple resurrections are slightly less certain. Roll only
+				# at a completed-pattern checkpoint, never once per physics frame.
+				if king_total_resurrections > 0 and randf() > king_repeat_revival_chance:
+					king_revival_attempt_cooldown = 7.0
+					king_revival_timer = 5.0
+				elif not _begin_king_elite_revive():
 					king_revival_attempt_cooldown = 0.75
 	if is_instance_valid(sprite):
 		var hit_black: bool = king_black_flash_timer > 0.0
@@ -2122,29 +2339,27 @@ func _update_hover(delta: float) -> void:
 		king_tp_guard_mode = guard_active
 		king_tp_guard_perch_locked = false
 		king_tp_last_perch = -1
-		# Retreat only ONCE when guards arrive; resume normal teleports when gone.
+		king_guard_perch_clock = 0.0
+		# Guard phase uses farther perches and periodic relocation.
 		king_tp_hold_remaining = 0.0 if guard_active else 0.6
 	var view: Rect2 = _king_visible_world_rect()
 	if view.size.x < 120.0 or view.size.y < 120.0:
 		return
 	if guard_active:
-		# Keep the resurrection and laser-casting poses readable: do not
-		# overwrite spawnenemies2 with death frames during an active cast.
-		# Once the cast finishes, make ONE retreat teleport and stay there.
+		# King remains distant but is no longer an immobile background decoration.
+		# Every few seconds he chooses another safe, distant perch via his
+		# existing vanish/reappear animation, without interrupting revival.
 		if king_revival_cast_fx > 0.0 or king_attack_cast_remaining > 0.0:
 			return
-		if king_tp_guard_perch_locked:
-			return
-		king_tp_hold_remaining -= delta
-		if king_tp_hold_remaining <= 0.0:
+		king_guard_perch_clock -= delta
+		if king_guard_perch_clock <= 0.0:
 			if _begin_king_teleport(view, true):
+				king_guard_perch_clock = maxf(3.0, king_guard_teleport_interval)
 				king_tp_guard_perch_locked = true
 				king_tp_failed_attempts = 0
 			else:
 				king_tp_failed_attempts += 1
-				king_tp_hold_remaining = 0.60
-				if king_tp_failed_attempts == 1 or king_tp_failed_attempts % 8 == 0:
-					push_warning("KING V30: no safe GUARD retreat perch. Retrying.")
+				king_guard_perch_clock = 0.75
 		return
 	# V30: This is an INDEPENDENT clock. Long staggered laser waves and
 	# ricochet slashes are world-space attacks and must NOT lock the King in
@@ -2162,6 +2377,55 @@ func _update_hover(delta: float) -> void:
 			king_tp_hold_remaining = 0.65
 			if king_tp_failed_attempts == 1 or king_tp_failed_attempts % 8 == 0:
 				push_warning("KING V30: no safe SOLO perch. Retrying.")
+
+
+func _king_collect_no_spawn_shapes() -> void:
+	# Accept your existing node name bosscolider. Optional future zones may be
+	# called BossNoSpawnZone or added to the boss_no_spawn group.
+	king_no_spawn_shapes.clear()
+	king_no_spawn_scanned = true
+	var level: Node = get_tree().current_scene
+	if level == null:
+		level = get_tree().root
+	for node: Node in level.find_children("*", "Area2D", true, false):
+		var area: Area2D = node as Area2D
+		var lower: String = area.name.to_lower()
+		if not (lower == "bosscolider" or lower == "bossnospawnzone"
+			or lower == "boss_no_spawn_zone" or area.is_in_group(&"boss_no_spawn")):
+			continue
+		for child: Node in area.get_children():
+			if child is CollisionShape2D:
+				var blocker: CollisionShape2D = child as CollisionShape2D
+				if blocker.shape != null and not blocker.disabled:
+					king_no_spawn_shapes.append(blocker)
+	if not king_no_spawn_shapes.is_empty():
+		print("KING V33: registered ", king_no_spawn_shapes.size(), " forbidden spawn shapes")
+
+
+func _king_spawn_overlaps_zone(spawn_world: Vector2, use_king_body: bool) -> bool:
+	if not king_no_spawn_scanned:
+		_king_collect_no_spawn_shapes()
+	var proposed_shape: Shape2D
+	var proposed_transform: Transform2D
+	if use_king_body:
+		if not is_instance_valid(body_shape) or body_shape.shape == null:
+			return false
+		proposed_shape = body_shape.shape
+		proposed_transform = body_shape.global_transform
+		proposed_transform.origin += spawn_world - global_position
+	else:
+		# Check the spawn body rather than just its center: skulls shouldn't
+		# appear halfway across the protected rectangle's boundary.
+		var skull_probe: CircleShape2D = CircleShape2D.new()
+		skull_probe.radius = maxf(12.0, king_spectral_skull_size * 0.42)
+		proposed_shape = skull_probe
+		proposed_transform = Transform2D(0.0, spawn_world)
+	for zone_shape: CollisionShape2D in king_no_spawn_shapes:
+		if not is_instance_valid(zone_shape) or zone_shape.disabled or zone_shape.shape == null:
+			continue
+		if proposed_shape.collide(proposed_transform, zone_shape.shape, zone_shape.global_transform):
+			return true
+	return false
 
 
 func _king_teleport_ground_safe(candidate: Vector2, view: Rect2) -> Dictionary:
@@ -2230,6 +2494,9 @@ func _king_teleport_ground_safe(candidate: Vector2, view: Rect2) -> Dictionary:
 		query.margin = 1.0
 		if not physics.intersect_shape(query, 1).is_empty():
 			continue
+		# No teleport may put the King's physical hitbox inside bosscolider.
+		if _king_spawn_overlaps_zone(probe, true):
+			continue
 		return {"valid": true, "position": probe}
 	return {"valid": false}
 
@@ -2265,13 +2532,13 @@ func _king_pick_teleport_destination(view: Rect2, guard_active: bool) -> Diction
 			if is_instance_valid(target):
 				var player_distance: float = pos.distance_to(target.global_position)
 				if guard_active:
-					score += player_distance * 3.8
+					score += player_distance * 5.0
 					if absf(pos.x - target.global_position.x) < view.size.x * 0.25:
 						score -= 300.0
 				else:
 					score -= absf(player_distance - view.size.x * 0.38) * 0.60
 			if guard_active:
-				score += absf(float(i) / 10.0 - 0.5) * 380.0
+				score += absf(float(i) / 10.0 - 0.5) * 520.0
 				for guard: CharacterBody2D in king_elite_guards:
 					if not is_instance_valid(guard) or guard.is_queued_for_deletion():
 						continue
@@ -2630,21 +2897,31 @@ func _spawn_king_spectral_skull() -> void:
 	var safe_view: Rect2 = view.grow(-50.0)
 	if safe_view.size.x < 20.0 or safe_view.size.y < 20.0:
 		safe_view = view
-	var chosen: Vector2 = safe_view.get_center()
+	var chosen: Vector2 = Vector2.ZERO
+	var found_safe_spawn: bool = false
 	var best_distance: float = -1.0
-	for attempt: int in range(28):
+	# Sample broadly; the protected zone might occupy most of the floor.
+	# If there is no valid position, skip this skull rather than spawning
+	# in bosscolider. Nothing else about its flight is changed.
+	for attempt: int in range(90):
 		var candidate: Vector2 = Vector2(
 			randf_range(safe_view.position.x, safe_view.end.x),
 			randf_range(safe_view.position.y, safe_view.end.y)
 		)
+		if _king_spawn_overlaps_zone(candidate, false):
+			continue
 		var distance: float = candidate.distance_to(target.global_position)
 		if distance > best_distance:
 			best_distance = distance
 			chosen = candidate
+			found_safe_spawn = true
 		if (distance >= king_skull_min_spawn_distance
 			and candidate.distance_to(global_position) >= 105.0):
 			chosen = candidate
 			break
+	if not found_safe_spawn:
+		visual.queue_free()
+		return
 	visual.global_position = chosen
 	skull.direction = chosen.direction_to(target.global_position)
 	skull.visual = visual
@@ -2706,10 +2983,10 @@ func _update_skulls(delta: float) -> void:
 					)).normalized()
 			skull.visual.rotation = skull.direction.angle() + PI
 		var finish: Vector2 = start + skull.direction * skull.speed * delta
-		# For the first 2s after launch: passes through walls/floors.
-		# Afterward: the terrain becomes solid and destroys it on contact.
+		# For the FIRST SECOND AFTER LAUNCH: ignore walls/floors, still hit player.
+		# After 1.0 s, terrain collisions destroy the skull on contact.
 		var collision_bits: int = target.collision_layer
-		if not skull.spectral or skull.flight_elapsed >= king_skull_terrain_phase_time:
+		if not skull.spectral or skull.flight_elapsed >= 1.0:
 			collision_bits |= terrain_mask
 		var query := PhysicsRayQueryParameters2D.create(start, finish, collision_bits, excluded)
 		query.hit_from_inside = true
@@ -2788,8 +3065,8 @@ func attack_shape_hits_hurtbox(attack_shape: CollisionShape2D) -> bool:
 	var local_size: Vector2 = texture.get_size() if texture != null else Vector2(28.0, 40.0)
 	var actual_scale: Vector2 = sprite.global_transform.get_scale().abs()
 	var body := RectangleShape2D.new()
-	body.size = Vector2(maxf(44.0, local_size.x * actual_scale.x * 0.59),
-		maxf(58.0, local_size.y * actual_scale.y * 0.70))
+	body.size = Vector2(maxf(44.0, local_size.x * actual_scale.x * 0.49),
+		maxf(58.0, local_size.y * actual_scale.y * 0.59))
 	var center: Vector2 = sprite.global_position + Vector2(0.0, -body.size.y * 0.05)
 	return attack_shape.shape.collide(attack_shape.global_transform, body,
 		Transform2D(0.0, center))
