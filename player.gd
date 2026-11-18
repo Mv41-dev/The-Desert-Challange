@@ -1,4 +1,5 @@
-# Player V51: King hurtbox integrated into verified V50 attack system; movement unchanged
+# Player V52: artifact abilities by level, rechargeable chalice shield, double jump, 40ms dash cooldown
+# Based on V51: King hurtbox integrated into verified V50 attack system; movement unchanged
 # V50 - conservative patch on user-provided WORKING player.gd baseline.
 extends CharacterBody2D
 
@@ -207,7 +208,12 @@ var recuperacao_dano_restante: float = 0.0
 
 var dash_remaining: float = 0.0
 var dash_direction: float = 1.0
-var dash_used: bool = false
+var dash_used: bool = false # legacy variable, no longer gates the dash
+@export_range(0.04, 1.0, 0.01) var dash_cooldown: float = 0.04
+var dash_cooldown_remaining: float = 0.0
+@export_range(1.0, 120.0, 1.0) var calice_shield_recharge: float = 30.0
+var calice_shield_cooldown: float = 0.0
+var double_jump_available: bool = true
 var slide_remaining: float = 0.0
 var slide_direction: float = 1.0
 var standing_shape: RectangleShape2D
@@ -241,8 +247,9 @@ func _update_artifact_movement(delta: float) -> bool:
 		return false
 
 	var direction := Input.get_axis(&"left", &"right")
-	if is_on_floor() and dash_remaining <= 0.0:
-		dash_used = false
+	dash_cooldown_remaining = maxf(0.0, dash_cooldown_remaining - delta)
+	if is_on_floor():
+		double_jump_available = true
 
 	if standing_shape != null:
 		if slide_remaining > 0.0 and is_on_floor():
@@ -256,7 +263,12 @@ func _update_artifact_movement(delta: float) -> bool:
 			move_and_slide()
 			return true
 
-	if dash_remaining <= 0.0 and not dash_used and Input.is_action_just_pressed(&"dash"):
+	if (
+		dash_remaining <= 0.0
+		and dash_cooldown_remaining <= 0.0
+		and GerenciadorArtefatos.possui_artefato("ankh")
+		and Input.is_action_just_pressed(&"dash")
+	):
 		if estado == Estado.ATAQUE:
 			estado = Estado.NORMAL
 			golpe_em_fila = false
@@ -265,6 +277,7 @@ func _update_artifact_movement(delta: float) -> bool:
 		dash_direction = signf(direction) if absf(direction) > 0.01 else (1.0 if olhando_direita else -1.0)
 		_virar(dash_direction)
 		dash_remaining = dash_duration
+		dash_cooldown_remaining = maxf(0.04, dash_cooldown)
 		dash_used = true
 	if dash_remaining > 0.0:
 		velocity = Vector2(dash_direction * dash_speed, 0.0)
@@ -279,7 +292,7 @@ func _update_artifact_movement(delta: float) -> bool:
 	if estado == Estado.ATAQUE:
 		return false
 
-	if is_on_floor() and absf(direction) > 0.01 and Input.is_action_just_pressed(&"slide") and GerenciadorArtefatos.possui_artefato("mascara"):
+	if is_on_floor() and absf(direction) > 0.01 and Input.is_action_just_pressed(&"slide"):
 		_begin_slide(signf(direction))
 		if standing_shape != null:
 			velocity.x = slide_direction * slide_speed
@@ -293,7 +306,7 @@ func _update_artifact_movement(delta: float) -> bool:
 		move_and_slide()
 		_atualizar_animacao_movimento(direction)
 		return true
-	if not is_on_floor() and is_on_wall_only() and velocity.y >= 0.0 and GerenciadorArtefatos.possui_artefato("calice"):
+	if not is_on_floor() and is_on_wall_only() and velocity.y >= 0.0 and GerenciadorArtefatos.possui_artefato("escaravelho"):
 		var normal := get_wall_normal()
 		if direction * normal.x < -0.01:
 			if tempo_buffer_restante > 0.0:
@@ -631,6 +644,7 @@ func _physics_process(
 		delta
 	)
 	_atualizar_brilho_verde(delta)
+	calice_shield_cooldown = maxf(0.0, calice_shield_cooldown - delta)
 	_update_menacing_parry(delta)
 	_atualizar_velocidade_defesa_cranio()
 	recarga_golpe_restante = maxf(0.0, recarga_golpe_restante - delta)
@@ -834,6 +848,17 @@ func _physics_process(
 			velocity.y = forca_pulo
 			tempo_buffer_restante = 0.0
 			tempo_coyote_restante = 0.0
+		elif (
+			GerenciadorArtefatos.possui_artefato("mascara")
+			and double_jump_available
+			and not is_on_floor()
+		):
+			# Phase 4 artifact: one extra jump, refreshed on landing.
+			velocity.y = forca_pulo
+			double_jump_available = false
+			tempo_buffer_restante = 0.0
+			tempo_coyote_restante = 0.0
+			_tocar(&"jump")
 
 	if (
 		Input.is_action_just_released(
@@ -1105,6 +1130,9 @@ func forcar_tela_preta() -> void:
 func resetar_para_inicio() -> void:
 	dash_remaining = 0.0
 	dash_used = false
+	dash_cooldown_remaining = 0.0
+	calice_shield_cooldown = 0.0
+	double_jump_available = true
 	slide_remaining = 0.0
 	wall_jump_lock = 0.0
 	_restore_standing_shape()
@@ -1567,6 +1595,16 @@ func tomar_dano(
 		or estado == Estado.MORTO
 		or tempo_invulneravel_restante > 0.0
 	):
+		return
+
+	# Phase 2 artifact: block one complete enemy hit every 30 seconds.
+	if (
+		GerenciadorArtefatos.possui_artefato("calice")
+		and calice_shield_cooldown <= 0.0
+	):
+		calice_shield_cooldown = maxf(1.0, calice_shield_recharge)
+		tempo_invulneravel_restante = maxf(tempo_invulneravel_restante, 0.18)
+		_iniciar_brilho_verde()
 		return
 
 	tempo_invulneravel_restante = (
