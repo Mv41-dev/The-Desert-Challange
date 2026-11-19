@@ -9,9 +9,9 @@
 [ext_resource type="PackedScene" uid="uid://bu1bbvi7k45pk" path="res://resetarea.tscn" id="9_j6qfn"]
 [ext_resource type="PackedScene" uid="uid://b2u6ab45n3lyn" path="res://portamovel.tscn" id="11_vw43l"]
 [ext_resource type="PackedScene" uid="uid://c4rohd8hefpig" path="res://artefato.tscn" id="12_jiqp1"]
-[ext_resource type="PackedScene" uid="uid://cy5ex0ib4p4j7" path="res://parallax_piramide2.0.tscn" id="13_uws32"]
 [ext_resource type="PackedScene" uid="uid://cml2juwqv24e6" path="res://necromancer.tscn" id="13_vcgqq"]
 [ext_resource type="PackedScene" uid="uid://bki42pmwj6agw" path="res://skeletonenemy.tscn" id="14_o1mlc"]
+[ext_resource type="PackedScene" uid="uid://c2k1jt5gvjehn" path="res://para_piramide.tscn" id="14_vcgqq"]
 [ext_resource type="PackedScene" uid="uid://cd81mclnh4a1b" path="res://menacingskeleton.tscn" id="15_o1mlc"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="hud_fases"]
 
@@ -636,8 +636,8 @@ position = Vector2(5856, -289)
 [node name="charbody2d20" parent="." unique_id=1258194132 instance=ExtResource("13_vcgqq")]
 position = Vector2(5856, -289)
 
-[node name="ParallaxBackground" parent="." unique_id=503224253 instance=ExtResource("13_uws32")]
-
 [node name="portal" parent="." unique_id=1235804463 instance=ExtResource("6_qhsfq")]
 position = Vector2(6885, -547)
 next_scene_path = "uid://dlgkx8kynkki6"
+
+[node name="Para piramide" parent="." unique_id=2133481068 instance=ExtResource("14_vcgqq")]

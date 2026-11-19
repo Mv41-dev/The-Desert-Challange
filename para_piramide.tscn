@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://c2k1jt5gvjehn"]
+
+[ext_resource type="Texture2D" uid="uid://btrbs2ntn7j8w" path="res://DesertTileMap/Desert/Background/pyramid_0.png" id="1_wafal"]
+[ext_resource type="Texture2D" uid="uid://dbrarq1blpcfe" path="res://DesertTileMap/Desert/Background/pyramid_1.png" id="2_qura2"]
+[ext_resource type="Texture2D" uid="uid://bc831m10rfc7l" path="res://DesertTileMap/Desert/Background/pyramid_2.png" id="3_ddr7v"]
+
+[node name="Para piramide" type="ParallaxBackground" unique_id=2133481068]
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="." unique_id=1460832974]
+motion_scale = Vector2(0, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer" unique_id=2087786159]
+position = Vector2(650.5, 370.49997)
+scale = Vector2(7.8645835, 7.361111)
+texture = ExtResource("1_wafal")
+
+[node name="ParallaxLayer2" type="ParallaxLayer" parent="." unique_id=1944305790]
+motion_scale = Vector2(0.2, 0.2)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer2" unique_id=573300664]
+position = Vector2(652, 372)
+scale = Vector2(7.8541665, 7.3555555)
+texture = ExtResource("2_qura2")
+
+[node name="ParallaxLayer3" type="ParallaxLayer" parent="." unique_id=1356153199]
+motion_scale = Vector2(0.4, 0.4)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer3" unique_id=1261539729]
+position = Vector2(650, 370)
+scale = Vector2(7.8541665, 7.3555555)
+texture = ExtResource("3_ddr7v")
