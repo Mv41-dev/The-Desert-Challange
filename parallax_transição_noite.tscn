@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://bl6x4a2k6j0us"]
+
+[ext_resource type="Texture2D" uid="uid://co4cs4gdph8i5" path="res://NightDesert/DesertNight_0.png" id="1_4pj1d"]
+
+[node name="Parallax transição noite" type="ParallaxBackground" unique_id=1052854510]
+
+[node name="ParallaxLayer7" type="ParallaxLayer" parent="." unique_id=413108803]
+
+[node name="ParallaxLayer8" type="ParallaxLayer" parent="." unique_id=858839057]
+
+[node name="Sprite2D2" type="Sprite2D" parent="ParallaxLayer8" unique_id=783974439]
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer8" unique_id=1165006389]
+
+[node name="ParallaxLayer9" type="ParallaxLayer" parent="." unique_id=1425825199]
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer9" unique_id=1151819359]
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="." unique_id=990965077]
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer" unique_id=679163873]
+position = Vector2(1573.0001, 371)
+scale = Vector2(4.028125, 4.0666666)
+texture = ExtResource("1_4pj1d")
+
+[node name="ParallaxLayer2" type="ParallaxLayer" parent="." unique_id=810029138]
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer2" unique_id=94577845]
+
+[node name="ParallaxLayer3" type="ParallaxLayer" parent="." unique_id=239018298]
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer3" unique_id=343223853]
+
+[node name="ParallaxLayer4" type="ParallaxLayer" parent="." unique_id=487795549]
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer4" unique_id=929617426]
+
+[node name="ParallaxLayer5" type="ParallaxLayer" parent="." unique_id=1954075943]
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer5" unique_id=1464147629]
+
+[node name="ParallaxLayer6" type="ParallaxLayer" parent="." unique_id=93968798]
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxLayer6" unique_id=392049685]
