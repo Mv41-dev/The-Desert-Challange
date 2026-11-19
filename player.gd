@@ -1,4 +1,5 @@
-# Player V52: artifact abilities by level, rechargeable chalice shield, double jump, 40ms dash cooldown
+# Player V53: Level 5 attack-hitbox optimization + temporary Level 6 ability unlock
+# Based on V52: artifact progression, chalice shield, double jump, 40ms dash cooldown
 # Based on V51: King hurtbox integrated into verified V50 attack system; movement unchanged
 # V50 - conservative patch on user-provided WORKING player.gd baseline.
 extends CharacterBody2D
@@ -220,6 +221,44 @@ var standing_shape: RectangleShape2D
 var standing_position: Vector2
 var wall_jump_lock: float = 0.0
 
+# Level 6 temporarily grants the four artifact abilities without collecting
+# or recording any artifact; levels 1-5 still require the real relics.
+var todas_habilidades_fase_seis: bool = false
+
+# Sword shape nodes are stable; caching avoids recursive tree searches every
+# physics tick during a swing. Geometry still uses their current transforms.
+var sword_shapes_cache: Array[Node] = []
+var ultimo_hitcheck_frame: int = -1
+var ultimo_hitcheck_animation: StringName = &""
+var ultimo_hitcheck_ms: int = 0
+var proxima_verificacao_cranio_ms: int = 0
+
+
+func _cena_eh_fase_seis() -> bool:
+	var cena: Node = get_tree().current_scene
+	if cena != null:
+		var nome_arquivo: String = cena.scene_file_path.get_file().get_basename().to_lower().replace("_", "")
+		var nome_cena: String = cena.name.to_lower().replace("_", "")
+		if nome_arquivo == "level6" or nome_cena == "level6":
+			return true
+	# Also works when running level_6.tscn directly from the editor.
+	var ancestral: Node = self
+	while ancestral != null:
+		if ancestral.name.to_lower().replace("_", "") == "level6":
+			return true
+		ancestral = ancestral.get_parent()
+	return false
+
+
+func _tem_habilidade(tipo: String) -> bool:
+	return todas_habilidades_fase_seis or GerenciadorArtefatos.possui_artefato(tipo)
+
+
+func _cachear_hitboxes_espada() -> void:
+	sword_shapes_cache.clear()
+	if is_instance_valid(attack_area_j):
+		sword_shapes_cache = attack_area_j.find_children("*", "CollisionShape2D", true, false)
+
 
 func _register_mouse_button(action: StringName, button: MouseButton) -> void:
 	if not InputMap.has_action(action):
@@ -266,7 +305,7 @@ func _update_artifact_movement(delta: float) -> bool:
 	if (
 		dash_remaining <= 0.0
 		and dash_cooldown_remaining <= 0.0
-		and GerenciadorArtefatos.possui_artefato("ankh")
+		and _tem_habilidade("ankh")
 		and Input.is_action_just_pressed(&"dash")
 	):
 		if estado == Estado.ATAQUE:
@@ -306,7 +345,7 @@ func _update_artifact_movement(delta: float) -> bool:
 		move_and_slide()
 		_atualizar_animacao_movimento(direction)
 		return true
-	if not is_on_floor() and is_on_wall_only() and velocity.y >= 0.0 and GerenciadorArtefatos.possui_artefato("escaravelho"):
+	if not is_on_floor() and is_on_wall_only() and velocity.y >= 0.0 and _tem_habilidade("escaravelho"):
 		var normal := get_wall_normal()
 		if direction * normal.x < -0.01:
 			if tempo_buffer_restante > 0.0:
@@ -574,6 +613,10 @@ func _ready() -> void:
 		authored_sword_transform.origin = OFFSET_J_DIREITA
 	_prepare_action_animations()
 	_fit_knight_attack_shape()
+	_cachear_hitboxes_espada()
+	todas_habilidades_fase_seis = _cena_eh_fase_seis()
+	if todas_habilidades_fase_seis:
+		print("[PLAYER] Fase 6: habilidades liberadas temporariamente.")
 	add_to_group(
 		"player"
 	)
@@ -849,7 +892,7 @@ func _physics_process(
 			tempo_buffer_restante = 0.0
 			tempo_coyote_restante = 0.0
 		elif (
-			GerenciadorArtefatos.possui_artefato("mascara")
+			_tem_habilidade("mascara")
 			and double_jump_available
 			and not is_on_floor()
 		):
@@ -1338,6 +1381,10 @@ func _iniciar_ataque() -> void:
 	# Never clamp velocity.x when a sword attack begins.
 	golpe_em_fila = false
 	atingidos_no_golpe.clear()
+	ultimo_hitcheck_frame = -1
+	ultimo_hitcheck_animation = &""
+	ultimo_hitcheck_ms = 0
+	proxima_verificacao_cranio_ms = 0
 	atualizar_areas_ataque()
 
 	# One roll per swing. Every target hit by that swing gets the same damage.
@@ -1383,25 +1430,56 @@ func _atualizar_velocidade_defesa_cranio() -> void:
 		return
 	if anim.animation != _action_animation(&"attack_quick", &"attack1"):
 		return
+	# A skull threat check can be expensive in large encounters.
+	# Checking 20 times/s instead of every physics frame preserves reaction
+	# while avoiding repeated full-group scans during every sword animation.
+	var agora_ms: int = Time.get_ticks_msec()
+	if agora_ms < proxima_verificacao_cranio_ms:
+		return
+	proxima_verificacao_cranio_ms = agora_ms + 50
 	var skull_multiplier: float = skull_defense_attack_speed if _existe_cranio_vindo_na_minha_direcao() else 1.0
 	anim.speed_scale = skull_multiplier
 
 
 func _verificar_acertos() -> void:
-	var frame := anim.frame
-	var first_hit_frame := mini(2, anim.sprite_frames.get_frame_count(anim.animation) - 1)
-	var area := attack_area_j
-	var dano := dano_do_golpe
-	var boss_hit_frame_end := 4 if anim.animation == &"attack1" else 3
-	if frame >= first_hit_frame and frame <= boss_hit_frame_end:
-		_verificar_acertos_miniboss(area, dano)
-	if frame < first_hit_frame or frame > 3:
+	# In Level 5, the original script recursively rediscovered ALL sword and
+	# enemy hitboxes every physics frame, even for distant bosses/projectiles.
+	# Bound it to at most once per animation frame or once every 50ms.
+	var frame: int = anim.frame
+	var agora_ms: int = Time.get_ticks_msec()
+	if (
+		frame == ultimo_hitcheck_frame
+		and anim.animation == ultimo_hitcheck_animation
+		and agora_ms - ultimo_hitcheck_ms < 50
+	):
+		return
+	ultimo_hitcheck_frame = frame
+	ultimo_hitcheck_animation = anim.animation
+	ultimo_hitcheck_ms = agora_ms
+
+	var first_hit_frame: int = mini(2, anim.sprite_frames.get_frame_count(anim.animation) - 1)
+	var boss_hit_frame_end: int = 4 if anim.animation == &"attack1" else 3
+	if frame < first_hit_frame or frame > boss_hit_frame_end:
+		return
+	if sword_shapes_cache.is_empty():
+		_cachear_hitboxes_espada()
+	if sword_shapes_cache.is_empty():
+		return
+
+	var area: Area2D = attack_area_j
+	if frame <= boss_hit_frame_end:
+		_verificar_acertos_miniboss(area, dano_do_golpe)
+	if frame > 3:
 		return
 	_verificar_reflexao_cranios(area, false)
 
-	var sword_shapes := area.find_children("*", "CollisionShape2D", true, false)
 	for corpo in get_tree().get_nodes_in_group(&"inimigo"):
 		if not is_instance_valid(corpo) or not corpo is PhysicsBody2D:
+			continue
+		# Broad-phase: a normal sword swing cannot hit an enemy hundreds of
+		# pixels away. This check is much cheaper than a shape collision.
+		var enemy_body: PhysicsBody2D = corpo as PhysicsBody2D
+		if enemy_body.global_position.distance_squared_to(global_position) > 400.0 * 400.0:
 			continue
 		if atingidos_no_golpe.has(corpo) or _inimigo_morreu(corpo):
 			continue
@@ -1409,13 +1487,12 @@ func _verificar_acertos() -> void:
 			continue
 		if corpo.has_method(&"can_receive_player_hit") and not bool(corpo.call(&"can_receive_player_hit")):
 			continue
-		if not area.overlaps_body(corpo) and not _sword_overlaps_enemy(sword_shapes, corpo):
+		if not area.overlaps_body(corpo) and not _sword_overlaps_enemy(sword_shapes_cache, corpo):
 			continue
 		atingidos_no_golpe.append(corpo)
 		corpo.call(&"tomar_dano", _damage_against_enemy(corpo), global_position)
 		if _inimigo_morreu(corpo):
 			on_enemy_killed(corpo)
-
 
 func _damage_against_enemy(enemy: Node) -> int:
 	if not enemy.is_in_group(&"necromancer") or not enemy.has_method(&"is_reviving"):
@@ -1444,27 +1521,29 @@ func _sword_overlaps_enemy(sword_shapes: Array[Node], enemy: PhysicsBody2D) -> b
 				return true
 	return false
 
-func _verificar_acertos_miniboss(area: Area2D, dano: int) -> void:
-	# V51: V50's generic hit loop intentionally skips enemies with custom
-	# hurtboxes, but this dedicated loop previously checked ONLY Menacing.
-	# Include the King, otherwise NO sword strike can damage him at any phase.
+func _verificar_acertos_miniboss(_area: Area2D, dano: int) -> void:
+	# Include BOTH Menacing and King as in V51, while skipping offscreen
+	# bosses before querying custom hurtboxes or allocating their shapes.
 	var boss_candidates: Array[Node] = []
 	boss_candidates.append_array(get_tree().get_nodes_in_group(&"menacing_skeleton"))
 	boss_candidates.append_array(get_tree().get_nodes_in_group(&"king_necromancer"))
 	for boss_node in boss_candidates:
-		if not boss_node is CharacterBody2D or not is_instance_valid(boss_node):
+		if not is_instance_valid(boss_node) or not boss_node is CharacterBody2D:
+			continue
+		var boss_body: CharacterBody2D = boss_node as CharacterBody2D
+		if boss_body.global_position.distance_squared_to(global_position) > 650.0 * 650.0:
 			continue
 		if atingidos_no_golpe.has(boss_node):
 			continue
 		if boss_node.has_method(&"is_dead") and bool(boss_node.call(&"is_dead")):
 			continue
 		var corpo_shape: CollisionShape2D = boss_node.get_node_or_null("CollisionShape2D") as CollisionShape2D
-		var has_hurtbox := boss_node.has_method(&"attack_shape_hits_hurtbox")
+		var has_hurtbox: bool = boss_node.has_method(&"attack_shape_hits_hurtbox")
 		if not has_hurtbox and (corpo_shape == null or corpo_shape.disabled or corpo_shape.shape == null):
 			continue
 		var acertou: bool = false
-		for shape_node in area.find_children("*", "CollisionShape2D", true, false):
-			if not shape_node is CollisionShape2D:
+		for shape_node in sword_shapes_cache:
+			if not is_instance_valid(shape_node) or not shape_node is CollisionShape2D:
 				continue
 			var ataque_shape: CollisionShape2D = shape_node as CollisionShape2D
 			if ataque_shape.disabled or ataque_shape.shape == null:
@@ -1473,8 +1552,7 @@ func _verificar_acertos_miniboss(area: Area2D, dano: int) -> void:
 				if bool(boss_node.call(&"attack_shape_hits_hurtbox", ataque_shape)):
 					acertou = true
 					break
-				# Fall back to the physical body collider if custom visual
-				# hurtbox testing misses, including when the King is phasing.
+				# Keep physical collider fallback for King, including phasing.
 			if corpo_shape == null or corpo_shape.disabled or corpo_shape.shape == null:
 				continue
 			if ataque_shape.shape.collide(
@@ -1489,36 +1567,44 @@ func _verificar_acertos_miniboss(area: Area2D, dano: int) -> void:
 			boss_node.call(&"tomar_dano", dano, global_position)
 			# The miniboss calls on_enemy_killed on its own death.
 
-
 # =====================================================
 # SKULL REFLECTION + HEAL ON KILL
 # =====================================================
-func _verificar_reflexao_cranios(area: Area2D, forte: bool) -> void:
-	# The Skull Area2D has collision_layer=0, so overlapping_areas() alone
-	# cannot find it. Check actual CollisionShape2D geometry instead.
+func _verificar_reflexao_cranios(_area: Area2D, forte: bool) -> void:
+	# Skull Area2D has collision_layer=0, so geometry checking remains
+	# necessary. Broad-phase filters the many distant skulls first.
 	for cranio in get_tree().get_nodes_in_group(&"skeleton_skull"):
-		if not cranio is Node2D or not is_instance_valid(cranio):
+		if not is_instance_valid(cranio) or not cranio is Node2D:
 			continue
 		if cranio.is_queued_for_deletion():
+			continue
+		var skull_node: Node2D = cranio as Node2D
+		if skull_node.global_position.distance_squared_to(global_position) > 400.0 * 400.0:
 			continue
 		var origem: Variant = cranio.get_meta(&"skeleton_owner", null)
 		if not origem is Node2D or not is_instance_valid(origem):
 			continue
 		var encontrou: bool = false
-		for area_shape in area.find_children("*", "CollisionShape2D", true, false):
-			if not area_shape is CollisionShape2D or area_shape.disabled or area_shape.shape == null:
+		var skull_shapes: Array[Node] = cranio.find_children("*", "CollisionShape2D", true, false)
+		for area_shape in sword_shapes_cache:
+			if not is_instance_valid(area_shape):
 				continue
-			for skull_shape in cranio.find_children("*", "CollisionShape2D", true, false):
-				if not skull_shape is CollisionShape2D or skull_shape.disabled or skull_shape.shape == null:
+			var area_hitbox: CollisionShape2D = area_shape as CollisionShape2D
+			if area_hitbox == null or area_hitbox.disabled or area_hitbox.shape == null:
+				continue
+			for skull_shape in skull_shapes:
+				if not is_instance_valid(skull_shape):
 					continue
-				if area_shape.shape.collide(area_shape.global_transform, skull_shape.shape, skull_shape.global_transform):
+				var skull_hitbox: CollisionShape2D = skull_shape as CollisionShape2D
+				if skull_hitbox == null or skull_hitbox.disabled or skull_hitbox.shape == null:
+					continue
+				if area_hitbox.shape.collide(area_hitbox.global_transform, skull_hitbox.shape, skull_hitbox.global_transform):
 					encontrou = true
 					break
 			if encontrou:
 				break
 		if encontrou and origem.has_method(&"reflect_skull"):
 			origem.call(&"reflect_skull", cranio, forte, self)
-
 func _inimigo_morreu(corpo: Node) -> bool:
 	if not is_instance_valid(corpo):
 		return false
@@ -1599,7 +1685,7 @@ func tomar_dano(
 
 	# Phase 2 artifact: block one complete enemy hit every 30 seconds.
 	if (
-		GerenciadorArtefatos.possui_artefato("calice")
+		_tem_habilidade("calice")
 		and calice_shield_cooldown <= 0.0
 	):
 		calice_shield_cooldown = maxf(1.0, calice_shield_recharge)
