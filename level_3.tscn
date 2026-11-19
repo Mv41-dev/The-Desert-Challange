@@ -357,6 +357,3 @@ position = Vector2(758, 297)
 [node name="portal2" parent="." unique_id=1762038120 instance=ExtResource("9_liaj6")]
 position = Vector2(-60, 300)
 next_scene_path = "uid://cb3qxy13u6pq4"
-
-[node name="artefato2" parent="." unique_id=1279389559 instance=ExtResource("8_7ds5r")]
-position = Vector2(366, 250)
