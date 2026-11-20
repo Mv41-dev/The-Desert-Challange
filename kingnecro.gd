@@ -1,3 +1,14 @@
+# KING V48: +75 HP to each Level 6 phase; longer FIRST-entrance-only title;
+# no second-phase title; immediately steering but momentum-limited accelerating / braking Void skulls.
+# KING V47: cinematic Void title (1s) before both shake entrances, zoomed-out centered phase-two camera,
+# raised marker appearances, 360-degree diverse skull origins, extended sweeping wall, marker-anchored cut patterns.
+# KING V46: fix phase-two marker naming mismatch (actual scene: 2phasebosspawns), prevent repeated warning spam.
+# V44: Phase-2 supervisor in _process (independent from boss physics/attack loop), marker-height trigger, guaranteed shake/reveal; preserves V43 attacks.
+# KING V42: reliable phase-2 detection and marker spawn; stronger second entrance shake; replace ball-headed VoidDashEcho with clean cut combos.
+# KING V41: no white-orb offensive cast pose; 3.3-second dash-through Void wall with dense drifting afterimages.
+# KING V39 LEVEL 6: hard phase-marker lock, no purple crown, void elite hit flash, boss gauntlet spells, swords/echoes, phased skulls, cinematic departure.
+# KING V38 LEVEL 6: reliable sword hits, white shader hit-flash + impact motes, black/white royal lasers.
+# V37 LEVEL 6: 150HP phase 1 -> 1HP shield and one Void Menacing; 2s crescendo shake; 2phaseidentifier delayed 150HP phase 2; new marker-based spells; smooth darkening; no summons in phase 2.
 # V34 - smaller King body and sword hurtbox; full-screen alternating laser/safe-space columns with offset shifting over three waves
 # V33 - bosscolider / BossNoSpawnZone protection for King teleports and spectral skull origins; lasers and skeletons unchanged
 # V32 - +100 HP, three shifting-safe-lane pillar waves, new combo patterns, moving distant guard perches, 1s skull phasing
@@ -31,6 +42,8 @@
 # V8 - rapid slashes, 4-wave Radiance-style skull walls with guaranteed safe gaps, Menacing 25HP + readable tells
 # V7 - King hittable at all active times; arena-spanning thick purple slashes; orbiting spectral skulls with 0.5s warnings and 15s volley cooldown
 # V6 - royal slash telegraphs, fast expansion/fade, two Radiance-like attack patterns
+# V49 - Level 6 skulls had a 75ms gap, too short to be visually distinguishable.
+# V50 - A visible 750ms (0.75s) gap between spawns; strict max 4 skulls, one per timer event.
 # KING NECROMANCER - Independent boss scene, no Level 5 auto-detection
 # Attach ONLY to the kingnecro.tscn root CharacterBody2D.
 # Preserves V5 Grave Monarch combat, Menacing-only guards and platform revival.
@@ -47,6 +60,8 @@ const REVIVE_ANIMATION := &"spawnenemies2"
 const REVIVE_LOOP_FIRST := 4
 const REVIVE_LOOP_LAST := 7
 const MAX_BUFFED_SKELETONS := 2
+const LEVEL6_SKULL_MAX: int = 4
+const LEVEL6_SKULL_STAGGER_SECONDS: float = 0.75 # 750ms, 75% of one second
 
 @export var max_hp: int = 30
 @export var activation_range: float = 280.0
@@ -96,6 +111,11 @@ const MAX_BUFFED_SKELETONS := 2
 @export_range(170.0, 420.0, 10.0) var king_skull_min_spawn_distance: float = 260.0
 @export_range(0.0, 0.8, 0.05) var king_skull_tracking_delay: float = 0.30
 @export_range(0.1, 1.2, 0.05) var king_skull_tracking_ramp: float = 0.45
+# Legacy Level 6 Inspector properties retained for compatibility, but V48
+# makes Level 6 skulls start steering as soon as their 0.5s charge ends.
+@export_range(1.15, 2.5, 0.05) var level6_skull_tracking_delay: float = 1.15
+@export_range(0.85, 2.0, 0.05) var level6_skull_tracking_ramp: float = 0.85
+@export_range(0.50, 2.20, 0.05) var level6_skull_turn_rate_v48: float = 1.35
 @export_range(140.0, 340.0, 10.0) var king_skull_flight_speed: float = 235.0
 
 @export_group("King Skull Walls")
@@ -180,6 +200,28 @@ const MAX_BUFFED_SKELETONS := 2
 @export_range(360.0, 2000.0, 20.0) var platform_search_depth: float = 900.0
 @export_range(1.0, 12.0, 1.0) var revive_floor_clearance: float = 4.0
 
+@export_group("Level 6: Multi-Phase Arena")
+@export var level6_boss_sequence_enabled: bool = true
+@export_range(0.5, 8.0, 0.1) var level6_entrance_delay: float = 3.8
+@export_range(1.0, 4.0, 0.1) var level6_entrance_shake_v37_seconds: float = 2.0
+@export_range(0.0, 20.0, 0.5) var level6_entrance_shake_v37_strength: float = 11.0
+@export_range(2.5, 4.0, 0.1) var level6_marker_hold_seconds: float = 3.7
+@export_range(20, 500, 10) var level6_first_phase_hp_v37: int = 150
+@export_range(20, 500, 10) var level6_second_phase_hp_v37: int = 150
+# Additive: works even when both original 150-HP exports were saved in the Inspector.
+@export_range(0, 300, 5) var level6_phase_hp_bonus_v48: int = 75
+@export_range(0.5, 5.0, 0.1) var level6_phase2_entrance_delay: float = 2.0
+@export_range(25, 150, 5) var level6_buffed_guard_health: int = 70
+@export_range(8.0, 30.0, 1.0) var level6_guard_spell_interval: float = 14.0
+@export_range(0.5, 4.0, 0.1) var level6_dissolve_seconds: float = 1.4
+@export_range(100.0, 650.0, 10.0) var level6_upper_trigger_radius: float = 340.0
+@export_range(0.0, 100.0, 5.0) var level6_marker_raise_pixels: float = 46.0
+@export_range(0.5, 4.0, 0.1) var level6_title_display_seconds: float = 1.8
+# Exact names in level_6.tscn; no TileMapLayer script required.
+@export var level6_boss_area_path: NodePath = NodePath("../bossarena")
+@export var level6_platforms_path: NodePath = NodePath("../boss2phase")
+@export var level6_second_identifier_path: NodePath = NodePath("../2phaseidentifier")
+
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
 
@@ -203,6 +245,9 @@ class Skull:
 	var orbit_sign: float = 1.0
 	var wobble_seed: float = 0.0
 	var base_scale: Vector2 = Vector2.ONE
+	# V48: inertial velocity and the speed it tries to rebuild after a turn.
+	var velocity: Vector2 = Vector2.ZERO
+	var cruise_speed: float = 0.0
 
 
 class SkullWall:
@@ -358,6 +403,1874 @@ var king_attack_cast_total: float = 0.0
 var king_final_pattern_round: int = 0
 
 
+# V40: marker-locked Void King, true skull noclip, dash-wall, readable attack waves, subtle HUD.
+# Level6 mode is independent of the earlier V35 shield/revival progression.
+# It only activates inside Level6/level_6.tscn, preserving the old fight elsewhere.
+enum Level6Stage {
+	HIDDEN, WAITING, SHAKING, REVEAL, PHASE_ONE,
+	DISSOLVE_ONE, CLIMB, SECOND_WAIT, PHASE_TWO, DISSOLVE_TWO, PHASE_THREE_PENDING,
+	INTRO_TITLE, SECOND_TITLE
+}
+var level6_mode: bool = false
+var level6_stage: Level6Stage = Level6Stage.HIDDEN
+var level6_stage_timer: float = 0.0
+var level6_perch_timer: float = 0.0
+var level6_guard_started: bool = false
+var level6_guard_retry: float = 0.0
+var level6_guard_summon_timer: float = 0.0
+var level6_attack_timer: float = 1.8
+var level6_attack_round: int = 0
+var level6_second_identifier: Area2D = null
+var level6_screen_layer: CanvasLayer = null
+var level6_screen_shadow: ColorRect = null
+var level6_title_layer: CanvasLayer = null
+var level6_title_black: ColorRect = null
+var level6_title_text: Label = null
+var level6_darkness_now: float = 0.0
+var level6_aura_sprite: Sprite2D = null
+var level6_aura_texture: Texture2D = null
+var level6_void_shader: ShaderMaterial = null
+var level6_first_markers: Array[Marker2D] = []
+var level6_second_markers: Array[Marker2D] = []
+var level6_current_marker: Marker2D = null
+var level6_arena: Area2D = null
+var level6_climb_layer: TileMapLayer = null
+var level6_original_cam_offset: Vector2 = Vector2.ZERO
+var level6_shake_cam: Camera2D = null
+var level6_camera_base_zoom: Vector2 = Vector2.ONE
+var level6_camera_initialized: bool = false
+@export_range(0.65, 1.0, 0.01) var level6_camera_zoom_factor: float = 0.87
+@export_range(0.0, 200.0, 5.0) var level6_camera_upward_pixels: float = 95.0
+var level6_hud_gradient_bar: ColorRect = null
+var level6_hud_gradient_material: ShaderMaterial = null
+var level6_void_walls: Array[VoidWall] = []
+var level6_aura_particles: CPUParticles2D = null
+var level6_particle_texture: Texture2D = null
+var level6_last_burst_at: Vector2 = Vector2.ZERO
+# V38: a short damage lock prevents the Player and the boss-side sword fallback
+# from registering the same strike twice. Does not affect invulnerable phases.
+var level6_hit_lock: float = 0.0
+var level6_player_swing_seen: bool = false
+var level6_player_swing_frame: int = -1
+var level6_fallback_hit_for_swing: bool = false
+var level6_guard_flash_timers: Dictionary = {}
+var level6_guard_previous_hp: Dictionary = {}
+var level6_void_swords: Array[VoidSword] = []
+var level6_dash_echoes: Array[VoidDashEcho] = []
+var level6_skull_shot_timer: float = 0.0
+var level6_skull_shots_left: int = 0
+var level6_skull_spawn_serial: int = 0
+var level6_skull_spawn_rotation: int = 0
+var level6_last_skull_spawn: Vector2 = Vector2(INF, INF)
+var level6_departure_target: Vector2 = Vector2.ZERO
+signal level6_phase_two_finished
+
+class VoidSword:
+	var position: Vector2 = Vector2.ZERO
+	var aim: Vector2 = Vector2.ZERO
+	var direction: Vector2 = Vector2.DOWN
+	var elapsed: float = 0.0
+	var delay: float = 0.0
+	var warning: float = 0.75
+	var launched: bool = false
+	var flight: float = 0.0
+	var trail: Array[Vector2] = []
+	var hit: bool = false
+
+class VoidWall:
+	var start_x: float = 0.0
+	var end_x: float = 0.0
+	var elapsed: float = 0.0
+	var warning: float = 1.30
+	var travel: float = 3.30
+	var width: float = 58.0
+	var last_damage_time: float = -1.0
+	# One successful dodge protects against this same sweeping wall for
+	# its remaining lifetime; the normal dash is shorter than its visual width.
+	var dashed_through: bool = false
+	var sweep_history: Array[float] = []
+
+class VoidDashEcho:
+	var start: Vector2 = Vector2.ZERO
+	var end: Vector2 = Vector2.ZERO
+	var elapsed: float = 0.0
+	var delay: float = 0.0
+	var warn: float = 0.68
+	var travel: float = 0.23
+	var hit: bool = false
+
+
+func _level6_detect_scene() -> bool:
+	if not level6_boss_sequence_enabled:
+		return false
+	var level: Node = get_tree().current_scene
+	if level == null:
+		level = get_parent()
+	if level == null:
+		return false
+	var name_text: String = String(level.name).to_lower().replace("_", "")
+	var file_text: String = String(level.scene_file_path).get_file().get_basename().to_lower().replace("_", "")
+	return name_text == "level6" or file_text == "level6"
+
+
+func _level6_initialize() -> void:
+	level6_mode = _level6_detect_scene()
+	if not level6_mode:
+		return
+	level6_stage = Level6Stage.HIDDEN
+	level6_skull_spawn_serial = 0
+	level6_skull_spawn_rotation = randi_range(0, 7)
+	level6_first_markers.clear()
+	level6_second_markers.clear()
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		scene_root = get_parent()
+	if scene_root != null:
+		for node: Node in scene_root.find_children("*", "Marker2D", true, false):
+			var marker2: Marker2D = node as Marker2D
+			if marker2 == null:
+				continue
+			var lower_name: String = String(marker2.name).to_lower()
+			if lower_name.begins_with("1phasespawns"):
+				level6_first_markers.append(marker2)
+			elif lower_name.begins_with("2phasebo") and "spawn" in lower_name:
+				level6_second_markers.append(marker2)
+	if not level6_boss_area_path.is_empty():
+		level6_arena = get_node_or_null(level6_boss_area_path) as Area2D
+	if level6_arena == null and scene_root != null:
+		level6_arena = scene_root.find_child("bossarena", true, false) as Area2D
+	if level6_arena != null:
+		if not level6_arena.body_entered.is_connected(_level6_on_boss_area_entered):
+			level6_arena.body_entered.connect(_level6_on_boss_area_entered)
+	else:
+		push_warning("KING V37: bossarena Area2D missing; phase 1 cannot auto-start.")
+	if not level6_second_identifier_path.is_empty():
+		level6_second_identifier = get_node_or_null(level6_second_identifier_path) as Area2D
+	if level6_second_identifier == null and scene_root != null:
+		level6_second_identifier = scene_root.find_child("2phaseidentifier", true, false) as Area2D
+	if level6_second_identifier != null:
+		if not level6_second_identifier.body_entered.is_connected(_level6_on_second_area_entered):
+			level6_second_identifier.body_entered.connect(_level6_on_second_area_entered)
+	else:
+		push_warning("KING V37: 2phaseidentifier Area2D missing; phase 2 requires it.")
+	if not level6_platforms_path.is_empty():
+		level6_climb_layer = get_node_or_null(level6_platforms_path) as TileMapLayer
+	if level6_climb_layer == null and scene_root != null:
+		level6_climb_layer = scene_root.find_child("boss2phase", true, false) as TileMapLayer
+	if level6_climb_layer != null:
+		level6_climb_layer.enabled = false  # Hide VISUALS AND COLLISIONS until the climb.
+	else:
+		push_warning("KING V36: boss2phase TileMapLayer not found.")
+	print("VOID KING V46: Level6 markers found: phase 1=", level6_first_markers.size(),
+		", phase 2=", level6_second_markers.size())
+	if level6_first_markers.is_empty() or level6_second_markers.is_empty():
+		push_warning("VOID KING V46: missing Marker2D nodes (accepts both 2phasebosspawns and 2phasebossspawns).")
+	max_hp = maxi(20, level6_first_phase_hp_v37 + level6_phase_hp_bonus_v48)
+	hp = max_hp
+	king_shield_phase = KingShieldPhase.SOLO
+	king_shield_countdown = -1.0
+	king_elite_total_waves = 1
+	king_elite_waves_spawned = 0
+	king_elite_guards.clear()
+	king_max_total_resurrections = 0
+	king_post_attack_timer = 1.0
+	sprite.visible = false
+	if is_instance_valid(king_crown_root):
+		king_crown_root.visible = false
+		king_crown_root.queue_free()
+		king_crown_root = null
+	if is_instance_valid(king_hud):
+		king_hud.visible = false
+	# Stop the large old purple tint. A shader turns all RED source pixels WHITE,
+	# and the rest of the sprite into an inky black/charcoal silhouette.
+	var void_shader := Shader.new()
+	void_shader.code = """shader_type canvas_item;
+uniform float hit_flash : hint_range(0.0, 1.0) = 0.0;
+void fragment() {
+    vec4 tex = texture(TEXTURE, UV);
+    float red_pixel = step(0.29, tex.r) * step(tex.g * 1.50, tex.r) * step(tex.b * 1.35, tex.r);
+    vec3 dark_body = vec3(0.021, 0.022, 0.029) + tex.rgb * 0.032;
+    vec3 col = mix(dark_body, vec3(1.0, 1.0, 1.0), red_pixel);
+    // Modulate cannot flash this shader when COLOR is overwritten; use a uniform.
+    col = mix(col, vec3(1.0, 1.0, 1.0), hit_flash);
+    COLOR = vec4(col, tex.a);
+} """
+	var void_material := ShaderMaterial.new()
+	void_material.shader = void_shader
+	sprite.material = void_material
+	level6_void_shader = void_material
+	sprite.self_modulate = Color.WHITE
+	sprite.modulate = Color.WHITE
+	sprite_tint = Color.WHITE
+	_level6_create_aura()
+	_level6_create_screen_darkness()
+	if is_instance_valid(level6_aura_particles):
+		level6_aura_particles.emitting = false
+		level6_aura_particles.visible = false
+	if is_instance_valid(level6_aura_sprite):
+		level6_aura_sprite.visible = false
+	_update_king_hp_label()
+	if is_instance_valid(king_hud):
+		king_hud.visible = false
+
+
+func _level6_accepted_hit(previous_hp: int) -> void:
+	# Only truly registered damage flashes; hits against the shield do not.
+	if hp >= previous_hp:
+		return
+	king_black_flash_timer = 0.105
+	# Mark the current swing as consumed even if Player V53 reported it first.
+	# Otherwise the fallback could count the same attack again 120 ms later.
+	if is_instance_valid(target) and target.has_method(&"is_swinging") and bool(target.call(&"is_swinging")):
+		level6_player_swing_seen = true
+		level6_fallback_hit_for_swing = true
+		var player_anim: AnimatedSprite2D = target.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+		if player_anim != null:
+			level6_player_swing_frame = player_anim.frame
+	if is_instance_valid(level6_void_shader):
+		level6_void_shader.set_shader_parameter("hit_flash", 1.0)
+	_level6_hit_particles()
+	# Useful during debugging: this proves the health actually changed.
+	print("VOID KING HIT: ", previous_hp, " -> ", hp, " / ", max_hp)
+
+
+func _level6_hit_particles() -> void:
+	# Fast, lightweight one-shot sparks from the actual King sprite position.
+	var fx: CPUParticles2D = CPUParticles2D.new()
+	fx.name = "VoidKingHitSparks"
+	fx.texture = _level6_get_particle_texture()
+	fx.one_shot = true
+	fx.amount = 14
+	fx.explosiveness = 1.0
+	fx.lifetime = 0.32
+	fx.direction = Vector2.UP
+	fx.spread = 155.0
+	fx.initial_velocity_min = 42.0
+	fx.initial_velocity_max = 115.0
+	fx.gravity = Vector2(0.0, 90.0)
+	fx.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	fx.emission_rect_extents = Vector2(17.0, 23.0)
+	fx.color = Color(0.83, 0.85, 0.92, 0.8)
+	fx.z_index = 81
+	var parent_node: Node = get_parent()
+	if parent_node == null:
+		return
+	parent_node.add_child(fx)
+	fx.global_position = sprite.global_position
+	fx.emitting = true
+	get_tree().create_timer(0.55).timeout.connect(fx.queue_free)
+
+
+func _level6_sword_fallback() -> void:
+	# Works alongside Player V53's hit checks, never instead of them.
+	# Fixes missed hits when the Player's cached sword shapes are out of date.
+	if not is_instance_valid(target) or not target.has_method(&"is_swinging"):
+		level6_player_swing_seen = false
+		return
+	if not bool(target.call(&"is_swinging")):
+		level6_player_swing_seen = false
+		level6_fallback_hit_for_swing = false
+		level6_player_swing_frame = -1
+		return
+	var sword_sprite: AnimatedSprite2D = target.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	if sword_sprite == null:
+		return
+	var frame: int = sword_sprite.frame
+	# A queued new attack can start without a full idle physics frame.
+	if not level6_player_swing_seen or frame < level6_player_swing_frame:
+		level6_fallback_hit_for_swing = false
+	level6_player_swing_seen = true
+	level6_player_swing_frame = frame
+	if level6_fallback_hit_for_swing or level6_hit_lock > 0.0:
+		return
+	if frame < 2 or frame > 4:
+		return
+	if global_position.distance_squared_to(target.global_position) > 320.0 * 320.0:
+		return
+	var sword_area: Area2D = target.get_node_or_null("AttackAreaJ") as Area2D
+	if sword_area == null:
+		sword_area = target.get_node_or_null("AttackArea") as Area2D
+	if sword_area == null:
+		return
+	for shape_node: Node in sword_area.find_children("*", "CollisionShape2D", true, false):
+		var sword_shape: CollisionShape2D = shape_node as CollisionShape2D
+		if sword_shape == null or sword_shape.disabled or sword_shape.shape == null:
+			continue
+		if attack_shape_hits_hurtbox(sword_shape):
+			var damage: int = 1
+			var proposed: Variant = target.get("dano_do_golpe")
+			if proposed is int:
+				damage = maxi(1, int(proposed))
+			level6_fallback_hit_for_swing = true
+			tomar_dano(damage, target.global_position)
+			return
+
+
+func _level6_get_particle_texture() -> Texture2D:
+	if level6_particle_texture != null:
+		return level6_particle_texture
+	var img: Image = Image.create(7, 7, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1.0, 1.0, 1.0, 0.0))
+	for px: int in range(1, 6):
+		for py: int in range(1, 6):
+			var edge: bool = px == 1 or px == 5 or py == 1 or py == 5
+			img.set_pixel(px, py, Color(1.0, 1.0, 1.0, 0.55 if edge else 1.0))
+	level6_particle_texture = ImageTexture.create_from_image(img)
+	return level6_particle_texture
+
+
+func _level6_get_aura_texture() -> Texture2D:
+	if level6_aura_texture != null:
+		return level6_aura_texture
+	# Actual transparent radial alpha with irregular smoky edges, not a solid disc.
+	var image: Image = Image.create(128, 128, false, Image.FORMAT_RGBA8)
+	for y: int in range(128):
+		for x: int in range(128):
+			var uv: Vector2 = (Vector2(float(x), float(y)) - Vector2(63.5, 63.5)) / 63.5
+			var theta: float = atan2(uv.y, uv.x)
+			var distance: float = uv.length()
+			var ripple: float = sin(theta * 7.0 + distance * 8.0) * 0.075 + sin(theta * 13.0 - distance * 11.0) * 0.038
+			var opacity: float = pow(clampf((1.0 + ripple - distance) / 0.83, 0.0, 1.0), 2.8) * 0.47
+			image.set_pixel(x, y, Color(0.017, 0.018, 0.025, opacity))
+	level6_aura_texture = ImageTexture.create_from_image(image)
+	return level6_aura_texture
+
+
+func _level6_create_aura() -> void:
+	if not is_instance_valid(level6_aura_sprite):
+		level6_aura_sprite = Sprite2D.new()
+		level6_aura_sprite.name = "SoftVoidAura"
+		level6_aura_sprite.texture = _level6_get_aura_texture()
+		level6_aura_sprite.scale = Vector2(2.05, 2.20)
+		level6_aura_sprite.position = Vector2(0.0, -14.0)
+		level6_aura_sprite.z_index = -4
+		level6_aura_sprite.show_behind_parent = true
+		add_child(level6_aura_sprite)
+	if is_instance_valid(level6_aura_particles):
+		return
+	level6_aura_particles = CPUParticles2D.new()
+	level6_aura_particles.name = "KingSoftVoidSmoke"
+	level6_aura_particles.texture = _level6_get_particle_texture()
+	level6_aura_particles.amount = 19
+	level6_aura_particles.lifetime = 1.8
+	level6_aura_particles.emitting = true
+	level6_aura_particles.direction = Vector2.UP
+	level6_aura_particles.spread = 80.0
+	level6_aura_particles.initial_velocity_min = 13.0
+	level6_aura_particles.initial_velocity_max = 29.0
+	level6_aura_particles.gravity = Vector2(0.0, -6.0)
+	level6_aura_particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	level6_aura_particles.emission_rect_extents = Vector2(22.0, 32.0)
+	level6_aura_particles.color = Color(0.028, 0.029, 0.045, 0.28)
+	level6_aura_particles.z_index = -3
+	level6_aura_particles.show_behind_parent = true
+	add_child(level6_aura_particles)
+
+
+func _level6_create_screen_darkness() -> void:
+	if is_instance_valid(level6_screen_layer):
+		return
+	level6_screen_layer = CanvasLayer.new()
+	level6_screen_layer.layer = 30
+	level6_screen_layer.name = "KingPhaseDarkness"
+	var shadow_parent: Node = get_tree().current_scene
+	if shadow_parent == null:
+		shadow_parent = get_tree().root
+	shadow_parent.add_child(level6_screen_layer)
+	level6_screen_shadow = ColorRect.new()
+	level6_screen_shadow.name = "GradualDarkness"
+	level6_screen_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level6_screen_shadow.color = Color(0.0, 0.0, 0.0, 1.0)
+	level6_screen_shadow.modulate.a = 0.0
+	level6_screen_shadow.position = Vector2.ZERO
+	level6_screen_shadow.size = get_viewport_rect().size
+	level6_screen_layer.add_child(level6_screen_shadow)
+
+
+func _level6_guard_hp_ratio() -> float:
+	for guard: CharacterBody2D in king_elite_guards:
+		if not is_instance_valid(guard) or guard.is_queued_for_deletion():
+			continue
+		if guard.has_method(&"is_dead") and bool(guard.call(&"is_dead")):
+			continue
+		# Menacing Skeleton exposes max_hp; look for an actual HP field before reading.
+		var have_hp: bool = false
+		var have_max: bool = false
+		for prop: Dictionary in guard.get_property_list():
+			var p: String = String(prop.get("name", ""))
+			if p == "hp":
+				have_hp = true
+			elif p == "max_hp":
+				have_max = true
+		if have_hp and have_max:
+			return clampf(float(guard.get("hp")) / maxf(1.0, float(guard.get("max_hp"))), 0.0, 1.0)
+	return 1.0
+
+
+func _level6_update_screen_darkness(delta: float) -> void:
+	if not is_instance_valid(level6_screen_shadow):
+		return
+	level6_screen_shadow.size = get_viewport_rect().size
+	var target_alpha: float = 0.0
+	if level6_stage == Level6Stage.PHASE_ONE:
+		if king_shield_phase == KingShieldPhase.SOLO:
+			var hp_danger: float = 1.0 - float(hp) / maxf(1.0, float(max_hp))
+			target_alpha = 0.04 + 0.46 * pow(clampf(hp_danger, 0.0, 1.0), 1.35)
+		elif king_shield_phase == KingShieldPhase.SHIELDED:
+			var guard_danger: float = 1.0 - _level6_guard_hp_ratio()
+			target_alpha = 0.46 + 0.18 * guard_danger
+		else:
+			target_alpha = 0.62
+	elif level6_stage == Level6Stage.PHASE_TWO:
+		target_alpha = 0.12 + 0.48 * (1.0 - float(hp) / maxf(1.0, float(max_hp)))
+	elif level6_stage in [Level6Stage.DISSOLVE_ONE, Level6Stage.DISSOLVE_TWO]:
+		target_alpha = 0.66
+	level6_darkness_now = move_toward(level6_darkness_now, target_alpha, delta * 0.48)
+	level6_screen_shadow.modulate.a = clampf(level6_darkness_now, 0.0, 0.68)
+
+
+func _level6_rebind_upper_nodes() -> void:
+	# Level 6 may be instantiated in a different order than the boss.
+	# Re-find markers and the Area2D instead of trusting a single _ready scan.
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		scene_root = get_parent()
+	if scene_root == null:
+		return
+	if not is_instance_valid(level6_second_identifier):
+		level6_second_identifier = scene_root.find_child("2phaseidentifier", true, false) as Area2D
+		if is_instance_valid(level6_second_identifier):
+			if not level6_second_identifier.body_entered.is_connected(_level6_on_second_area_entered):
+				level6_second_identifier.body_entered.connect(_level6_on_second_area_entered)
+	if level6_second_markers.is_empty():
+		for node: Node in scene_root.find_children("*", "Marker2D", true, false):
+			var marker: Marker2D = node as Marker2D
+			if marker != null and (String(marker.name).to_lower().begins_with("2phasebo") and "spawn" in String(marker.name).to_lower()):
+				level6_second_markers.append(marker)
+		if not level6_second_markers.is_empty():
+			print("VOID KING V46: recovered ", level6_second_markers.size(), " upper markers: ",
+				level6_second_markers[0].name)
+	# Handle deleted/replaced markers, including an editor-reloaded level.
+	for index: int in range(level6_second_markers.size() - 1, -1, -1):
+		if not is_instance_valid(level6_second_markers[index]):
+			level6_second_markers.remove_at(index)
+
+
+func _level6_upper_arena_reached() -> bool:
+	if not is_instance_valid(target):
+		return false
+	# 1. Exact Area2D geometry. Works even if its physics mask is wrong,
+	# and even if the player entered while the King was still dissolving.
+	if is_instance_valid(level6_second_identifier):
+		if level6_second_identifier.overlaps_body(target):
+			return true
+		var body_points: Array[Vector2] = [
+			target.global_position,
+			target.global_position + Vector2(0.0, -22.0),
+			target.global_position + Vector2(0.0, 22.0)
+		]
+		for point: Vector2 in body_points:
+			if _level6_point_inside_area(level6_second_identifier, point):
+				return true
+	# 2. Fail-safe using ONLY the seven upper Marker2Ds. The editor's large
+	# Area2D rectangle can be misplaced or have an invalid collision shape.
+	# This bounding region matches the upper fight, not the lower markers.
+	if level6_second_markers.is_empty():
+		return false
+	var left: float = INF
+	var right: float = -INF
+	var top: float = INF
+	var bottom: float = -INF
+	for marker: Marker2D in level6_second_markers:
+		if not is_instance_valid(marker):
+			continue
+		left = minf(left, marker.global_position.x)
+		right = maxf(right, marker.global_position.x)
+		top = minf(top, marker.global_position.y)
+		bottom = maxf(bottom, marker.global_position.y)
+	if left == INF:
+		return false
+	var margin_x: float = maxf(130.0, level6_upper_trigger_radius * 0.55)
+	var margin_y: float = maxf(100.0, level6_upper_trigger_radius * 0.40)
+	var p: Vector2 = target.global_position
+	return (
+		p.x >= left - margin_x and p.x <= right + margin_x
+		and p.y >= top - margin_y and p.y <= bottom + margin_y
+	)
+
+
+func _level6_marker_position(marker: Marker2D) -> Vector2:
+	# Centralized offset: all teleport destinations, initial reveals and
+	# marker validation use the same elevated point to prevent snap-back.
+	return marker.global_position + Vector2(0.0, -level6_marker_raise_pixels)
+
+
+func _level6_phase_two_framing() -> bool:
+	return level6_stage in [
+		Level6Stage.SECOND_TITLE, Level6Stage.SECOND_WAIT,
+		Level6Stage.PHASE_TWO, Level6Stage.DISSOLVE_TWO
+	] or (level6_stage == Level6Stage.REVEAL and level6_second_reveal)
+
+
+func _level6_create_title_overlay() -> void:
+	if is_instance_valid(level6_title_layer):
+		return
+	var root: Node = get_tree().root
+	level6_title_layer = CanvasLayer.new()
+	level6_title_layer.name = "VoidKingTitleScreen"
+	level6_title_layer.layer = 200 # Above the old HUD (layer 110).
+	root.add_child(level6_title_layer)
+	level6_title_black = ColorRect.new()
+	level6_title_black.name = "FullBlack"
+	level6_title_black.color = Color.BLACK
+	level6_title_black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level6_title_layer.add_child(level6_title_black)
+	level6_title_text = Label.new()
+	level6_title_text.name = "VoidKingName"
+	level6_title_text.text = "VOID KING NECROMANCER"
+	level6_title_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	level6_title_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	level6_title_text.add_theme_color_override("font_color", Color.WHITE)
+	level6_title_text.add_theme_font_size_override("font_size", 38)
+	level6_title_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level6_title_layer.add_child(level6_title_text)
+	level6_title_layer.visible = false
+	_level6_title_resize()
+
+
+func _level6_title_resize() -> void:
+	if not is_instance_valid(level6_title_layer):
+		return
+	var viewport_size: Vector2 = get_viewport_rect().size
+	level6_title_black.position = Vector2.ZERO
+	level6_title_black.size = viewport_size
+	level6_title_text.position = Vector2.ZERO
+	level6_title_text.size = viewport_size
+
+
+func _level6_begin_title(second: bool) -> void:
+	if second:
+		# Title belongs ONLY to the very first entrance.
+		_level6_end_title()
+		level6_stage = Level6Stage.SECOND_WAIT
+		level6_stage_timer = maxf(1.0, level6_phase2_shake_duration)
+		return
+	_level6_create_title_overlay()
+	level6_stage = Level6Stage.INTRO_TITLE
+	# Old scene overrides cannot cut the 1.8-second title hold short.
+	level6_stage_timer = maxf(1.8, level6_title_display_seconds)
+	level6_title_layer.visible = true
+	_level6_title_resize()
+	sprite.visible = false
+	if is_instance_valid(king_hud):
+		king_hud.visible = false
+	# Adjust the camera NOW, behind the completely black title card.
+	# In phase two its offset is zero, but the wider boss zoom remains.
+	var camera: Camera2D = _level6_find_battle_camera()
+	if is_instance_valid(camera):
+		if not level6_camera_initialized:
+			level6_camera_initialized = true
+			level6_original_cam_offset = camera.offset
+			level6_camera_base_zoom = camera.zoom
+		camera.zoom = level6_camera_base_zoom * level6_camera_zoom_factor
+		camera.offset = Vector2.ZERO if second else level6_original_cam_offset + Vector2(0.0, -level6_camera_upward_pixels)
+		camera.reset_smoothing()
+
+
+func _level6_end_title() -> void:
+	if is_instance_valid(level6_title_layer):
+		level6_title_layer.visible = false
+
+
+func _level6_find_battle_camera() -> Camera2D:
+	var camera: Camera2D = get_viewport().get_camera_2d()
+	if not is_instance_valid(camera) and is_instance_valid(target):
+		camera = target.find_child("Camera2D", true, false) as Camera2D
+	return camera
+
+
+# When climbing to the top, the player's feet may remain BELOW every
+# phase-two Marker2D even though the player is already on the boss platform.
+# This safe fallback recognises the upper section by height and its X span.
+func _level6_upper_height_reached() -> bool:
+	if not is_instance_valid(target):
+		return false
+	var upper_bottom: float = -INF
+	var upper_left: float = INF
+	var upper_right: float = -INF
+	for marker: Marker2D in level6_second_markers:
+		if not is_instance_valid(marker):
+			continue
+		upper_bottom = maxf(upper_bottom, marker.global_position.y)
+		upper_left = minf(upper_left, marker.global_position.x)
+		upper_right = maxf(upper_right, marker.global_position.x)
+	if upper_bottom == -INF:
+		return false
+	# Allow the player's standing position to be ~340 px below the lowest
+	# teleport anchor. The upper platform can be well below flying markers.
+	var trigger_y: float = upper_bottom + 340.0
+	var lower_top: float = INF
+	for marker: Marker2D in level6_first_markers:
+		if is_instance_valid(marker):
+			lower_top = minf(lower_top, marker.global_position.y)
+	if lower_top < INF and lower_top > upper_bottom:
+		# Keep trigger within the transition corridor, not at phase one.
+		trigger_y = minf(trigger_y, upper_bottom + maxf(100.0, (lower_top - upper_bottom) * 0.45))
+	var player_at: Vector2 = target.global_position
+	return (
+		player_at.y <= trigger_y
+		and player_at.x >= upper_left - 450.0
+		and player_at.x <= upper_right + 450.0
+	)
+
+
+# The upper encounter runs independently of _physics_process. If an old
+# projectile/attack raises a runtime error, it cannot stall this phase timer.
+func _process(delta: float) -> void:
+	if not level6_mode:
+		return
+	if level6_stage not in [Level6Stage.CLIMB, Level6Stage.SECOND_TITLE, Level6Stage.SECOND_WAIT, Level6Stage.REVEAL]:
+		return
+	if level6_stage == Level6Stage.REVEAL and not level6_second_reveal:
+		return # Phase-one reveal stays in its original physics loop.
+
+	if not is_instance_valid(target):
+		target = get_tree().get_first_node_in_group(&"player") as CharacterBody2D
+
+	if level6_stage == Level6Stage.CLIMB:
+		level6_climb_elapsed += delta
+		level6_upper_check_log_timer += delta
+		_level6_rebind_upper_nodes()
+		var inside_upper: bool = _level6_upper_arena_reached() or _level6_upper_height_reached()
+		if inside_upper and is_instance_valid(target):
+			print("VOID KING V44: upper platform detected, starting phase-two shake at ", target.global_position)
+			_level6_on_second_area_entered(target)
+		elif level6_upper_check_log_timer >= 5.0:
+			level6_upper_check_log_timer = 0.0
+			print("VOID KING V44: STILL CLIMBING: player=", target.global_position if is_instance_valid(target) else Vector2.ZERO,
+				" 2nd_area=", is_instance_valid(level6_second_identifier), " upper_markers=", level6_second_markers.size())
+		return
+
+	if level6_stage == Level6Stage.SECOND_TITLE:
+		_level6_title_resize()
+		level6_stage_timer -= delta
+		if level6_stage_timer <= 0.0:
+			_level6_end_title()
+			level6_stage = Level6Stage.SECOND_WAIT
+			level6_stage_timer = level6_phase2_shake_duration
+		return
+
+	if level6_stage == Level6Stage.SECOND_WAIT:
+		level6_stage_timer -= delta
+		if not is_instance_valid(level6_shake_cam):
+			level6_shake_cam = _level6_find_battle_camera()
+		if is_instance_valid(level6_shake_cam):
+			var progress: float = 1.0 - clampf(level6_stage_timer / maxf(0.2, level6_phase2_shake_duration), 0.0, 1.0)
+			var power: float = level6_phase2_shake_max_pixels * pow(progress, 2.0)
+			level6_shake_cam.offset = Vector2(randf_range(-power, power), randf_range(-power, power))
+		if level6_stage_timer <= 0.0:
+			_level6_stop_shake()
+			_level6_rebind_upper_nodes()
+			var upper_marker: Marker2D = _level6_phase2_marker_near_player()
+			if is_instance_valid(upper_marker):
+				king_tp_phase = 0
+				level6_current_marker = upper_marker
+				global_position = _level6_marker_position(upper_marker)
+				king_tp_destination = global_position
+				reset_physics_interpolation()
+				_level6_start_second_phase()
+				print("VOID KING V44: phase-two REVEAL started at ", upper_marker.name, " / ", global_position)
+			else:
+				push_error("VOID KING V44: no upper Marker2D found; check node names 2phasebosspawns...")
+				# Keep counting, but do not spam one error per rendered frame.
+				level6_stage_timer = 1.0
+		return
+
+	if level6_stage == Level6Stage.REVEAL and level6_second_reveal:
+		level6_stage_timer -= delta
+		var progress: float = 1.0 - clampf(level6_stage_timer / maxf(0.30, king_teleport_reappear_seconds), 0.0, 1.0)
+		_king_set_teleport_death_frame(1.0 - progress)
+		sprite.visible = true
+		if level6_stage_timer <= 0.0:
+			level6_second_reveal = false
+			level6_stage = Level6Stage.PHASE_TWO
+			level6_perch_timer = maxf(2.5, level6_marker_hold_seconds)
+			king_tp_hold_remaining = 4.0
+			king_tp_phase = 0
+			_level6_secure_second_marker()
+			_play(&"idle", true)
+			if not is_instance_valid(king_hud):
+				_create_king_boss_hud()
+			if is_instance_valid(king_hud):
+				king_hud.visible = true
+			_update_king_hp_label()
+			print("VOID KING V44: PHASE TWO ACTIVE / hp=", hp, "/", max_hp, " / location=", global_position)
+		queue_redraw()
+
+
+func _level6_on_second_area_entered(body: Node2D) -> void:
+	if not level6_mode or level6_stage != Level6Stage.CLIMB or not body.is_in_group(&"player"):
+		return
+	if level6_second_markers.is_empty():
+		_level6_rebind_upper_nodes()
+	if level6_second_markers.is_empty():
+		if not level6_phase2_missing_markers_warned:
+			level6_phase2_missing_markers_warned = true
+			push_warning("VOID KING V46: zero upper markers found. Expected 2phasebosspawns(2...7) or 2phasebossspawns.")
+		return
+	level6_phase2_missing_markers_warned = false
+	level6_phase2_shake_duration = maxf(1.0, level6_phase2_shake_seconds)
+	# No second title. Start the second-phase crescendo shake immediately.
+	_level6_end_title()
+	level6_stage = Level6Stage.SECOND_WAIT
+	level6_stage_timer = level6_phase2_shake_duration
+	print("VOID KING V48: upper arena reached; no title, just crescendo shake and boss reveal")
+	level6_shake_cam = _level6_find_battle_camera()
+	if is_instance_valid(level6_shake_cam):
+		if not level6_camera_initialized:
+			level6_camera_initialized = true
+			level6_original_cam_offset = level6_shake_cam.offset
+			level6_camera_base_zoom = level6_shake_cam.zoom
+		# Keep the wider field of view, centered on the player.
+		level6_shake_cam.zoom = level6_camera_base_zoom * level6_camera_zoom_factor
+		level6_shake_cam.offset = Vector2.ZERO
+		level6_shake_cam.reset_smoothing()
+	level6_second_reveal = false
+	level6_phase2_start_logged = true
+	king_tp_phase = 0
+	sprite.visible = false
+	if is_instance_valid(king_hud):
+		king_hud.visible = false
+	print("VOID KING V43: UPPER ARENA TRIGGERED; starting 2-second shake. Player=", body.global_position, " markers=", level6_second_markers.size(), " area=", is_instance_valid(level6_second_identifier))
+	if not is_instance_valid(level6_shake_cam):
+		push_warning("VOID KING V43: no Camera2D found; timer/reveal continue without shake")
+
+
+func _level6_point_inside_area(area: Area2D, world_point: Vector2) -> bool:
+	# Check actual shapes independently of Area2D layers/masks. Scene markers
+	# and areas are often configured for editing rather than physics overlap.
+	if not is_instance_valid(area):
+		return false
+	for node: Node in area.find_children("*", "CollisionShape2D", true, false):
+		var shape_node: CollisionShape2D = node as CollisionShape2D
+		if shape_node == null or shape_node.disabled or shape_node.shape == null:
+			continue
+		var relative: Vector2 = shape_node.global_transform.affine_inverse() * world_point
+		if shape_node.shape is RectangleShape2D:
+			var rect: RectangleShape2D = shape_node.shape as RectangleShape2D
+			if absf(relative.x) <= rect.size.x * 0.5 + 14.0 and absf(relative.y) <= rect.size.y * 0.5 + 18.0:
+				return true
+		elif shape_node.shape is CircleShape2D:
+			var circle: CircleShape2D = shape_node.shape as CircleShape2D
+			if relative.length_squared() <= pow(circle.radius + 18.0, 2.0):
+				return true
+		elif shape_node.shape is CapsuleShape2D:
+			var capsule: CapsuleShape2D = shape_node.shape as CapsuleShape2D
+			var limit_y: float = maxf(0.0, capsule.height * 0.5 - capsule.radius)
+			var dist: float = (relative - Vector2(0.0, clampf(relative.y, -limit_y, limit_y))).length()
+			if dist <= capsule.radius + 16.0:
+				return true
+	return false
+
+
+func _level6_phase2_marker_near_player() -> Marker2D:
+	# Spawn at one of the seven UPPER markers, ideally visible on the camera
+	# when the reveal begins. Never fall back to a phase-one marker.
+	var best: Marker2D = null
+	var best_score: float = INF
+	var view: Rect2 = _king_visible_world_rect()
+	for marker: Marker2D in level6_second_markers:
+		if not is_instance_valid(marker):
+			continue
+		var spawn_at: Vector2 = _level6_marker_position(marker)
+		var score: float = spawn_at.distance_squared_to(target.global_position) if is_instance_valid(target) else 0.0
+		if view.grow(-60.0).has_point(spawn_at):
+			score *= 0.18
+		if score < best_score:
+			best_score = score
+			best = marker
+	return best
+
+
+func _level6_on_boss_area_entered(body: Node2D) -> void:
+	if level6_mode and level6_stage == Level6Stage.HIDDEN and body.is_in_group(&"player"):
+		level6_stage = Level6Stage.WAITING
+		# Minimum keeps old saved Inspector value (2.8s) from cutting the new wait short.
+		level6_stage_timer = maxf(3.8, level6_entrance_delay)
+
+
+func _level6_camera_tick(delta: float) -> void:
+	var cam: Camera2D = _level6_find_battle_camera()
+	if not is_instance_valid(cam):
+		return
+	if not level6_camera_initialized:
+		level6_camera_initialized = true
+		level6_original_cam_offset = cam.offset
+		level6_camera_base_zoom = cam.zoom
+	var boss_framing: bool = level6_stage in [
+		Level6Stage.INTRO_TITLE, Level6Stage.SECOND_TITLE,
+		Level6Stage.SHAKING, Level6Stage.REVEAL, Level6Stage.PHASE_ONE,
+		Level6Stage.SECOND_WAIT, Level6Stage.PHASE_TWO, Level6Stage.DISSOLVE_TWO
+	]
+	var phase2_centered: bool = _level6_phase_two_framing()
+	var desired_offset: Vector2 = (Vector2.ZERO if phase2_centered else
+		(level6_original_cam_offset + Vector2(0.0, -level6_camera_upward_pixels) if boss_framing else level6_original_cam_offset))
+	var desired_zoom: Vector2 = level6_camera_base_zoom * (level6_camera_zoom_factor if boss_framing else 1.0)
+	cam.zoom = cam.zoom.lerp(desired_zoom, minf(1.0, delta * 2.0))
+	if level6_stage not in [Level6Stage.SHAKING, Level6Stage.SECOND_WAIT]:
+		cam.offset = cam.offset.lerp(desired_offset, minf(1.0, delta * 3.0))
+
+
+func _level6_begin_shake() -> void:
+	level6_stage = Level6Stage.SHAKING
+	level6_stage_timer = maxf(0.5, level6_entrance_shake_v37_seconds)
+	level6_shake_cam = get_viewport().get_camera_2d()
+	# _level6_camera_tick() captured the original player camera values.
+	if is_instance_valid(level6_shake_cam) and not level6_camera_initialized:
+		level6_camera_initialized = true
+		level6_original_cam_offset = level6_shake_cam.offset
+		level6_camera_base_zoom = level6_shake_cam.zoom
+
+
+func _level6_stop_shake() -> void:
+	if is_instance_valid(level6_shake_cam):
+		level6_shake_cam.offset = Vector2.ZERO if _level6_phase_two_framing() else level6_original_cam_offset + Vector2(0.0, -level6_camera_upward_pixels)
+	level6_shake_cam = null
+
+
+func _level6_center_phase_one_marker() -> Marker2D:
+	if level6_first_markers.is_empty():
+		return null
+	var average_x: float = 0.0
+	for marker2: Marker2D in level6_first_markers:
+		average_x += marker2.global_position.x
+	average_x /= float(level6_first_markers.size())
+	var best: Marker2D = level6_first_markers[0]
+	for marker2: Marker2D in level6_first_markers:
+		if absf(marker2.global_position.x - average_x) < absf(best.global_position.x - average_x):
+			best = marker2
+	return best
+
+
+func _level6_reveal_phase_one() -> void:
+	_level6_stop_shake()
+	level6_stage = Level6Stage.REVEAL
+	level6_stage_timer = maxf(0.30, king_teleport_reappear_seconds)
+	var center_marker: Marker2D = _level6_center_phase_one_marker()
+	if is_instance_valid(center_marker):
+		global_position = _level6_marker_position(center_marker)
+		level6_current_marker = center_marker
+	else:
+		push_warning("KING V36: No phase-one markers, appearing at placed boss position.")
+	reset_physics_interpolation()
+	sprite.visible = true
+	if is_instance_valid(king_crown_root):
+		king_crown_root.visible = true
+	if is_instance_valid(level6_aura_particles):
+		level6_aura_particles.visible = true
+		level6_aura_particles.emitting = true
+	if is_instance_valid(level6_aura_sprite):
+		level6_aura_sprite.visible = true
+	_king_set_teleport_death_frame(1.0)
+	_update_king_hp_label()
+	if is_instance_valid(king_hud):
+		king_hud.visible = true
+
+
+func _level6_begin_phase_one() -> void:
+	level6_stage = Level6Stage.PHASE_ONE
+	level6_perch_timer = maxf(2.5, level6_marker_hold_seconds)
+	state = State.GUARDED
+	max_hp = maxi(20, level6_first_phase_hp_v37 + level6_phase_hp_bonus_v48)
+	hp = max_hp
+	king_shield_phase = KingShieldPhase.SOLO
+	king_shield_countdown = -1.0
+	level6_attack_timer = 1.5
+	level6_attack_round = 0
+	_play(&"idle", true)
+	_update_king_hp_label()
+	health_changed.emit(hp, max_hp)
+
+
+func _level6_begin_guard() -> void:
+	if level6_guard_started:
+		return
+	level6_guard_started = true
+	king_shield_phase = KingShieldPhase.SHIELDED
+	king_shield_hit_fx = king_shield_hit_pulse_duration
+	king_elite_total_waves = 1
+	king_elite_waves_spawned = 0
+	king_elite_guards.clear()
+	king_shield_elite_spawned = false
+	level6_guard_retry = 0.0
+	level6_guard_summon_timer = 1.1
+	king_guard_attack_timer = maxf(10.0, level6_guard_spell_interval)
+	level6_attack_timer = maxf(9.0, level6_guard_spell_interval)
+	king_shield_countdown = -1.0
+	king_post_attack_timer = 2.0
+	_level6_clear_attacks()
+	# The V40 spawnenemies2 pose contains a huge white ball. Do not display
+	# it in Level 6, even for the unique Void Skeleton summon. The regular
+	# 1.1-second shield + aura wind-up remains fully intact.
+	_play(&"idle", true)
+	_update_king_hp_label()
+	queue_redraw()
+
+
+func _level6_try_guard_spawn() -> void:
+	if king_elite_waves_spawned >= 1:
+		return
+	if _try_spawn_king_elite():
+		king_shield_elite_spawned = true
+		king_guard_attack_timer = maxf(10.0, level6_guard_spell_interval)
+		level6_attack_timer = maxf(9.0, level6_guard_spell_interval)
+		_play(&"idle", true)
+	else:
+		level6_guard_retry = 1.25
+
+
+func _level6_clear_attacks() -> void:
+	_clear_skulls()
+	king_skull_spawns_remaining = 0
+	king_royal_slashes.clear()
+	king_skull_walls.clear()
+	king_wall_spawn_remaining = 0
+	level6_void_swords.clear()
+	level6_void_walls.clear()
+	level6_dash_echoes.clear()
+	level6_skull_shots_left = 0
+	_clear_king_gravefall()
+	level6_attack_timer = 2.0
+	king_attack_cast_remaining = 0.0
+	king_gravefall_active = false
+
+
+func _level6_start_dissolving(first: bool) -> void:
+	level6_stage = Level6Stage.DISSOLVE_ONE if first else Level6Stage.DISSOLVE_TWO
+	# Three-stage departure: scatter, hang in the void, then accelerate upward.
+	level6_stage_timer = maxf(2.50 if first else 2.25, level6_dissolve_seconds)
+	_level6_clear_attacks()
+	king_tp_phase = 0
+	velocity = Vector2.ZERO
+	king_shield_phase = KingShieldPhase.EXPOSED
+	_level6_emit_burst()
+	sprite.visible = true
+	_play(&"death", true)
+	if is_instance_valid(level6_aura_particles):
+		level6_aura_particles.emitting = false
+	if is_instance_valid(level6_aura_sprite):
+		level6_aura_sprite.visible = false
+	if is_instance_valid(king_crown_root):
+		king_crown_root.visible = false
+	queue_redraw()
+
+
+func _level6_emit_burst() -> void:
+	# 56 independent motes. First explode in ALL directions and decelerate,
+	# pause for 0.42 seconds, then race UP toward the next spawn location.
+	var parent2: Node = get_parent()
+	if parent2 == null:
+		parent2 = get_tree().current_scene
+	if parent2 == null:
+		return
+	var origin: Vector2 = global_position
+	var arrival: Vector2 = origin + Vector2(0.0, -680.0)
+	if level6_stage == Level6Stage.DISSOLVE_ONE and not level6_second_markers.is_empty():
+		var sum_positions: Vector2 = Vector2.ZERO
+		for point: Marker2D in level6_second_markers:
+			sum_positions += point.global_position
+		arrival = sum_positions / float(level6_second_markers.size()) + Vector2(0.0, -95.0)
+	level6_departure_target = arrival
+	var tex: Texture2D = _level6_get_particle_texture()
+	for i: int in range(56):
+		var mote: Sprite2D = Sprite2D.new()
+		mote.texture = tex
+		mote.z_index = 82
+		mote.modulate = Color(0.70, 0.72, 0.80, randf_range(0.40, 0.85)) if i % 6 == 0 else Color(0.015, 0.016, 0.023, 0.98)
+		mote.scale = Vector2.ONE * randf_range(0.8, 2.6)
+		parent2.add_child(mote)
+		mote.global_position = origin + Vector2(randf_range(-22.0, 22.0), randf_range(-24.0, 24.0))
+		var angle: float = TAU * float(i) / 56.0 + randf_range(-0.16, 0.16)
+		var stop_point: Vector2 = origin + Vector2.RIGHT.rotated(angle) * randf_range(90.0, 240.0)
+		var final_point: Vector2 = arrival + Vector2(randf_range(-70.0, 70.0), randf_range(-36.0, 36.0))
+		var tween: Tween = mote.create_tween()
+		tween.tween_property(mote, "global_position", stop_point, randf_range(0.48, 0.67)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.tween_interval(0.42)
+		tween.tween_property(mote, "global_position", final_point, randf_range(0.85, 1.05)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		tween.parallel().tween_property(mote, "modulate:a", 0.0, 0.75).set_delay(0.20)
+		tween.tween_callback(mote.queue_free)
+
+
+func _level6_enable_climb() -> void:
+	level6_stage = Level6Stage.CLIMB
+	level6_climb_elapsed = 0.0
+	level6_upper_check_log_timer = 0.0
+	level6_phase2_start_logged = false
+	king_tp_phase = 0
+	sprite.visible = false
+	_level6_rebind_upper_nodes()
+	print("VOID KING V43: CLIMB BEGINS; 2phaseidentifier=", is_instance_valid(level6_second_identifier), " upper markers=", level6_second_markers.size())
+	if is_instance_valid(level6_aura_particles):
+		level6_aura_particles.visible = false
+	if is_instance_valid(level6_aura_sprite):
+		level6_aura_sprite.visible = false
+	if is_instance_valid(king_hud):
+		king_hud.visible = false
+	if level6_climb_layer != null:
+		level6_climb_layer.enabled = true
+	# RisingVoid is optional; if present it activates on the same frame.
+	for void_node: Node in get_tree().get_nodes_in_group(&"rising_void"):
+		if void_node.has_method(&"start_boss_climb"):
+			void_node.call(&"start_boss_climb")
+		elif void_node.has_method(&"activate"):
+			void_node.call(&"activate")
+	if not level6_second_markers.is_empty():
+		global_position = _level6_marker_position(level6_second_markers[0])
+		level6_current_marker = level6_second_markers[0]
+		reset_physics_interpolation()
+	# Void enemies can still stalk the climb. The arena closes to them at phase 2.
+	queue_redraw()
+
+
+func _level6_start_second_phase() -> void:
+	level6_stage = Level6Stage.PHASE_TWO
+	var level_root: Node = get_tree().current_scene
+	if level_root != null:
+		level_root.set_meta(&"level6_boss_active", true)
+	level6_stage_timer = 0.0
+	level6_perch_timer = maxf(2.5, level6_marker_hold_seconds)
+	hp = maxi(20, level6_second_phase_hp_v37 + level6_phase_hp_bonus_v48)
+	max_hp = hp
+	king_shield_phase = KingShieldPhase.EXPOSED
+	king_shield_countdown = -1.0
+	king_elite_total_waves = 0
+	king_max_total_resurrections = 0
+	king_total_resurrections = 0
+	king_revival_timer = -1.0
+	king_revival_started = false
+	king_revival_completed = true
+	king_revival_cast_fx = 0.0
+	king_last_stand_started = true # Only to enable tougher attacks, NOT old resurrections.
+	king_last_stand_intro_timer = 0.0
+	king_final_pattern_round = 0
+	king_gravefall_cooldown_timer = 1.2
+	level6_attack_timer = 2.1
+	level6_attack_round = 0
+	_level6_clear_attacks()
+	level6_attack_timer = 2.1
+	king_post_attack_timer = 1.3
+	king_skull_volley_timer = 15.0
+	king_tp_phase = 0
+	# Never inherit the previous phase's markers or unfinished teleport.
+	# Hard reset the old phase-one movement/destination. The reveal must
+	# happen on a REAL phase-two Marker2D, close enough to be seen.
+	var arrival_marker: Marker2D = _level6_phase2_marker_near_player()
+	if is_instance_valid(arrival_marker):
+		level6_current_marker = arrival_marker
+		global_position = _level6_marker_position(arrival_marker)
+		king_tp_destination = global_position
+		reset_physics_interpolation()
+	else:
+		push_error("VOID KING V43: phase-two Marker2D list is empty!")
+	king_tp_destination = global_position
+	king_tp_hold_remaining = 4.0 # ONLY the seven explicit phase-2 markers.
+	state = State.GUARDED
+	sprite.visible = true
+	if is_instance_valid(level6_aura_particles):
+		level6_aura_particles.visible = true
+		level6_aura_particles.emitting = true
+	if is_instance_valid(level6_aura_sprite):
+		level6_aura_sprite.visible = true
+	if is_instance_valid(king_crown_root):
+		king_crown_root.visible = false # No giant purple crown in the Void.
+	if is_instance_valid(king_hud):
+		king_hud.visible = true
+	_king_set_teleport_death_frame(1.0)
+	sprite.visible = true
+	level6_stage = Level6Stage.REVEAL
+	level6_stage_timer = maxf(0.30, king_teleport_reappear_seconds)
+	# REVEAL goes to PHASE_TWO if this flag is set.
+	level6_second_reveal = true
+	_update_king_hp_label()
+	health_changed.emit(hp, max_hp)
+
+
+var level6_second_reveal: bool = false
+# V43 - The boss may become invisible during CLIMB, but must still poll the
+# upper arena every frame. A missed Area2D body_entered must never softlock it.
+var level6_climb_elapsed: float = 0.0
+var level6_upper_check_log_timer: float = 0.0
+var level6_phase2_start_logged: bool = false
+var level6_phase2_missing_markers_warned: bool = false
+# One controlled 2-second crescendo when entering the upper arena.
+@export_range(1.0, 4.0, 0.1) var level6_phase2_shake_seconds: float = 2.0
+@export_range(0.0, 25.0, 0.5) var level6_phase2_shake_max_pixels: float = 12.0
+var level6_phase2_shake_duration: float = 2.0
+
+
+
+func _level6_secure_second_marker() -> void:
+	if not level6_mode or level6_stage != Level6Stage.PHASE_TWO:
+		return
+	var valid_points: Array[Marker2D] = []
+	for marker: Marker2D in level6_second_markers:
+		if is_instance_valid(marker):
+			valid_points.append(marker)
+	if valid_points.is_empty():
+		return
+	# Validate current marker and destination BEFORE the old teleport animation
+	# can move the King to an obsolete first-phase coordinate.
+	if not is_instance_valid(level6_current_marker) or not valid_points.has(level6_current_marker):
+		level6_current_marker = _level6_phase2_marker_near_player()
+	if not is_instance_valid(level6_current_marker):
+		level6_current_marker = valid_points[0]
+	var destination_ok: bool = false
+	for marker: Marker2D in valid_points:
+		if king_tp_destination.distance_squared_to(_level6_marker_position(marker)) < 9.0:
+			destination_ok = true
+			break
+	if not destination_ok:
+		king_tp_destination = _level6_marker_position(level6_current_marker)
+	if king_tp_phase == 0:
+		var body_on_marker: bool = false
+		for marker: Marker2D in valid_points:
+			if global_position.distance_squared_to(_level6_marker_position(marker)) < 36.0:
+				body_on_marker = true
+				level6_current_marker = marker
+				break
+		if not body_on_marker:
+			global_position = _level6_marker_position(level6_current_marker)
+			reset_physics_interpolation()
+
+
+func _level6_choose_marker() -> void:
+	# Strict phase gate: intermediate stages must NEVER choose phase-one points.
+	if level6_stage != Level6Stage.PHASE_ONE and level6_stage != Level6Stage.PHASE_TWO:
+		return
+	var choices: Array[Marker2D] = level6_second_markers if level6_stage == Level6Stage.PHASE_TWO else level6_first_markers
+	if choices.is_empty():
+		return
+	var possible: Array[Marker2D] = []
+	for m: Marker2D in choices:
+		if is_instance_valid(m) and m != level6_current_marker:
+			possible.append(m)
+	if possible.is_empty():
+		possible = choices
+	var chosen: Marker2D = possible.pick_random()
+	if chosen == null:
+		return
+	level6_current_marker = chosen
+	king_tp_destination = _level6_marker_position(chosen)
+	king_tp_phase = 1
+	king_tp_elapsed = 0.0
+	level6_perch_timer = clampf(level6_marker_hold_seconds, 2.5, 4.0)
+	_king_set_teleport_death_frame(0.0)
+	# No extra crown/other old teleport markers in this mode.
+
+
+func _level6_perch_tick(delta: float) -> void:
+	if king_tp_phase != 0:
+		_update_king_teleport_animation(delta)
+		return
+	level6_perch_timer -= delta
+	if level6_perch_timer <= 0.0:
+		_level6_choose_marker()
+
+
+func _level6_update(delta: float) -> void:
+	_level6_camera_tick(delta)
+	if not is_instance_valid(target):
+		target = get_tree().get_first_node_in_group(&"player") as CharacterBody2D
+	_level6_update_screen_darkness(delta)
+	if level6_stage == Level6Stage.HIDDEN:
+		# Area2D body_entered alone can fail with an incompatible collision mask.
+		if is_instance_valid(level6_arena) and is_instance_valid(target):
+			if level6_arena.overlaps_body(target) or _level6_point_inside_area(level6_arena, target.global_position):
+				_level6_on_boss_area_entered(target)
+		return
+	if level6_stage == Level6Stage.WAITING:
+		level6_stage_timer -= delta
+		if level6_stage_timer <= 0.0:
+			_level6_begin_title(false)
+		return
+	if level6_stage == Level6Stage.INTRO_TITLE:
+		_level6_title_resize()
+		level6_stage_timer -= delta
+		if level6_stage_timer <= 0.0:
+			_level6_end_title()
+			_level6_begin_shake()
+		return
+	if level6_stage == Level6Stage.SHAKING:
+		level6_stage_timer -= delta
+		if is_instance_valid(level6_shake_cam):
+			# Starts nearly imperceptible, peaks just before the reveal.
+			var progress: float = 1.0 - clampf(level6_stage_timer / maxf(0.1, level6_entrance_shake_v37_seconds), 0.0, 1.0)
+			var strength: float = level6_entrance_shake_v37_strength * pow(progress, 2.0)
+			level6_shake_cam.offset = level6_original_cam_offset + Vector2(0.0, -level6_camera_upward_pixels) + Vector2(
+				randf_range(-strength, strength), randf_range(-strength, strength))
+		if level6_stage_timer <= 0.0:
+			_level6_reveal_phase_one()
+		return
+	if level6_stage == Level6Stage.REVEAL:
+		if level6_second_reveal:
+			return # Second reveal is completed by _process().
+		level6_stage_timer -= delta
+		var fraction: float = 1.0 - clampf(level6_stage_timer / maxf(0.3, king_teleport_reappear_seconds), 0.0, 1.0)
+		_king_set_teleport_death_frame(1.0 - fraction)
+		if level6_stage_timer <= 0.0:
+			if level6_second_reveal:
+				level6_second_reveal = false
+				level6_stage = Level6Stage.PHASE_TWO
+				level6_perch_timer = maxf(2.5, level6_marker_hold_seconds)
+				king_tp_hold_remaining = 4.0
+				sprite.visible = true
+				_level6_secure_second_marker()
+				_play(&"idle", true)
+				_update_king_hp_label()
+				print("VOID KING V43: upper battle ACTIVE @ ", global_position, " (", level6_second_markers.size(), " upper markers)")
+			else:
+				_level6_begin_phase_one()
+		queue_redraw()
+		return
+	if level6_stage == Level6Stage.DISSOLVE_ONE or level6_stage == Level6Stage.DISSOLVE_TWO:
+		level6_stage_timer -= delta
+		if level6_stage_timer <= 0.0:
+			if level6_stage == Level6Stage.DISSOLVE_ONE:
+				_level6_enable_climb()
+			else:
+				level6_stage = Level6Stage.PHASE_THREE_PENDING
+				sprite.visible = false
+				if is_instance_valid(king_hud):
+					king_hud.visible = false
+				level6_phase_two_finished.emit()
+		queue_redraw()
+		return
+	if level6_stage in [Level6Stage.CLIMB, Level6Stage.SECOND_WAIT, Level6Stage.SECOND_TITLE]:
+		# Updated by the dedicated _process() supervisor. Avoid double
+		# decrementing timers or overwriting the camera shake.
+		return
+	if level6_stage == Level6Stage.PHASE_THREE_PENDING:
+		return
+	if level6_stage != Level6Stage.PHASE_ONE and level6_stage != Level6Stage.PHASE_TWO:
+		return
+	if not is_instance_valid(target):
+		return
+	# Strictly enforce phase 2 placement: never reuse a previous phase's destination.
+	if level6_stage == Level6Stage.PHASE_TWO and king_tp_phase == 0 and not level6_second_markers.is_empty():
+		var marker_ok: bool = false
+		for point: Marker2D in level6_second_markers:
+			if is_instance_valid(point) and global_position.distance_to(_level6_marker_position(point)) < 5.0:
+				marker_ok = true
+				level6_current_marker = point
+				break
+		if not marker_ok:
+			var nearest: Marker2D = level6_second_markers[0]
+			for point: Marker2D in level6_second_markers:
+				if is_instance_valid(point) and _level6_marker_position(point).distance_squared_to(global_position) < _level6_marker_position(nearest).distance_squared_to(global_position):
+					nearest = point
+			level6_current_marker = nearest
+			global_position = _level6_marker_position(nearest)
+			reset_physics_interpolation()
+
+	var dx: float = target.global_position.x - global_position.x
+	if absf(dx) > 3.0:
+		sprite.flip_h = (dx > 0.0) != sprite_faces_right_by_default
+	velocity = Vector2.ZERO  # NEVER pursue the player, even during guard mode.
+	hover_time += delta
+	king_shield_animation_time += delta
+	king_black_flash_timer = maxf(0.0, king_black_flash_timer - delta)
+	level6_hit_lock = maxf(0.0, level6_hit_lock - delta)
+	if is_instance_valid(level6_void_shader):
+		level6_void_shader.set_shader_parameter("hit_flash", 1.0 if king_black_flash_timer > 0.0 else 0.0)
+	king_shield_hit_fx = maxf(0.0, king_shield_hit_fx - delta)
+	king_post_attack_timer = maxf(0.0, king_post_attack_timer - delta)
+	king_attack_cast_remaining = maxf(0.0, king_attack_cast_remaining - delta)
+	king_exposure_timer = maxf(0.0, king_exposure_timer - delta)
+	# Clamp before the legacy teleport animation can commit its destination.
+	_level6_secure_second_marker()
+	_level6_perch_tick(delta)
+	_level6_secure_second_marker()
+	_level6_update_void_walls(delta)
+	_level6_sword_fallback()
+	_level6_update_guard_visuals(delta)
+	_level6_update_void_swords(delta)
+	_level6_update_dash_echoes(delta)
+	_level6_skull_burst_tick(delta)
+	_update_skulls(delta)
+	_update_king_royal_slashes(delta)
+
+	if is_instance_valid(king_crown_root):
+		king_crown_root.visible = false
+	if level6_stage == Level6Stage.PHASE_ONE and king_shield_phase == KingShieldPhase.SHIELDED:
+		if king_elite_waves_spawned < 1:
+			if level6_guard_summon_timer > 0.0:
+				level6_guard_summon_timer -= delta
+			else:
+				level6_guard_retry -= delta
+				if level6_guard_retry <= 0.0:
+					_level6_try_guard_spawn()
+		else:
+			# Keep the one-guard shield from softlocking if the guard falls
+			# past the lower safety region. No new summons are created.
+			for guard: CharacterBody2D in king_elite_guards:
+				if not is_instance_valid(guard) or guard.is_queued_for_deletion():
+					continue
+				if guard.has_method(&"is_dead") and bool(guard.call(&"is_dead")):
+					continue
+				if guard.global_position.y > target.global_position.y + 680.0:
+					if guard.has_method(&"tomar_dano"):
+						guard.call(&"tomar_dano", 999999, global_position)
+					if is_instance_valid(guard) and not guard.is_queued_for_deletion():
+						guard.queue_free()
+			if _king_elites_alive_count() == 0:
+				_begin_king_shield_break()
+	if level6_stage == Level6Stage.PHASE_ONE and king_shield_phase == KingShieldPhase.BREAKING:
+		king_shield_break_fx = maxf(0.0, king_shield_break_fx - delta)
+		if king_shield_break_fx <= 0.0:
+			king_shield_phase = KingShieldPhase.EXPOSED
+			level6_attack_timer = 20.0  # The player gets their one-hit finish window.
+			king_post_attack_timer = 1.5
+			_update_king_hp_label()
+	_level6_update_attack_patterns(delta)
+	_update_king_attack_cast_pose(delta)
+	_update_king_crown(delta)
+	sprite.self_modulate = Color.WHITE
+	sprite.modulate = Color.WHITE
+	_update_king_hp_label()
+	queue_redraw()
+
+
+func _level6_update_attack_patterns(delta: float) -> void:
+	if level6_stage not in [Level6Stage.PHASE_ONE, Level6Stage.PHASE_TWO]:
+		return
+	if king_gravefall_active:
+		king_gravefall_warning_timer -= delta
+		if king_gravefall_warning_timer <= 0.0:
+			_finish_king_spell()
+		return
+	if not king_royal_slashes.is_empty() or not level6_void_walls.is_empty() or king_tp_phase != 0 or level6_skull_shots_left > 0:
+		return
+	if king_post_attack_timer > 0.0 or king_attack_cast_remaining > 0.0:
+		return
+	if level6_stage == Level6Stage.PHASE_ONE and king_shield_phase in [KingShieldPhase.EXPOSED, KingShieldPhase.BREAKING]:
+		return
+	if level6_stage == Level6Stage.PHASE_ONE and king_shield_phase == KingShieldPhase.SHIELDED:
+		if king_elite_waves_spawned < 1 or _king_elites_alive_count() <= 0:
+			return
+	level6_attack_timer -= delta
+	if level6_attack_timer > 0.0:
+		return
+	level6_attack_round += 1
+	var danger: float = clampf(1.0 - float(hp) / maxf(1.0, float(max_hp)), 0.0, 1.0)
+	if level6_stage == Level6Stage.PHASE_ONE and king_shield_phase == KingShieldPhase.SHIELDED:
+		# One protected 1-HP King and exactly ONE Void Menacing. Rare spells.
+		if level6_attack_round % 3 == 0:
+			_level6_start_void_swords(3)
+		elif level6_attack_round % 2 == 0:
+			_level6_start_void_dash_combo(2)
+		else:
+			_level6_start_void_twin_cut(2)
+		level6_attack_timer = maxf(8.0, level6_guard_spell_interval)
+		return
+	_begin_king_attack_cast()
+	if level6_stage == Level6Stage.PHASE_ONE:
+		# ALL void attacks become available, not merely four low-pressure lasers.
+		match level6_attack_round % 8:
+			0: _level6_start_interleaved_pillars()
+			1: _level6_start_void_dash_combo(2 if danger < 0.42 else 4)
+			2: _level6_start_void_skull_burst(3 if danger < 0.60 else 4)
+			3: _level6_start_void_swords(3 if danger < 0.60 else 5)
+			4: _level6_start_predictive_slash_spam(4 if danger < 0.50 else 7)
+			5: _level6_start_horizontal_lanes(2 if danger < 0.55 else 3)
+			6: _level6_start_void_wall()
+			_: _level6_start_void_dash_combo(3 if danger < 0.50 else 5)
+		level6_attack_timer = lerpf(2.55, 1.1, danger)
+	else:
+		# Marker-based second phase: no summons, much faster vertical-platform patterns.
+		match level6_attack_round % 10:
+			0: _level6_start_marker_cuts(3 if danger < 0.5 else 5)
+			1: _level6_start_void_swords(3 if danger < 0.40 else 5)
+			2: _level6_start_void_dash_combo(3 if danger < 0.5 else 5)
+			3: _level6_start_void_staircase(2 if danger < 0.5 else 3)
+			4: _level6_start_horizontal_lanes(3)
+			5: _level6_start_marker_cuts(4 if danger < 0.5 else 6)
+			6: _level6_start_void_wall()
+			7: _level6_start_void_skull_burst(4)
+			8: _level6_start_interleaved_pillars()
+			_: _level6_start_predictive_slash_spam(5 if danger < 0.5 else 8)
+		level6_attack_timer = lerpf(2.2, 0.9, danger)
+	queue_redraw()
+
+
+func _level6_start_void_wall() -> void:
+	# A single sweeping full-height cut. It is physically dodged by DASHING
+	# through it (Player V53 dash_remaining > 0), and clearly telegraphed.
+	var view: Rect2 = _king_visible_world_rect()
+	var wall: VoidWall = VoidWall.new()
+	var side: bool = target.global_position.x > view.get_center().x
+	# The threat starts nearly half a screen OFFSCREEN and crosses the
+	# entire visible region plus an equal run-out after the opposite edge.
+	# 250-290 px/s keeps this an intentional dash-through obstacle.
+	var extra: float = maxf(220.0, view.size.x * 0.48)
+	wall.start_x = (view.position.x - extra) if side else (view.end.x + extra)
+	wall.end_x = (view.end.x + extra) if side else (view.position.x - extra)
+	wall.width = 58.0
+	wall.warning = 1.30
+	wall.travel = clampf(absf(wall.end_x - wall.start_x) / 285.0, 3.30, 8.0)
+	level6_void_walls.append(wall)
+	king_post_attack_timer = maxf(king_post_attack_timer, wall.warning + wall.travel + 0.40)
+
+
+func _level6_update_void_walls(delta: float) -> void:
+	if level6_void_walls.is_empty():
+		return
+	for idx: int in range(level6_void_walls.size() - 1, -1, -1):
+		var wall: VoidWall = level6_void_walls[idx]
+		wall.elapsed += delta
+		if wall.elapsed < wall.warning:
+			continue
+		var t: float = (wall.elapsed - wall.warning) / wall.travel
+		if t > 1.0:
+			level6_void_walls.remove_at(idx)
+			continue
+		var x: float = lerpf(wall.start_x, wall.end_x, clampf(t, 0.0, 1.0))
+		wall.sweep_history.push_front(x)
+		if wall.sweep_history.size() > 50:
+			wall.sweep_history.pop_back()
+		if not is_instance_valid(target):
+			continue
+		var distance_from_wall: float = absf(target.global_position.x - x)
+		# Check the dash timer, but ALSO the actual dash animation / horizontal
+		# velocity. On the final dash physics frame, Player decrements the
+		# timer to zero AFTER moving at dash speed. The old check therefore
+		# counted a real dash as a normal hit on that frame.
+		var is_dashing: bool = false
+		if distance_from_wall <= wall.width * 0.5 + 120.0:
+			for entry: Dictionary in target.get_property_list():
+				if String(entry.get("name", "")) == "dash_remaining":
+					is_dashing = float(target.get("dash_remaining")) > 0.0
+					break
+			if not is_dashing and absf(target.velocity.x) >= 300.0:
+				var player_sprite: AnimatedSprite2D = target.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+				if player_sprite != null and player_sprite.animation == &"dash":
+					is_dashing = true
+		# Honor an actual nearby dash for the rest of THIS wall's passage.
+		# Otherwise the wall could hit the player immediately as their short
+		# 0.16s dash expires while the 58px-wide beam is still alongside them.
+		if is_dashing and distance_from_wall <= wall.width * 0.5 + 100.0:
+			wall.dashed_through = true
+		if wall.dashed_through:
+			continue
+		# Forgiving damaging core: narrower than the bright visual edges, so
+		# the player's short dash can physically cross the threat zone.
+		if distance_from_wall < wall.width * 0.34 + 8.0:
+			if wall.last_damage_time < 0.0:
+				wall.last_damage_time = wall.elapsed
+				if target.has_method(&"tomar_dano"):
+					target.call(&"tomar_dano", skull_damage, Vector2(x, target.global_position.y))
+	queue_redraw()
+
+
+func _level6_start_predictive_slash_spam(amount: int) -> void:
+	# No short or clipped lines: each slash spans well beyond the view.
+	# Some predict the direction the player is already moving.
+	king_special_kind = 36
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view) + view.size.length()
+	var count: int = clampi(amount, 3, 9)
+	var ahead: Vector2 = target.global_position + target.velocity * 0.35
+	for i: int in range(count):
+		var angle: float = deg_to_rad(90.0) if i % 3 == 0 else (deg_to_rad(32.0) if i % 3 == 1 else deg_to_rad(148.0))
+		var axis: Vector2 = Vector2.RIGHT.rotated(angle)
+		var normal: Vector2 = Vector2(-axis.y, axis.x)
+		var lane: Vector2 = ahead + normal * float((i % 4) - 2) * 82.0
+		lane += Vector2(randf_range(-28.0, 28.0), randf_range(-18.0, 18.0))
+		_queue_king_slash(lane - axis * reach, lane + axis * reach, 0.82 + float(i % 3) * 0.06, float(i) * 0.31)
+	king_gravefall_warning_timer = 1.05 + float(count - 1) * 0.31 + 0.55
+
+
+func _level6_start_void_rails(waves: int) -> void:
+	# Vertical slashes with clear corridors, made for standing on narrow ledges.
+	king_special_kind = 12
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	var middle_x: float = target.global_position.x
+	var total: int = clampi(waves, 1, 3)
+	for wave: int in range(total):
+		var shift: float = (float(wave % 2) * 70.0) - 35.0
+		for side: int in [-1, 1]:
+			var x: float = middle_x + float(side) * 140.0 + shift
+			_queue_king_slash(Vector2(x, view.position.y - reach),
+				Vector2(x, view.end.y + reach), 0.92, float(wave) * 0.77)
+	king_gravefall_warning_timer = 0.92 + float(total - 1) * 0.77 + 0.42
+
+
+func _level6_start_void_twin_cut(cuts: int) -> void:
+	# Avoid always crossing the player's exact center. The offset creates a
+	# dodgable pair of diagonal blades with visible warnings.
+	king_special_kind = 13
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	var anchor: Vector2 = target.global_position
+	var total: int = clampi(cuts, 2, 3)
+	for i: int in range(total):
+		var direction: Vector2 = Vector2.RIGHT.rotated(deg_to_rad(42.0 if i % 2 == 0 else -42.0))
+		var line_center: Vector2 = anchor + Vector2(float(i - 1) * 73.0, 0.0)
+		_queue_king_slash(line_center - direction * reach,
+			line_center + direction * reach, 0.95, float(i) * 0.52)
+	king_gravefall_warning_timer = 0.95 + float(total - 1) * 0.52 + 0.42
+
+
+func _level6_start_void_crown_fan(rays: int) -> void:
+	# A fan of aimed slashes originates at King's current MARKER, making
+	# each perch meaningful while the player has room to climb and evade.
+	king_special_kind = 14
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	var center_dir: Vector2 = target.global_position - global_position
+	if center_dir.length_squared() < 1.0:
+		center_dir = Vector2.DOWN
+	center_dir = center_dir.normalized()
+	var total: int = clampi(rays, 2, 5)
+	for i: int in range(total):
+		var angle: float = (float(i) - (float(total - 1) / 2.0)) * deg_to_rad(13.0)
+		var direction: Vector2 = center_dir.rotated(angle)
+		_queue_king_slash(global_position - direction * 75.0,
+			global_position + direction * reach, 0.95, float(i) * 0.24)
+	king_gravefall_warning_timer = 0.95 + float(total - 1) * 0.24 + 0.43
+
+
+func _level6_start_void_staircase(waves: int) -> void:
+	# Alternates short bands of vertical cuts and diagonal cuts on new ledges.
+	king_special_kind = 15
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	var anchor: Vector2 = target.global_position
+	var total: int = clampi(waves, 2, 3)
+	for wave: int in range(total):
+		if wave % 2 == 0:
+			for side: int in [-1, 1]:
+				var x: float = anchor.x + float(side) * 125.0 + float(wave) * 35.0
+				_queue_king_slash(Vector2(x, view.position.y - reach),
+					Vector2(x, view.end.y + reach), 1.0, float(wave) * 0.86)
+		else:
+			var direction: Vector2 = Vector2.RIGHT.rotated(deg_to_rad(37.0))
+			_queue_king_slash(anchor - direction * reach,
+				anchor + direction * reach, 0.94, float(wave) * 0.86)
+	king_gravefall_warning_timer = 1.0 + float(total - 1) * 0.86 + 0.43
+
+
+
+func _level6_update_guard_visuals(delta: float) -> void:
+	if level6_stage != Level6Stage.PHASE_ONE:
+		return
+	for guard: CharacterBody2D in king_elite_guards:
+		if not is_instance_valid(guard) or guard.is_queued_for_deletion():
+			continue
+		var id: int = guard.get_instance_id()
+		if guard.has_method(&"is_dead") and bool(guard.call(&"is_dead")):
+			_level6_remove_guard_aura(guard)
+			continue
+		var current: int = int(guard.get("hp"))
+		var last: int = int(level6_guard_previous_hp.get(id, current))
+		var remaining: float = maxf(0.0, float(level6_guard_flash_timers.get(id, 0.0)) - delta)
+		if current < last:
+			remaining = 0.11
+			_level6_guard_hit_sparks(guard.global_position)
+		level6_guard_previous_hp[id] = current
+		level6_guard_flash_timers[id] = remaining
+		for visual_node: Node in guard.find_children("*", "AnimatedSprite2D", true, false):
+			var art: AnimatedSprite2D = visual_node as AnimatedSprite2D
+			if art != null and art.material is ShaderMaterial:
+				(art.material as ShaderMaterial).set_shader_parameter("hit_flash", 1.0 if remaining > 0.0 else 0.0)
+		if current <= 0:
+			_level6_remove_guard_aura(guard)
+
+
+func _level6_guard_hit_sparks(at_pos: Vector2) -> void:
+	var parent_node: Node = get_parent()
+	if parent_node == null:
+		return
+	var fx: CPUParticles2D = CPUParticles2D.new()
+	fx.texture = _level6_get_particle_texture()
+	fx.one_shot = true
+	fx.amount = 13
+	fx.lifetime = 0.32
+	fx.explosiveness = 1.0
+	fx.spread = 180.0
+	fx.initial_velocity_min = 25.0
+	fx.initial_velocity_max = 110.0
+	fx.gravity = Vector2(0.0, 45.0)
+	fx.color = Color(0.96, 0.97, 1.0, 0.90)
+	fx.z_index = 80
+	parent_node.add_child(fx)
+	fx.global_position = at_pos
+	fx.emitting = true
+	get_tree().create_timer(0.55).timeout.connect(fx.queue_free)
+
+
+func _level6_remove_guard_aura(guard: CharacterBody2D) -> void:
+	if not is_instance_valid(guard):
+		return
+	for name: String in ["VoidMenacingSoftAura", "VoidMenacingSmoke"]:
+		var effect: Node = guard.get_node_or_null(name)
+		if is_instance_valid(effect) and not effect.is_queued_for_deletion():
+			effect.queue_free()
+
+
+func _level6_start_interleaved_pillars() -> void:
+	# Three staggered waves. Each extends WELL BEYOND both camera edges,
+	# so walking sideways does not escape the formation entirely.
+	king_special_kind = 31
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	var left: float = view.position.x - view.size.x * 0.72
+	var right: float = view.end.x + view.size.x * 0.72
+	var spacing: float = 112.0
+	var target_x: float = target.global_position.x
+	var moves: Array[float] = [-104.0, 95.0, -65.0]
+	var player_vx: float = target.velocity.x if target is CharacterBody2D else 0.0
+	for wave: int in range(3):
+		var safe_x: float = clampf(target_x + moves[wave] + player_vx * 0.14,
+			view.position.x + 75.0, view.end.x - 75.0)
+		var x: float = left + float(wave % 2) * 55.0
+		while x <= right:
+			if absf(x - safe_x) > 92.0:
+				_queue_king_slash(Vector2(x, view.position.y - reach),
+					Vector2(x, view.end.y + reach), 0.86, float(wave) * 0.75)
+			x += spacing
+	king_gravefall_warning_timer = 0.86 + 2.0 * 0.75 + 0.78
+
+
+func _level6_start_horizontal_lanes(rows: int) -> void:
+	king_special_kind = 32
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view)
+	var total: int = clampi(rows, 2, 3)
+	var center_y: float = target.global_position.y
+	for i: int in range(total):
+		var lane_y: float = center_y + (float(i) - float(total - 1) * 0.5) * 108.0
+		_queue_king_slash(Vector2(view.position.x - reach, lane_y),
+			Vector2(view.end.x + reach, lane_y), 0.88, float(i) * 0.62)
+	king_gravefall_warning_timer = 0.88 + float(total - 1) * 0.62 + 0.75
+
+
+func _level6_start_marker_cuts(amount: int) -> void:
+	# Only phase-two teleport markers provide cut anchors. Each has a
+	# horizontal OR vertical sweeping warning, staggered to remain readable.
+	if level6_stage != Level6Stage.PHASE_TWO or level6_second_markers.is_empty():
+		return
+	king_special_kind = 38
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view) + view.size.length()
+	var valid: Array[Marker2D] = []
+	for marker: Marker2D in level6_second_markers:
+		if is_instance_valid(marker):
+			valid.append(marker)
+	if valid.is_empty():
+		king_gravefall_active = false
+		return
+	valid.shuffle()
+	var count: int = mini(clampi(amount, 2, 6), valid.size())
+	for i: int in range(count):
+		var anchor: Vector2 = _level6_marker_position(valid[i])
+		# A vertical beam at the marker's X, then a horizontal beam at
+		# another marker's Y. This never uses a phase-one marker.
+		if (i + level6_attack_round) % 2 == 0:
+			_queue_king_slash(
+				Vector2(anchor.x, view.position.y - reach),
+				Vector2(anchor.x, view.end.y + reach),
+				0.98, float(i) * 0.44)
+		else:
+			_queue_king_slash(
+				Vector2(view.position.x - reach, anchor.y),
+				Vector2(view.end.x + reach, anchor.y),
+				0.98, float(i) * 0.44)
+	king_gravefall_warning_timer = 0.98 + float(count - 1) * 0.44 + 0.75
+
+
+func _level6_start_void_skull_burst(count: int) -> void:
+	king_special_kind = 33
+	# At most four skulls per attack, regardless of the attack pattern.
+	level6_skull_shots_left = clampi(count, 1, LEVEL6_SKULL_MAX)
+	level6_skull_shot_timer = maxf(0.2, king_attack_cast_total)
+	king_post_attack_timer = 0.7
+	# The charge and launched skulls are still part of the attack and
+	# collision against the player remains lethal even during noclip.
+
+
+func _level6_skull_burst_tick(delta: float) -> void:
+	if level6_skull_shots_left <= 0:
+		return
+	level6_skull_shot_timer -= delta
+	if level6_skull_shot_timer > 0.0:
+		return
+	# Spawn ONE skull per timer event. The next skull can appear only after
+	# 0.75 seconds, so its 0.5s charge is visible before the next one appears.
+	# The active-skull cap is enforced inside _spawn_king_spectral_skull().
+	_spawn_king_spectral_skull()
+	level6_skull_shots_left -= 1
+	level6_skull_shot_timer = LEVEL6_SKULL_STAGGER_SECONDS
+	if level6_skull_shots_left <= 0:
+		king_post_attack_timer = maxf(king_post_attack_timer, 0.95)
+
+
+func _level6_start_void_swords(amount: int) -> void:
+	# Floating white/black swords aim continuously during their warnings;
+	# once launched they commit to that trajectory and phase through terrain.
+	king_special_kind = 34
+	var count: int = clampi(amount, 1, 5)
+	for i: int in range(count):
+		var blade: VoidSword = VoidSword.new()
+		var angle: float = TAU * float(i) / float(count) + randf_range(-0.28, 0.28)
+		blade.position = target.global_position + Vector2.RIGHT.rotated(angle) * randf_range(155.0, 235.0)
+		blade.aim = target.global_position
+		blade.delay = float(i) * 0.19
+		blade.warning = 1.0
+		level6_void_swords.append(blade)
+	king_post_attack_timer = maxf(king_post_attack_timer, 0.90)
+
+
+func _level6_update_void_swords(delta: float) -> void:
+	if level6_void_swords.is_empty() or not is_instance_valid(target):
+		return
+	for index: int in range(level6_void_swords.size() - 1, -1, -1):
+		var sword: VoidSword = level6_void_swords[index]
+		sword.elapsed += delta
+		if sword.elapsed < sword.delay:
+			continue
+		if not sword.launched:
+			sword.aim = target.global_position
+			sword.direction = sword.position.direction_to(sword.aim)
+			if sword.elapsed >= sword.delay + sword.warning:
+				sword.launched = true
+		else:
+			sword.flight += delta
+			sword.trail.push_front(sword.position)
+			if sword.trail.size() > 8:
+				sword.trail.pop_back()
+			sword.position += sword.direction * 420.0 * delta
+			# Damage on the narrow blade, not on its harmless afterimage.
+			if not sword.hit and sword.position.distance_to(target.global_position) < 26.0:
+				sword.hit = true
+				if target.has_method(&"tomar_dano"):
+					target.call(&"tomar_dano", skull_damage, sword.position)
+			if sword.hit or sword.flight > 1.85:
+				level6_void_swords.remove_at(index)
+	queue_redraw()
+
+
+func _level6_start_void_dash_combo(amount: int) -> void:
+	# V42: eliminate the thick horizontal rectangle with its circular ball tip.
+	# Instead, clean sequential long diagonal cuts, with NO travelling orb/head.
+	level6_dash_echoes.clear()
+	king_special_kind = 35
+	king_gravefall_active = true
+	var view: Rect2 = _king_visible_world_rect()
+	var reach: float = _king_laser_reach(view) + view.size.length() * 0.5
+	var count: int = clampi(amount, 2, 5)
+	var predicted: Vector2 = target.global_position + target.velocity * 0.22
+	for i: int in range(count):
+		var angle: float = deg_to_rad(28.0 if i % 2 == 0 else 152.0)
+		var direction: Vector2 = Vector2.RIGHT.rotated(angle)
+		var offset: Vector2 = Vector2(float(i % 3 - 1) * 55.0, float(i % 2) * 33.0)
+		var center: Vector2 = predicted + offset
+		_queue_king_slash(center - direction * reach, center + direction * reach,
+			0.94, float(i) * 0.40)
+	king_gravefall_warning_timer = 0.94 + float(count - 1) * 0.40 + 0.80
+	king_post_attack_timer = maxf(king_post_attack_timer, 1.0)
+
+
+func _level6_update_dash_echoes(delta: float) -> void:
+	if level6_dash_echoes.is_empty() or not is_instance_valid(target):
+		return
+	for index: int in range(level6_dash_echoes.size() - 1, -1, -1):
+		var echo: VoidDashEcho = level6_dash_echoes[index]
+		echo.elapsed += delta
+		var active: float = echo.elapsed - echo.delay
+		if active < 0.0:
+			continue
+		if active >= echo.warn and active <= echo.warn + echo.travel:
+			var progress: float = clampf((active - echo.warn) / echo.travel, 0.0, 1.0)
+			var head: Vector2 = echo.start.lerp(echo.end, progress)
+			if not echo.hit and head.distance_to(target.global_position) < 32.0:
+				echo.hit = true
+				if target.has_method(&"tomar_dano"):
+					target.call(&"tomar_dano", skull_damage, head)
+		if active > echo.warn + echo.travel + 0.24:
+			level6_dash_echoes.remove_at(index)
+	queue_redraw()
+
+
+func _level6_draw_extra_attacks() -> void:
+	if not level6_void_walls.is_empty():
+		var view: Rect2 = _king_visible_world_rect()
+		var top: float = view.position.y - view.size.y * 1.6
+		var bottom: float = view.end.y + view.size.y * 1.6
+		for wall: VoidWall in level6_void_walls:
+			var progress: float = clampf(wall.elapsed / maxf(0.01, wall.warning), 0.0, 1.0)
+			var active: bool = wall.elapsed >= wall.warning
+			var x: float = wall.start_x
+			if active:
+				x = lerpf(wall.start_x, wall.end_x, clampf((wall.elapsed - wall.warning) / wall.travel, 0.0, 1.0))
+				# Long, readable afterimage train: charcoal silhouettes with
+				# faint pearl edges. Draw every third position for separation.
+				# 50 remembered physics frames leave ~250px of real history.
+				for trail_i: int in range(3, wall.sweep_history.size(), 3):
+					var tx: float = wall.sweep_history[trail_i]
+					var age: float = float(trail_i) / 50.0
+					var fade: float = pow(1.0 - age, 1.25)
+					var trail_start: Vector2 = to_local(Vector2(tx, top))
+					var trail_end: Vector2 = to_local(Vector2(tx, bottom))
+					draw_line(trail_start, trail_end,
+						Color(0.008, 0.008, 0.014, 0.59 * fade),
+						wall.width * (0.84 - age * 0.27), true)
+					draw_line(trail_start, trail_end,
+						Color(0.74, 0.77, 0.85, 0.28 * fade), 2.3, true)
+			var alpha: float = 0.16 + 0.72 * progress if not active else 0.96
+			# Place the pre-fire warning at the nearest visible SCREEN EDGE,
+			# because the wall itself begins far outside the camera.
+			var draw_x: float = x
+			if not active:
+				draw_x = clampf(x, view.position.x + 12.0, view.end.x - 12.0)
+			var a: Vector2 = to_local(Vector2(draw_x, top))
+			var b: Vector2 = to_local(Vector2(draw_x, bottom))
+			# Warning: pale outline of the stationary wall, NOT a giant orb.
+			draw_line(a, b, Color(0.85, 0.87, 0.94, 0.17 * alpha), wall.width + 9.0, true)
+			draw_line(a, b, Color(0.004, 0.005, 0.010, alpha), wall.width, true)
+			draw_line(a, b, Color(0.96, 0.96, 1.0, 0.58 * alpha), 3.0, true)
+	for blade: VoidSword in level6_void_swords:
+		if blade.elapsed < blade.delay:
+			continue
+		var local: Vector2 = to_local(blade.position)
+		var angle: float = blade.direction.angle()
+		var forward: Vector2 = Vector2.RIGHT.rotated(angle)
+		var perpendicular: Vector2 = Vector2(-forward.y, forward.x)
+		var opacity: float = clampf((blade.elapsed - blade.delay) / 0.32, 0.0, 1.0)
+		# Black interior, very pale translucent cutting edge.
+		draw_line(local - forward * 22.0, local + forward * 22.0,
+			Color(0.005, 0.005, 0.010, 0.95 * opacity), 9.0, true)
+		draw_line(local - forward * 20.0, local + forward * 22.0,
+			Color(0.88, 0.9, 1.0, 0.72 * opacity), 1.7, true)
+		draw_line(local + perpendicular * 8.0, local - perpendicular * 8.0,
+			Color(0.8, 0.83, 0.91, 0.62 * opacity), 2.0, true)
+		for i: int in range(blade.trail.size()):
+			var after_point: Vector2 = to_local(blade.trail[i])
+			var fade: float = (1.0 - float(i) / 9.0) * 0.28
+			draw_line(after_point - forward * 18.0, after_point + forward * 18.0,
+				Color(0.75, 0.76, 0.84, fade), 2.0, true)
+	# V42: the obsolete circular-headed VoidDashEcho effect was removed.
+	# All dash-combo attacks now reuse crisp RoyalSlash geometry, without orbs.
+
+
 func _activate_king_mode() -> void:
 	if is_king:
 		return
@@ -472,6 +2385,8 @@ func _king_visible_bottom_offset() -> float:
 
 
 func _build_king_crown() -> void:
+	if level6_mode or _level6_detect_scene():
+		return
 	# A real foreground crown, not a _draw() polygon hidden BEHIND the sprite.
 	if is_instance_valid(king_crown_root):
 		return
@@ -509,6 +2424,10 @@ func _build_king_crown() -> void:
 
 
 func _update_king_crown(_delta: float) -> void:
+	if level6_mode:
+		if is_instance_valid(king_crown_root):
+			king_crown_root.visible = false
+		return
 	if not is_king or not is_instance_valid(king_crown_root):
 		return
 	king_crown_root.position = sprite.position + Vector2(
@@ -522,59 +2441,84 @@ func _create_king_boss_hud() -> void:
 	if is_instance_valid(king_hud):
 		return
 	king_hud = CanvasLayer.new()
-	king_hud.name = "GraveMonarchBossHUD"
-	# Put the HUD directly under the tree root, above any scene CanvasLayers.
-	# Parenting it to the level allowed later scene overlays to hide it.
+	king_hud.name = "VoidKingBossHUD" if level6_mode else "GraveMonarchBossHUD"
 	king_hud.layer = 110
-	get_tree().root.add_child(king_hud)
-	king_hud.visible = true
+	# Keep HUD under the current scene, not the SceneTree root. This avoids
+	# stale canvases surviving a reload and only appearing after dying once.
+	var hud_parent: Node = get_tree().current_scene
+	if hud_parent == null:
+		hud_parent = get_tree().root
+	hud_parent.add_child(king_hud)
 	var frame := VBoxContainer.new()
 	frame.name = "BossHeader"
-	frame.visible = true
-	frame.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	frame.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	frame.anchor_left = 0.5
 	frame.anchor_right = 0.5
-	frame.offset_left = -240.0
-	frame.offset_right = 240.0
+	frame.offset_left = -246.0
+	frame.offset_right = 246.0
 	frame.offset_top = 16.0
-	frame.offset_bottom = 91.0
+	frame.offset_bottom = 94.0
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	king_hud.add_child(frame)
 	var title := Label.new()
-	title.text = "THE GRAVE MONARCH  |  KING NECROMANCER"
+	title.text = "THE VOID KING" if level6_mode else "THE GRAVE MONARCH | KING NECROMANCER"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 18)
-	title.add_theme_color_override("font_color", Color(0.97, 0.79, 1.0))
-	title.add_theme_color_override("font_outline_color", Color(0.06, 0.01, 0.11))
-	title.add_theme_constant_override("outline_size", 5)
+	title.add_theme_font_size_override("font_size", 17)
+	title.add_theme_color_override("font_color", Color(0.68, 0.70, 0.76) if level6_mode else Color(0.97, 0.79, 1.0))
+	title.add_theme_color_override("font_outline_color", Color(0.01, 0.012, 0.018))
+	title.add_theme_constant_override("outline_size", 2 if level6_mode else 4)
 	frame.add_child(title)
-	king_hud_bar = ProgressBar.new()
-	king_hud_bar.name = "KingHP"
-	king_hud_bar.custom_minimum_size = Vector2(470, 18)
-	king_hud_bar.min_value = 0.0
-	king_hud_bar.max_value = float(max_hp)
-	king_hud_bar.value = float(hp)
-	# Godot's standard ProgressBar shows the actual percent lost. This makes
-	# confirmed damage immediately visible without a hurt animation.
-	king_hud_bar.show_percentage = true
-	king_hud_bar.visible = true
-	king_hud_bar.modulate = Color.WHITE
-	king_hud_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var bar_bg := StyleBoxFlat.new()
-	bar_bg.bg_color = Color(0.07, 0.02, 0.12, 0.94)
-	bar_bg.border_color = Color(0.80, 0.37, 0.98)
-	bar_bg.set_border_width_all(2)
-	king_hud_bar.add_theme_stylebox_override("background", bar_bg)
-	var bar_fill := StyleBoxFlat.new()
-	bar_fill.bg_color = Color(0.71, 0.21, 0.91)
-	king_hud_bar.add_theme_stylebox_override("fill", bar_fill)
-	frame.add_child(king_hud_bar)
+	if level6_mode:
+		# A bespoke shader-driven HP readout: no percent text, no border,
+		# no sharp line dividing filled and empty regions.
+		level6_hud_gradient_bar = ColorRect.new()
+		level6_hud_gradient_bar.name = "VoidHealthFade"
+		level6_hud_gradient_bar.custom_minimum_size = Vector2(480.0, 19.0)
+		level6_hud_gradient_bar.color = Color.WHITE
+		level6_hud_gradient_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var health_shader := Shader.new()
+		health_shader.code = """shader_type canvas_item;
+uniform float health_ratio : hint_range(0.0, 1.0) = 1.0;
+void fragment() {
+    float edge_left = smoothstep(0.0, 0.035, UV.x);
+    float edge_right = 1.0 - smoothstep(0.96, 1.0, UV.x);
+    float edge_top = smoothstep(0.0, 0.20, UV.y);
+    float edge_bottom = 1.0 - smoothstep(0.76, 1.0, UV.y);
+    float soft_end = 1.0 - smoothstep(health_ratio - 0.025, health_ratio + 0.014, UV.x);
+    vec3 abyss = vec3(0.012, 0.013, 0.018);
+    vec3 remaining = mix(vec3(0.12, 0.13, 0.15), vec3(0.31, 0.32, 0.35), 1.0 - UV.y);
+    vec3 ink = mix(abyss, remaining, soft_end);
+    float alpha = 0.93 * edge_left * edge_right * edge_top * edge_bottom;
+    COLOR = vec4(ink, alpha);
+} """
+		level6_hud_gradient_material = ShaderMaterial.new()
+		level6_hud_gradient_material.shader = health_shader
+		level6_hud_gradient_bar.material = level6_hud_gradient_material
+		frame.add_child(level6_hud_gradient_bar)
+	else:
+		king_hud_bar = ProgressBar.new()
+		king_hud_bar.name = "KingHP"
+		king_hud_bar.custom_minimum_size = Vector2(470.0, 18.0)
+		king_hud_bar.min_value = 0.0
+		king_hud_bar.max_value = float(max_hp)
+		king_hud_bar.value = float(hp)
+		king_hud_bar.show_percentage = true
+		king_hud_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var bar_bg := StyleBoxFlat.new()
+		bar_bg.bg_color = Color(0.07, 0.02, 0.12, 0.94)
+		bar_bg.border_color = Color(0.80, 0.37, 0.98)
+		bar_bg.set_border_width_all(2)
+		king_hud_bar.add_theme_stylebox_override("background", bar_bg)
+		var bar_fill := StyleBoxFlat.new()
+		bar_fill.bg_color = Color(0.71, 0.21, 0.91)
+		king_hud_bar.add_theme_stylebox_override("fill", bar_fill)
+		frame.add_child(king_hud_bar)
 	king_hud_status = Label.new()
 	king_hud_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	king_hud_status.add_theme_font_size_override("font_size", 13)
-	king_hud_status.add_theme_color_override("font_color", Color(1.0, 0.86, 0.96))
+	king_hud_status.add_theme_font_size_override("font_size", 12 if level6_mode else 13)
+	king_hud_status.add_theme_color_override("font_color", Color(0.61, 0.63, 0.68) if level6_mode else Color(1.0, 0.86, 0.96))
 	frame.add_child(king_hud_status)
-	print("KING HUD CREATED: ", king_hud.get_path(), " layer=", king_hud.layer)
+	king_hud.visible = not level6_mode
 
 
 func _update_king_hp_label() -> void:
@@ -584,11 +2528,31 @@ func _update_king_hp_label() -> void:
 		king_hud.visible = true
 	if is_instance_valid(king_hp_label):
 		king_hp_label.text = "KING  %d/%d" % [hp, max_hp]
+	if is_instance_valid(level6_hud_gradient_material):
+		level6_hud_gradient_material.set_shader_parameter("health_ratio", clampf(float(hp) / maxf(1.0, float(max_hp)), 0.0, 1.0))
 	if is_instance_valid(king_hud_bar):
 		king_hud_bar.max_value = float(max_hp)
 		king_hud_bar.value = float(hp)
 		king_hud_bar.tooltip_text = "KING HP: %d / %d" % [hp, max_hp]
+	if level6_mode and is_instance_valid(king_hud):
+		king_hud.visible = level6_stage in [Level6Stage.REVEAL, Level6Stage.PHASE_ONE, Level6Stage.PHASE_TWO]
 	if is_instance_valid(king_hud_status):
+		if level6_mode:
+			match level6_stage:
+				Level6Stage.PHASE_ONE:
+					if king_shield_phase == KingShieldPhase.SHIELDED:
+						king_hud_status.text = "VOID WARD | DEFEAT THE ENHANCED MENACING GUARD"
+					elif king_shield_phase == KingShieldPhase.BREAKING:
+						king_hud_status.text = "THE WARD SHATTERS"
+					elif king_shield_phase == KingShieldPhase.EXPOSED:
+						king_hud_status.text = "ONE LAST STRIKE"
+					else:
+						king_hud_status.text = "VOID KING | BREAK HIM DOWN TO 1 HP"
+				Level6Stage.PHASE_TWO:
+					king_hud_status.text = "PHASE TWO | THE VOID KING"
+				_:
+					king_hud_status.text = ""
+			return
 		if king_elite_missing_scene_warned and king_menacing_skeleton_scene == null:
 			king_hud_status.text = "ASSIGN MENACING SKELETON .tscn IN KING INSPECTOR"
 		elif king_shield_phase == KingShieldPhase.SHIELDED:
@@ -700,6 +2664,17 @@ func _update_king_attack_cast_pose(delta: float) -> void:
 		return
 	if not is_instance_valid(sprite) or sprite.sprite_frames == null:
 		return
+	# In Level 6 the spawnenemies2 attack-cast frames show the oversized
+	# white flame/orb beside the King. That is a CAST POSE, not a projectile.
+	# Offensive Void spells keep their telegraph timing and damage, but show
+	# the neutral idle sprite instead. The one actual GUARD summon continues
+	# has its own shield/aura buildup, without the white-ball pose.
+	if level6_mode and level6_stage in [Level6Stage.PHASE_ONE, Level6Stage.PHASE_TWO]:
+		if sprite.sprite_frames.has_animation(&"idle"):
+			sprite.animation = &"idle"
+			sprite.stop()
+			sprite.set_frame_and_progress(0, 0.0)
+		return
 	var cast_animation: StringName = REVIVE_ANIMATION
 	if not sprite.sprite_frames.has_animation(cast_animation):
 		cast_animation = &"spawnenemies"
@@ -783,6 +2758,28 @@ func _draw_king_royal_slashes() -> void:
 			continue
 		var normal: Vector2 = Vector2(-v.y, v.x).normalized()
 		var active_time: float = slash.elapsed - slash.delay
+		if level6_mode:
+			# V38: black is the dominant laser color. The thin pale border is
+			# transparent so warnings remain legible against the Abyss background.
+			if not slash.fired:
+				var t6: float = clampf(active_time / maxf(0.01, slash.warning), 0.0, 1.0)
+				var a6: float = clampf(t6 / 0.2, 0.0, 1.0) * (0.55 + 0.40 * t6)
+				var w6: float = king_slash_hitbox_width
+				draw_line(a, b, Color(0.82, 0.85, 0.92, a6 * 0.22), w6 * 1.2, true)
+				draw_line(a, b, Color(0.012, 0.013, 0.019, a6 * 0.93), w6, true)
+				draw_line(a, b, Color(0.9, 0.91, 1.0, a6 * 0.56), maxf(1.5, w6 * 0.13), true)
+				for endpoint: Vector2 in [a, b]:
+					draw_circle(endpoint, maxf(2.0, w6 * 0.19), Color(0.88, 0.89, 1.0, a6 * 0.45))
+				continue
+			var after6: float = maxf(0.0, active_time - slash.warning)
+			var e6: float = maxf(0.01, king_slash_expand_seconds)
+			var f6: float = maxf(0.01, king_slash_fade_seconds)
+			var remaining6: float = clampf(1.0 - maxf(0.0, after6 - e6) / f6, 0.0, 1.0)
+			var width6: float = lerpf(king_slash_hitbox_width * 1.04, 0.6, 1.0 - remaining6)
+			draw_line(a, b, Color(0.82, 0.84, 0.92, remaining6 * 0.22), width6 * 1.23, true)
+			draw_line(a, b, Color(0.004, 0.005, 0.009, remaining6 * 0.98), width6, true)
+			draw_line(a, b, Color(0.94, 0.95, 1.0, remaining6 * 0.69), maxf(0.8, width6 * 0.17), true)
+			continue
 		if not slash.fired:
 			# Fade in while the warning builds. First faint, then bright and
 			# pulsating. No damage whatsoever during the telegraph.
@@ -1645,15 +3642,19 @@ func _try_spawn_king_elite() -> bool:
 	elite.set_meta(&"king_guard_index", king_elite_waves_spawned)
 	# V10: first summons are NORMAL 25-HP Menacing Skeletons, untinted.
 	# Keep only the enlarged activation radius and independent patrol roles.
-	elite.set("max_hp", maxi(1, king_normal_guard_hp))
+	var is_l6_guard: bool = level6_mode and level6_stage == Level6Stage.PHASE_ONE
+	elite.set("max_hp", maxi(1, level6_buffed_guard_health if is_l6_guard else king_normal_guard_hp))
 	elite.set("activation_radius", 900.0)
-	elite.set("attack_warning_seconds", 1.08)
-	elite.set("point_blank_warning_seconds", 1.20)
-	elite.set("lunge_warning_seconds", 1.14)
-	elite.set("jump_slam_warning_seconds", 1.10)
-	elite.set("advancing_slam_warning_seconds", 1.15)
-	elite.set("tactical_retreat_chance", 0.22 if king_elite_waves_spawned == 0 else 0.50)
-	elite.set_meta(&"king_guard_buffed", false)
+	elite.set("attack_warning_seconds", 0.94 if is_l6_guard else 1.08)
+	elite.set("point_blank_warning_seconds", 1.00 if is_l6_guard else 1.20)
+	elite.set("lunge_warning_seconds", 0.96 if is_l6_guard else 1.14)
+	elite.set("jump_slam_warning_seconds", 0.96 if is_l6_guard else 1.10)
+	elite.set("advancing_slam_warning_seconds", 0.98 if is_l6_guard else 1.15)
+	elite.set("tactical_retreat_chance", 0.14 if is_l6_guard else (0.22 if king_elite_waves_spawned == 0 else 0.50))
+	elite.set_meta(&"king_guard_buffed", is_l6_guard)
+	if is_l6_guard:
+		elite.set_meta(&"king_reborn_elite", false)
+		elite.set_meta(&"void_no_revive", true)
 	elite.set("debug_grant_all_artifact_buffs_on_engage", false)
 	var rect: RectangleShape2D = collider.shape as RectangleShape2D
 	var feet: float = collider.position.y + rect.size.y * 0.5 * absf(collider.scale.y)
@@ -1668,6 +3669,41 @@ func _try_spawn_king_elite() -> bool:
 	else:
 		elite.position = spawn_world
 	parent.add_child(elite)
+	if is_l6_guard:
+		# Every red detail on the guard becomes clean white; all other pixels
+		# become black/charcoal. The guard's own animations remain unchanged.
+		for guard_visual: Node in elite.find_children("*", "AnimatedSprite2D", true, false):
+			var guard_art: AnimatedSprite2D = guard_visual as AnimatedSprite2D
+			if guard_art != null:
+				guard_art.material = level6_void_shader.duplicate() as ShaderMaterial
+				(guard_art.material as ShaderMaterial).set_shader_parameter("hit_flash", 0.0)
+				guard_art.self_modulate = Color.WHITE
+				guard_art.modulate = Color.WHITE
+		var guard_aura: Sprite2D = Sprite2D.new()
+		guard_aura.name = "VoidMenacingSoftAura"
+		guard_aura.texture = _level6_get_aura_texture()
+		guard_aura.scale = Vector2(1.35, 1.65)
+		guard_aura.position = Vector2(0.0, -17.0)
+		guard_aura.z_index = -3
+		guard_aura.show_behind_parent = true
+		elite.add_child(guard_aura)
+		var guard_smoke: CPUParticles2D = CPUParticles2D.new()
+		guard_smoke.name = "VoidMenacingSmoke"
+		guard_smoke.texture = _level6_get_particle_texture()
+		guard_smoke.amount = 10
+		guard_smoke.lifetime = 1.4
+		guard_smoke.direction = Vector2.UP
+		guard_smoke.spread = 60.0
+		guard_smoke.initial_velocity_min = 10.0
+		guard_smoke.initial_velocity_max = 23.0
+		guard_smoke.color = Color(0.025, 0.025, 0.033, 0.29)
+		guard_smoke.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		guard_smoke.emission_rect_extents = Vector2(10.0, 15.0)
+		guard_smoke.position = Vector2(0.0, -13.0)
+		guard_smoke.z_index = -2
+		elite.add_child(guard_smoke)
+		level6_guard_previous_hp[elite.get_instance_id()] = int(elite.get("hp"))
+		level6_guard_flash_timers[elite.get_instance_id()] = 0.0
 	# The Menacing queues itself for deletion after its death animation.
 	# Capture the actual death position while the node still exists, so the
 	# King can perform a real-looking resurrection at the fallen guard's spot.
@@ -1705,6 +3741,14 @@ func _update_king_elite_reinforcements(delta: float) -> void:
 		_update_king_hp_label()
 
 func _on_king_guard_died(guard: CharacterBody2D) -> void:
+	if level6_mode and is_instance_valid(guard):
+		_level6_remove_guard_aura(guard)
+		if not bool(guard.get_meta(&"void_guard_cleanup_started", false)):
+			guard.set_meta(&"void_guard_cleanup_started", true)
+			get_tree().create_timer(0.85).timeout.connect(func() -> void:
+				if is_instance_valid(guard):
+					guard.queue_free()
+			)
 	if not is_instance_valid(guard):
 		return
 	# All royal minions stay at their actual death position. A revived
@@ -1815,8 +3859,12 @@ func _ready() -> void:
 	add_to_group(&"necromancer")
 	_play(&"idle")
 	health_changed.emit(hp, max_hp)
+	# Detect the level before _activate_king_mode creates the boss HUD.
+	# Otherwise the purple Grave Monarch bar is created on the first run.
+	level6_mode = _level6_detect_scene()
 	# Dedicated King scene: activate now, no level-name or group selection needed.
 	_activate_king_mode()
+	_level6_initialize()
 
 
 func _begin_king_shield_phase() -> void:
@@ -1995,6 +4043,9 @@ func _update_king_phase_visuals(delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if level6_mode:
+		_level6_update(delta)
+		return
 	if state == State.DEAD:
 		return
 	# The HUD is never gated by the player's existence or a previous death.
@@ -2596,6 +4647,8 @@ func _update_king_teleport_animation(delta: float) -> void:
 		if t >= 1.0:
 			# The last death frame is the invisible/vanished state.
 			# Only after it finishes do we change the King's position.
+			if level6_mode and level6_stage == Level6Stage.PHASE_TWO:
+				_level6_secure_second_marker()
 			global_position = king_tp_destination
 			# Keep physics interpolation from drawing a one-frame flight path.
 			reset_physics_interpolation()
@@ -2875,6 +4928,9 @@ func _launch_skull(
 
 
 func _spawn_king_spectral_skull() -> void:
+	# Level 6: no more than four spectral skulls active at once.
+	if level6_mode and skulls.size() >= LEVEL6_SKULL_MAX:
+		return
 	if king_shield_phase == KingShieldPhase.BREAKING:
 		return
 	if not is_king or not is_instance_valid(target):
@@ -2884,8 +4940,18 @@ func _spawn_king_spectral_skull() -> void:
 	var visual := Sprite2D.new()
 	visual.texture = SKULL_TEXTURE
 	visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	visual.modulate = Color(0.82, 0.34, 1.0, 0.0)
+	visual.modulate = Color(1.0, 1.0, 1.0, 0.0) if level6_mode else Color(0.82, 0.34, 1.0, 0.0)
 	visual.top_level = true
+	# The skull texture stays visible, but becomes a white/ink void skull.
+	if level6_mode:
+		visual.material = level6_void_shader.duplicate() as ShaderMaterial
+		var aura: Sprite2D = Sprite2D.new()
+		aura.name = "SkullVoidAura"
+		aura.texture = _level6_get_aura_texture()
+		aura.scale = Vector2(1.6, 1.6)
+		aura.z_index = -1
+		aura.show_behind_parent = true
+		visual.add_child(aura)
 	var texture_size: Vector2 = SKULL_TEXTURE.get_size()
 	# Minimum size overrides older Level 5 Inspector values (formerly 44px).
 	var size_multiplier: float = maxf(60.0, king_spectral_skull_size) / maxf(texture_size.x, texture_size.y)
@@ -2900,33 +4966,68 @@ func _spawn_king_spectral_skull() -> void:
 	var chosen: Vector2 = Vector2.ZERO
 	var found_safe_spawn: bool = false
 	var best_distance: float = -1.0
-	# Sample broadly; the protected zone might occupy most of the floor.
-	# If there is no valid position, skip this skull rather than spawning
-	# in bosscolider. Nothing else about its flight is changed.
-	for attempt: int in range(90):
-		var candidate: Vector2 = Vector2(
-			randf_range(safe_view.position.x, safe_view.end.x),
-			randf_range(safe_view.position.y, safe_view.end.y)
-		)
-		if _king_spawn_overlaps_zone(candidate, false):
-			continue
-		var distance: float = candidate.distance_to(target.global_position)
-		if distance > best_distance:
-			best_distance = distance
-			chosen = candidate
-			found_safe_spawn = true
-		if (distance >= king_skull_min_spawn_distance
-			and candidate.distance_to(global_position) >= 105.0):
-			chosen = candidate
-			break
+	# Level 6: rotate through eight separated screen sectors rather than
+	# selecting whichever nearby point is encountered first. Volley skulls
+	# consequently appear ABOVE, BELOW, LEFT and RIGHT in different orders.
+	if level6_mode:
+		var sectors: Array[Vector2i] = [
+			Vector2i(0, 0), Vector2i(2, 2), Vector2i(2, 0), Vector2i(0, 2),
+			Vector2i(1, 0), Vector2i(2, 1), Vector2i(1, 2), Vector2i(0, 1)
+		]
+		var slot: int = (level6_skull_spawn_serial + level6_skull_spawn_rotation) % sectors.size()
+		level6_skull_spawn_serial += 1
+		for shift: int in range(sectors.size()):
+			var sector: Vector2i = sectors[(slot + shift) % sectors.size()]
+			for attempt: int in range(8):
+				var candidate: Vector2 = safe_view.position + Vector2(
+					(float(sector.x) + randf_range(0.14, 0.86)) / 3.0 * safe_view.size.x,
+					(float(sector.y) + randf_range(0.14, 0.86)) / 3.0 * safe_view.size.y
+				)
+				if _king_spawn_overlaps_zone(candidate, false):
+					continue
+				var distance: float = candidate.distance_to(target.global_position)
+				if distance < 180.0 or candidate.distance_to(global_position) < 95.0:
+					continue
+				if level6_last_skull_spawn.x != INF and candidate.distance_to(level6_last_skull_spawn) < 160.0:
+					continue
+				chosen = candidate
+				found_safe_spawn = true
+				break
+			if found_safe_spawn:
+				break
+	# Fallback for a tiny camera, or an exclusion zone covering many sectors.
+	# Previous levels retain their ordinary random skull origins.
+	if not found_safe_spawn:
+		for attempt: int in range(90):
+			var candidate: Vector2 = Vector2(
+				randf_range(safe_view.position.x, safe_view.end.x),
+				randf_range(safe_view.position.y, safe_view.end.y)
+			)
+			if _king_spawn_overlaps_zone(candidate, false):
+				continue
+			var distance: float = candidate.distance_to(target.global_position)
+			if distance > best_distance:
+				best_distance = distance
+				chosen = candidate
+				found_safe_spawn = true
+			if (distance >= king_skull_min_spawn_distance
+				and candidate.distance_to(global_position) >= 105.0):
+				chosen = candidate
+				break
 	if not found_safe_spawn:
 		visual.queue_free()
 		return
 	visual.global_position = chosen
+	if level6_mode:
+		level6_last_skull_spawn = chosen
 	skull.direction = chosen.direction_to(target.global_position)
 	skull.visual = visual
 	skull.spectral = true
-	skull.speed = king_skull_flight_speed
+	skull.cruise_speed = king_skull_flight_speed
+	# Charge first, then begin moving at 55% speed. The skull rapidly accelerates
+	# while tracking; sharp turns force it to brake and carve a visible curve.
+	skull.speed = king_skull_flight_speed * (0.55 if level6_mode else 1.0)
+	skull.velocity = skull.direction * skull.speed
 	skull.damage = skull_damage
 	skull.lifetime = maxf(4.2, king_skull_charge_duration + king_skull_terrain_phase_time + 1.7)
 	skull.orbit_sign = -1.0 if randf() < 0.5 else 1.0
@@ -2958,40 +5059,73 @@ func _update_skulls(delta: float) -> void:
 		var start: Vector2 = skull.visual.global_position
 		if skull.spectral:
 			skull.flight_elapsed += delta
-			# First fly straight, then smoothly ramp the homing strength up.
-			# This makes a jump or direction change effective without eliminating
-			# the circling/curved pursuit during the rest of the flight.
-			var tracking_age: float = skull.flight_elapsed - king_skull_tracking_delay
-			if tracking_age > 0.0:
-				var tracking_factor: float = clampf(
-					tracking_age / maxf(0.05, king_skull_tracking_ramp), 0.0, 1.0
-				)
-				var orbit_phase: float = skull.flight_elapsed * 1.6 + skull.wobble_seed
-				var distance_to_player: float = start.distance_to(target.global_position)
-				var orbit_strength: float = clampf(
-					(distance_to_player - 45.0) / 210.0, 0.0, 1.0
-				)
-				var sideways: Vector2 = Vector2(-skull.direction.y, skull.direction.x)
-				var orbit_offset: float = sin(orbit_phase) * 32.0 * skull.orbit_sign * orbit_strength
-				var desired_point: Vector2 = target.global_position + sideways * orbit_offset
-				var desired: Vector2 = start.direction_to(desired_point)
-				if desired.length_squared() > 0.001:
-					var angle_delta: float = angle_difference(skull.direction.angle(), desired.angle())
-					var turn_limit: float = king_skull_turn_rate * tracking_factor * delta
-					skull.direction = skull.direction.rotated(clampf(
-						angle_delta, -turn_limit, turn_limit
-					)).normalized()
+			if level6_mode:
+				# V48: No straight-flight tracking delay. Homing begins IMMEDIATELY
+				# after the stationary skull has spent 0.5s visibly charging.
+				# Steering has finite angular speed, so dodging produces wide curves.
+				var wanted_direction: Vector2 = start.direction_to(target.global_position)
+				var turn_error: float = 0.0
+				if wanted_direction.length_squared() > 0.0001:
+					turn_error = angle_difference(skull.direction.angle(), wanted_direction.angle())
+					var maximum_rotation: float = level6_skull_turn_rate_v48 * delta
+					skull.direction = skull.direction.rotated(
+						clampf(turn_error, -maximum_rotation, maximum_rotation)
+					).normalized()
+				# Turning sharply costs momentum. It does NOT teleport toward the
+				# target or turn 180 degrees instantly. Once aligned, it accelerates.
+				var brake: float = clampf((absf(turn_error) - 0.30) / 1.60, 0.0, 1.0)
+				var cruise: float = maxf(1.0, skull.cruise_speed)
+				var wanted_speed: float = cruise * (1.0 - 0.52 * brake)
+				var acceleration: float = 470.0 if skull.speed > wanted_speed else 285.0
+				skull.speed = move_toward(skull.speed, wanted_speed, acceleration * delta)
+				skull.velocity = skull.direction * skull.speed
+			else:
+				# Preserve the original pre-Level-6 spectral skull tracking.
+				var tracking_age: float = skull.flight_elapsed - king_skull_tracking_delay
+				if tracking_age > 0.0:
+					var tracking_factor: float = clampf(
+						tracking_age / maxf(0.05, king_skull_tracking_ramp), 0.0, 1.0
+					)
+					var orbit_phase: float = skull.flight_elapsed * 1.6 + skull.wobble_seed
+					var distance_to_player: float = start.distance_to(target.global_position)
+					var orbit_strength: float = clampf((distance_to_player - 45.0) / 210.0, 0.0, 1.0)
+					var sideways: Vector2 = Vector2(-skull.direction.y, skull.direction.x)
+					var orbit_offset: float = sin(orbit_phase) * 32.0 * skull.orbit_sign * orbit_strength
+					var desired_point: Vector2 = target.global_position + sideways * orbit_offset
+					var desired: Vector2 = start.direction_to(desired_point)
+					if desired.length_squared() > 0.001:
+						var angle_delta: float = angle_difference(skull.direction.angle(), desired.angle())
+						var turn_limit: float = king_skull_turn_rate * tracking_factor * delta
+						skull.direction = skull.direction.rotated(
+							clampf(angle_delta, -turn_limit, turn_limit)
+						).normalized()
 			skull.visual.rotation = skull.direction.angle() + PI
-		var finish: Vector2 = start + skull.direction * skull.speed * delta
-		# For the FIRST SECOND AFTER LAUNCH: ignore walls/floors, still hit player.
-		# After 1.0 s, terrain collisions destroy the skull on contact.
-		var collision_bits: int = target.collision_layer
-		if not skull.spectral or skull.flight_elapsed >= 1.0:
-			collision_bits |= terrain_mask
+		var displacement: Vector2 = skull.velocity if (level6_mode and skull.spectral) else skull.direction * skull.speed
+		var finish: Vector2 = start + displacement * delta
+		# Exact noclip window starts AFTER the charge, not at spawn.
+		# Completely bypass physics raycasts for 1.5 s in Level 6.
+		# This is necessary even if TileMap physics layers share player bits.
+		skull.lifetime -= delta
+		var phase_time: float = 1.5 if level6_mode else king_skull_terrain_phase_time
+		if skull.spectral and skull.flight_elapsed < phase_time:
+			var closest: Vector2 = Geometry2D.get_closest_point_to_segment(target.global_position, start, finish)
+			if closest.distance_to(target.global_position) < 26.0:
+				if target.has_method(&"tomar_dano"):
+					target.call(&"tomar_dano", skull.damage, start)
+				skull.visual.queue_free()
+				skulls.remove_at(index)
+			elif skull.lifetime <= 0.0:
+				skull.visual.queue_free()
+				skulls.remove_at(index)
+			else:
+				skull.visual.global_position = finish
+			continue
+		# Noclip has expired. Now ALL terrain and ordinary solid geometry
+		# destroy the skull on contact, while player contact still hurts.
+		var collision_bits: int = 0x7FFFFFFF if level6_mode else (target.collision_layer | terrain_mask)
 		var query := PhysicsRayQueryParameters2D.create(start, finish, collision_bits, excluded)
 		query.hit_from_inside = true
 		var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(query)
-		skull.lifetime -= delta
 		if not hit.is_empty() or skull.lifetime <= 0.0:
 			if hit.get("collider") == target and target.has_method(&"tomar_dano"):
 				target.call(&"tomar_dano", skull.damage, start)
@@ -3039,6 +5173,8 @@ func can_receive_player_hit() -> bool:
 	# King can be hurt throughout the encounter, including while hovering.
 	# A first legitimate sword hit can also wake a dormant King. Before this,
 	# a visually connecting strike was silently ignored until activation.
+	if level6_mode:
+		return level6_stage in [Level6Stage.PHASE_ONE, Level6Stage.PHASE_TWO]
 	return state != State.DEAD
 
 
@@ -3065,8 +5201,8 @@ func attack_shape_hits_hurtbox(attack_shape: CollisionShape2D) -> bool:
 	var local_size: Vector2 = texture.get_size() if texture != null else Vector2(28.0, 40.0)
 	var actual_scale: Vector2 = sprite.global_transform.get_scale().abs()
 	var body := RectangleShape2D.new()
-	body.size = Vector2(maxf(44.0, local_size.x * actual_scale.x * 0.49),
-		maxf(58.0, local_size.y * actual_scale.y * 0.59))
+	body.size = Vector2(maxf(48.0, local_size.x * actual_scale.x * (0.65 if level6_mode else 0.49)),
+		maxf(62.0, local_size.y * actual_scale.y * (0.73 if level6_mode else 0.59)))
 	var center: Vector2 = sprite.global_position + Vector2(0.0, -body.size.y * 0.05)
 	return attack_shape.shape.collide(attack_shape.global_transform, body,
 		Transform2D(0.0, center))
@@ -3078,6 +5214,42 @@ func take_damage(amount: int, origin: Vector2 = Vector2.ZERO) -> void:
 
 func tomar_dano(amount: int, _origin: Vector2 = Vector2.ZERO) -> void:
 	if amount <= 0 or not can_receive_player_hit():
+		return
+	if level6_mode:
+		# A single physical sword strike must not count twice through the
+		# Player's handler and the new boss-side fallback in one physics tick.
+		if level6_hit_lock > 0.0:
+			return
+		if level6_stage == Level6Stage.PHASE_ONE:
+			if king_shield_phase == KingShieldPhase.SOLO:
+				var previous_hp_one: int = hp
+				hp = maxi(1, hp - amount)
+				if hp < previous_hp_one:
+					level6_hit_lock = 0.12
+					_level6_accepted_hit(previous_hp_one)
+					health_changed.emit(hp, max_hp)
+				if hp <= 1:
+					_level6_begin_guard() # Exactly one Void Menacing at 1 HP.
+			elif king_shield_phase == KingShieldPhase.SHIELDED:
+				king_shield_hit_fx = maxf(king_shield_hit_fx, king_shield_hit_pulse_duration)
+			elif king_shield_phase == KingShieldPhase.EXPOSED:
+				var previous_hp_last: int = hp
+				hp = 0 # One final hit after the guard has died.
+				level6_hit_lock = 0.12
+				_level6_accepted_hit(previous_hp_last)
+				health_changed.emit(hp, max_hp)
+				_level6_start_dissolving(true)
+		elif level6_stage == Level6Stage.PHASE_TWO:
+			var previous_hp_two: int = hp
+			hp = maxi(0, hp - amount)
+			if hp < previous_hp_two:
+				level6_hit_lock = 0.12
+				_level6_accepted_hit(previous_hp_two)
+				health_changed.emit(hp, max_hp)
+			if hp <= 0:
+				_level6_start_dissolving(false)
+		_update_king_hp_label()
+		queue_redraw()
 		return
 	if state == State.DORMANT:
 		_begin_encounter()
@@ -3132,6 +5304,19 @@ func tomar_dano(amount: int, _origin: Vector2 = Vector2.ZERO) -> void:
 
 
 func _exit_tree() -> void:
+	# CanvasLayer is attached to SceneTree.root, not the scene root.
+	# Dispose it explicitly on death/level reload to prevent a stuck black screen.
+	if is_instance_valid(level6_title_layer):
+		level6_title_layer.queue_free()
+	if level6_mode:
+		_level6_stop_shake()
+		if is_instance_valid(level6_screen_layer):
+			level6_screen_layer.queue_free()
+	if level6_mode and level6_camera_initialized:
+		var cam: Camera2D = get_viewport().get_camera_2d()
+		if is_instance_valid(cam):
+			cam.offset = level6_original_cam_offset
+			cam.zoom = level6_camera_base_zoom
 	# CanvasLayer is parented to SceneTree.root, so explicitly dispose it
 	# when the level is reloaded; otherwise old HUDs can cover the new one.
 	if is_instance_valid(king_hud):
@@ -3170,6 +5355,10 @@ func _die_king_v9() -> void:
 		queue_free()
 
 func _play(animation: StringName, restart: bool = false) -> void:
+	# Void King's casting frames contain the giant white flame staff.
+	# Never show these frames as part of an offensive phase 1/2 attack.
+	if level6_mode and animation in [&"spawnenemies2", &"spawnenemies"]:
+		animation = &"idle"
 	if not sprite.sprite_frames.has_animation(animation):
 		return
 	if restart:
@@ -3181,14 +5370,25 @@ func _play(animation: StringName, restart: bool = false) -> void:
 func _draw() -> void:
 	if state == State.DEAD:
 		return
+	if level6_mode and level6_stage in [Level6Stage.HIDDEN, Level6Stage.WAITING, Level6Stage.SHAKING,
+		Level6Stage.CLIMB, Level6Stage.SECOND_WAIT, Level6Stage.PHASE_THREE_PENDING]:
+		return
+	if is_king and level6_mode:
+		var swirl_phase: float = hover_time * 1.2
+		for orbit_i: int in range(14):
+			var theta: float = swirl_phase + TAU * float(orbit_i) / 14.0
+			var radius: float = 58.0 + 8.0 * sin(theta * 2.5 + swirl_phase)
+			var mote: Vector2 = body_shape.position + Vector2.RIGHT.rotated(theta) * radius
+			draw_circle(mote, 2.0 + float(orbit_i % 3), Color(0.02, 0.02, 0.027, 0.37))
 	if is_king:
 		# Giant aura behind the sprite. Crown is an actual foreground child.
 		# Aura has no collision geometry.
 		var center: Vector2 = body_shape.position
 		var pulse: float = 0.5 + 0.5 * sin(hover_time * 3.0)
 		# Ambient aura is a subtle fill, never a permanent WARNING ring.
-		draw_circle(center, 72.0 + 4.0 * pulse, Color(0.45, 0.08, 0.80, 0.055))
-		if king_gravefall_active and king_special_kind == 3:
+		if not level6_mode:
+			draw_circle(center, 72.0 + 4.0 * pulse, Color(0.45, 0.08, 0.80, 0.055))
+		if not level6_mode and king_gravefall_active and king_special_kind == 3:
 			var progress: float = clampf(1.0 - king_gravefall_warning_timer / 0.72, 0.0, 1.0)
 			var alpha: float = clampf(progress / 0.30, 0.0, 1.0) * (0.48 + 0.42 * progress)
 			draw_arc(center, 130.0 - 25.0 * progress, 0.0, TAU, 60,
@@ -3198,7 +5398,7 @@ func _draw() -> void:
 				var ray: Vector2 = Vector2.RIGHT.rotated(angle)
 				draw_line(center + ray * 35.0, center + ray * 123.0,
 					Color(0.90, 0.39, 1.0, alpha), 3.0, true)
-		if king_crown_burst_remaining > 0.0:
+		if king_crown_burst_remaining > 0.0 and not level6_mode:
 			var b: float = 1.0 - king_crown_burst_remaining / 0.34
 			var radius: float = (125.0 + 75.0 * b) if b < 0.25 else (145.0 - 50.0 * (b - 0.25) / 0.75)
 			draw_arc(center, radius, 0.0, TAU, 60,
@@ -3240,6 +5440,8 @@ func _draw() -> void:
 			draw_arc(shield_origin, ward_radius - 8.0, 0.0, TAU, 64,
 				Color(0.64, 0.18, 0.95, 0.35 + 0.28 * ward_hit), 2.0, true)
 		_draw_king_royal_slashes()
+		if level6_mode:
+			_level6_draw_extra_attacks()
 		# A short, non-damaging Last Stand eruption, not a permanent warning.
 		if king_last_stand_intro_timer > 0.0:
 			var last_stand_progress: float = clampf(
