@@ -1,3 +1,4 @@
+# Player V54: dash-attack softlock recovery, animation restore, input buffering
 # Player V53: Level 5 attack-hitbox optimization + temporary Level 6 ability unlock
 # Based on V52: artifact progression, chalice shield, double jump, 40ms dash cooldown
 # Based on V51: King hurtbox integrated into verified V50 attack system; movement unchanged
@@ -309,16 +310,23 @@ func _update_artifact_movement(delta: float) -> bool:
 		and Input.is_action_just_pressed(&"dash")
 	):
 		if estado == Estado.ATAQUE:
+			# Interrupt the sword state explicitly. A canceled attack will
+			# NEVER emit its animation_finished signal.
 			estado = Estado.NORMAL
 			golpe_em_fila = false
 			atingidos_no_golpe.clear()
 			anim.speed_scale = 1.0
+			ultimo_hitcheck_frame = -1
 		dash_direction = signf(direction) if absf(direction) > 0.01 else (1.0 if olhando_direita else -1.0)
 		_virar(dash_direction)
 		dash_remaining = dash_duration
 		dash_cooldown_remaining = maxf(0.04, dash_cooldown)
 		dash_used = true
 	if dash_remaining > 0.0:
+		# LMB during a dash is queued for immediately after the dash. It
+		# must not start an attack animation while dash frames are playing.
+		if Input.is_action_just_pressed(&"attack_quick"):
+			golpe_em_fila = true
 		velocity = Vector2(dash_direction * dash_speed, 0.0)
 		dash_remaining = maxf(0.0, dash_remaining - delta)
 		tempo_buffer_restante = 0.0
@@ -326,6 +334,12 @@ func _update_artifact_movement(delta: float) -> bool:
 		move_and_slide()
 		if is_on_wall():
 			dash_remaining = 0.0
+		if dash_remaining <= 0.0:
+			# End the dash visually on the very same physics frame instead
+			# of leaving its final animation frame active indefinitely.
+			anim.speed_scale = 1.0
+			if estado == Estado.NORMAL:
+				_atualizar_animacao_movimento(direction)
 		return true
 
 	if estado == Estado.ATAQUE:
@@ -363,6 +377,19 @@ func _update_artifact_movement(delta: float) -> bool:
 			move_and_slide()
 			return true
 	return false
+
+
+func _recuperar_ataque_interrompido() -> void:
+	# Defense against stale Estado.ATAQUE when dash/knockback/another
+	# animation cuts off an attack before animation_finished can fire.
+	if estado != Estado.ATAQUE:
+		return
+	var attack_name: StringName = _action_animation(&"attack_quick", &"attack1")
+	if dash_remaining > 0.0 or anim.animation != attack_name or not anim.is_playing():
+		estado = Estado.NORMAL
+		anim.speed_scale = 1.0
+		atingidos_no_golpe.clear()
+		ultimo_hitcheck_frame = -1
 
 
 func _begin_slide(direction: float) -> void:
@@ -688,6 +715,7 @@ func _physics_process(
 	)
 	_atualizar_brilho_verde(delta)
 	calice_shield_cooldown = maxf(0.0, calice_shield_cooldown - delta)
+	_recuperar_ataque_interrompido()
 	_update_menacing_parry(delta)
 	_atualizar_velocidade_defesa_cranio()
 	recarga_golpe_restante = maxf(0.0, recarga_golpe_restante - delta)
@@ -1364,6 +1392,9 @@ func is_swinging() -> bool:
 
 
 func solicitar_ataque() -> void:
+	if dash_remaining > 0.0:
+		golpe_em_fila = true
+		return
 	if estado == Estado.NORMAL and recarga_golpe_restante <= 0.0:
 		_iniciar_ataque()
 	elif estado == Estado.NORMAL or estado == Estado.ATAQUE:
@@ -1373,6 +1404,9 @@ func solicitar_ataque() -> void:
 
 func _iniciar_ataque() -> void:
 	if estado == Estado.MORTO or estado == Estado.FERIDO:
+		return
+	if dash_remaining > 0.0:
+		golpe_em_fila = true
 		return
 	if recarga_golpe_restante > 0.0:
 		return
@@ -1796,6 +1830,13 @@ func morrer() -> void:
 # =====================================================
 
 func _ao_terminar_animacao() -> void:
+	# Dash animation has no combat-state completion event of its own.
+	# Restore movement once the actual dash timer is finished.
+	if anim.animation == &"dash":
+		if dash_remaining <= 0.0 and estado == Estado.NORMAL:
+			anim.speed_scale = 1.0
+			_atualizar_animacao_movimento(Input.get_axis(&"left", &"right"))
+		return
 	match estado:
 		Estado.ATAQUE:
 			if anim.animation == _action_animation(&"attack_quick", &"attack1"):

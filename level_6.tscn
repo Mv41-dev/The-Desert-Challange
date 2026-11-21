@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://qhf3inbjhuq3" path="res://abyss/abyssparallax2.png" id="6_brkdw"]
 [ext_resource type="PackedScene" uid="uid://cb3qhbphquwgp" path="res://voidnecro.tscn" id="8_brkdw"]
 [ext_resource type="PackedScene" uid="uid://dxuk00u4v5fd7" path="res://kingnecro.tscn" id="9_soim0"]
+[ext_resource type="Script" uid="uid://b3t0mji6ca0r6" path="res://rising_void.gd" id="10_vp58d"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="hud_fases"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hbghi"]
@@ -1785,6 +1786,12 @@ sources/1 = SubResource("TileSetAtlasSource_soim0")
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3o1bh"]
 size = Vector2(712, 380)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gxl01"]
+size = Vector2(1926, 37)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_h11e8"]
+size = Vector2(524, 113)
+
 [node name="Level6" type="Node2D" unique_id=781529516]
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=969581031]
@@ -1860,6 +1867,12 @@ enabled = false
 tile_set = SubResource("TileSet_q45od")
 metadata/_edit_lock_ = true
 
+[node name="boss3phase" type="TileMapLayer" parent="." unique_id=78341001]
+tile_map_data = PackedByteArray("AACKBKUBAQAUAAUAAACLBKUBAQAVAAUAAACMBKUBAQAWAAUAAACRBKEBAQAUAAUAAACSBKEBAQAVAAUAAACTBKEBAQAWAAUAAACUBKEBAQAXAAUAAACLBJwBAQAUAAUAAACMBJwBAQAVAAUAAACNBJwBAQAWAAUAAACOBJwBAQAXAAUAAACRBJYBAQAUAAUAAACSBJYBAQAVAAUAAACTBJYBAQAWAAUAAACUBJYBAQAXAAUAAACRBIsBAQAUAAUAAACSBIsBAQAVAAUAAACTBIsBAQAWAAUAAACUBIsBAQAXAAUAAACbBJIBAQAUAAUAAACcBJIBAQAVAAUAAACdBJIBAQAWAAUAAACeBJIBAQAXAAUAAACIBJIBAQAUAAUAAACJBJIBAQAVAAUAAACKBJIBAQAWAAUAAACLBJIBAQAXAAUAAAChBI0BAQAUAAUAAACiBI0BAQAVAAUAAACjBI0BAQAWAAUAAACkBI0BAQAXAAUAAACCBI0BAQAUAAUAAACDBI0BAQAVAAUAAACEBI0BAQAWAAUAAACFBI0BAQAXAAUAAACABJYBAQAUAAUAAACBBJYBAQAVAAUAAACCBJYBAQAWAAUAAACDBJYBAQAXAAUAAACiBJYBAQAUAAUAAACjBJYBAQAVAAUAAACkBJYBAQAWAAUAAAClBJYBAQAXAAUAAACNBKUBAQAXAAUAAACMBIUBAQAUAAUAAACNBIUBAQAVAAUAAACOBIUBAQAWAAUAAACPBIUBAQAXAAUAAACUBIEBAQAUAAUAAACVBIEBAQAVAAUAAACWBIEBAQAWAAUAAACXBIEBAQAXAAUAAACPBHwBAQAUAAUAAACQBHwBAQAVAAUAAACRBHwBAQAWAAUAAACSBHwBAQAXAAUAAACWBHgBAQAUAAUAAACXBHgBAQAVAAUAAACYBHgBAQAWAAUAAACZBHgBAQAXAAUAAACdBHMBAQAUAAUAAACeBHMBAQAVAAUAAACfBHMBAQAWAAUAAACgBHMBAQAXAAUAAACYBG4BAQAUAAUAAACZBG4BAQAVAAUAAACaBG4BAQAWAAUAAACbBG4BAQAXAAUAAACcBGgBAQAUAAUAAACdBGgBAQAVAAUAAACeBGgBAQAWAAUAAACfBGgBAQAXAAUAAACVBGQBAQAUAAUAAACWBGQBAQAVAAUAAACXBGQBAQAWAAUAAACYBGQBAQAXAAUAAACdBF8BAQAUAAUAAACeBF8BAQAVAAUAAACfBF8BAQAWAAUAAACgBF8BAQAXAAUAAACWBFoBAQAUAAUAAACXBFoBAQAVAAUAAACYBFoBAQAWAAUAAACZBFoBAQAXAAUAAACPBFYBAQAUAAUAAACQBFYBAQAVAAUAAACRBFYBAQAWAAUAAACSBFYBAQAXAAUAAACJBFIBAQAUAAUAAACKBFIBAQAVAAUAAACLBFIBAQAWAAUAAACMBFIBAQAXAAUAAACHBE0BAQAUAAUAAACIBE0BAQAVAAUAAACJBE0BAQAWAAUAAACKBE0BAQAXAAUAAACNBEgBAQAUAAUAAACOBEgBAQAVAAUAAACPBEgBAQAWAAUAAACQBEgBAQAXAAUAAACRBEMBAQAUAAUAAACSBEMBAQAVAAUAAACTBEMBAQAWAAUAAACUBEMBAQAXAAUAAACTBD8BAQAUAAUAAACUBD8BAQAVAAUAAACVBD8BAQAWAAUAAACWBD8BAQAXAAUAAACQBDoBAQAUAAUAAACRBDoBAQAVAAUAAACSBDoBAQAWAAUAAACTBDoBAQAXAAUAAACZBDYBAQAUAAUAAACaBDYBAQAVAAUAAACbBDYBAQAWAAUAAACcBDYBAQAXAAUAAACdBDYBAQAUAAUAAACeBDYBAQAVAAUAAACfBDYBAQAWAAUAAACgBDYBAQAXAAUAAACGBDYBAQAUAAUAAACHBDYBAQAUAAUAAACIBDYBAQAVAAUAAACJBDYBAQAWAAUAAACCBDYBAQAUAAUAAACDBDYBAQAVAAUAAACEBDYBAQAWAAUAAACFBDYBAQAXAAUAAACKBDYBAQAXAAUAAAA=")
+enabled = false
+tile_set = SubResource("TileSet_q45od")
+metadata/_edit_lock_ = true
+
 [node name="2phasebosspawns" type="Marker2D" parent="." unique_id=1471281960]
 position = Vector2(18743, 6252)
 
@@ -1871,6 +1884,12 @@ position = Vector2(18506, 6291)
 
 [node name="2phasebosspawns4" type="Marker2D" parent="." unique_id=346398338]
 position = Vector2(18738, 6436)
+
+[node name="3phasebosspawns1" type="Marker2D" parent="." unique_id=1204250780]
+position = Vector2(18532, 4811)
+
+[node name="3phasebosspawns2" type="Marker2D" parent="." unique_id=423257858]
+position = Vector2(18895, 4809)
 
 [node name="2phasebosspawns5" type="Marker2D" parent="." unique_id=1039862615]
 position = Vector2(18900, 6372)
@@ -2003,11 +2022,21 @@ level6_dissolve_seconds = null
 level6_upper_trigger_radius = null
 level6_marker_raise_pixels = null
 level6_title_display_seconds = null
+level6_spear_height_above_player = null
 level6_boss_area_path = null
 level6_platforms_path = null
 level6_second_identifier_path = null
+level6_third_identifier_path = null
+level6_third_platforms_path = null
+level6_third_phase_sword_hits = null
+level6_phase3_laser_start_delay = null
+level6_climb_laser_gap = null
+level6_climb_laser_warning = null
+level6_final_animation_seconds = null
 level6_camera_zoom_factor = null
 level6_camera_upward_pixels = null
+level6_debug_skip_phase_one_with_1 = null
+level6_debug_skip_phase_two_with_2 = null
 level6_phase2_shake_seconds = null
 level6_phase2_shake_max_pixels = null
 
@@ -2019,3 +2048,28 @@ metadata/_edit_lock_ = true
 position = Vector2(112, 540)
 shape = SubResource("RectangleShape2D_3o1bh")
 metadata/_edit_lock_ = true
+
+[node name="RisingVoid" type="Node2D" parent="." unique_id=1449001643]
+script = ExtResource("10_vp58d")
+
+[node name="VoidSurface" type="Area2D" parent="RisingVoid" unique_id=791423241]
+position = Vector2(18095, 6832)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RisingVoid/VoidSurface" unique_id=2075844614]
+position = Vector2(639, 27.5)
+shape = SubResource("RectangleShape2D_gxl01")
+
+[node name="VoidParticles" type="GPUParticles2D" parent="RisingVoid" unique_id=395765485]
+
+[node name="risingvoidphase2" type="Marker2D" parent="." unique_id=178308841]
+position = Vector2(18727, 6614)
+
+[node name="risingvoidphase3" type="Marker2D" parent="." unique_id=495817301]
+position = Vector2(18724, 5014)
+
+[node name="phase3startdetection" type="Area2D" parent="." unique_id=526654556]
+position = Vector2(18717, 4854)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="phase3startdetection" unique_id=610141139]
+position = Vector2(5, 46.5)
+shape = SubResource("RectangleShape2D_h11e8")
