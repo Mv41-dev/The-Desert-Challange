@@ -9,6 +9,8 @@
 [ext_resource type="PackedScene" uid="uid://cb3qhbphquwgp" path="res://voidnecro.tscn" id="8_brkdw"]
 [ext_resource type="PackedScene" uid="uid://dxuk00u4v5fd7" path="res://kingnecro.tscn" id="9_soim0"]
 [ext_resource type="Script" uid="uid://b3t0mji6ca0r6" path="res://rising_void.gd" id="10_vp58d"]
+[ext_resource type="Script" uid="uid://dilc4qvqufxnm" path="res://ambiencia_level_6.gd" id="11_3eqwd"]
+[ext_resource type="Script" uid="uid://d1vjhi026hq24" path="res://abismo_pressagios.gd" id="12_xo623"]
 [ext_resource type="PackedScene" uid="uid://bmbfgr7lg7awu" path="res://hud.tscn" id="hud_fases"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hbghi"]
@@ -1801,7 +1803,7 @@ tile_set = SubResource("TileSet_ebum8")
 
 [node name="Player" parent="." unique_id=267222214 instance=ExtResource("2_yxwl1")]
 z_index = 3
-position = Vector2(17670, 6797)
+position = Vector2(3052, 18160)
 
 [node name="HUD" parent="." unique_id=2002812259 instance=ExtResource("hud_fases")]
 
@@ -1911,134 +1913,6 @@ position = Vector2(18981, 6653)
 
 [node name="charbody2d2" parent="." unique_id=1432361193 instance=ExtResource("9_soim0")]
 position = Vector2(18630, 6654)
-max_hp = null
-activation_range = null
-terrain_mask = null
-skeleton_count = null
-revive_seconds = null
-summon_release_frame = null
-between_summons_seconds = null
-sprite_faces_right_by_default = null
-summon_bonus_hp = null
-summon_speed_multiplier = null
-hover_speed = null
-keep_distance = null
-arena_roam_distance = null
-skull_speed = null
-skull_damage = null
-king_max_hp = null
-king_visual_scale = null
-king_hover_speed_multiplier = null
-king_skull_speed_multiplier = null
-king_gravefall_cooldown = null
-king_gravefall_warning_time = null
-king_max_live_skulls = null
-king_exposed_after_attack = null
-king_slash_hitbox_width = null
-king_slash_expand_seconds = null
-king_slash_fade_seconds = null
-king_slash_hit_cooldown = null
-king_extra_laser_warning_seconds = null
-king_post_attack_pause = null
-king_skull_spawn_interval = null
-king_skull_volley_cooldown = null
-king_skull_charge_duration = null
-king_skull_terrain_phase_time = null
-king_skull_turn_rate = null
-king_skull_min_spawn_distance = null
-king_skull_tracking_delay = null
-king_skull_tracking_ramp = null
-level6_skull_tracking_delay = null
-level6_skull_tracking_ramp = null
-level6_skull_turn_rate_v48 = null
-king_skull_flight_speed = null
-king_wall_warning_time = null
-king_wall_speed = null
-king_wall_safe_gap = null
-king_wall_wave_interval = null
-king_elite_total_waves = null
-king_normal_guard_hp = null
-king_reborn_guard_hp = null
-king_revival_after_shield_seconds = null
-king_reborn_boss_spell_interval = null
-king_max_total_resurrections = null
-king_max_active_purple_guards = null
-king_repeat_revival_delay = null
-king_elite_hp = null
-king_shield_appear_delay = null
-king_guard_attack_interval = null
-king_first_elite_delay = null
-king_elite_resummon_delay = null
-king_shield_trigger_hp_ratio = null
-king_shield_break_duration = null
-king_shield_hit_pulse_duration = null
-king_black_hit_flash_duration = null
-king_spectral_skull_size = null
-king_wall_skull_size = null
-king_last_stand_heal_ratio = null
-king_last_stand_intro_seconds = null
-king_last_stand_spell_cooldown_factor = null
-king_last_stand_skull_volley_cooldown = null
-king_last_stand_warning_factor = null
-king_repeat_revival_chance = null
-king_guard_teleport_interval = null
-king_guard_standoff_distance = null
-king_guard_retreat_speed = null
-king_guard_retarget_cooldown = null
-king_patrol_horizontal_radius = null
-king_patrol_vertical_radius = null
-king_guard_height_ratio = null
-king_guard_chase_distance = null
-king_guard_flight_acceleration = null
-king_solo_hover_height_ratio = null
-king_guard_hover_height_ratio = null
-king_exposed_spells_before_revival = null
-king_solo_travel_speed = null
-king_solo_reposition_seconds = null
-king_ricochet_warning_seconds = null
-king_teleport_hold_seconds = null
-king_teleport_vanish_seconds = null
-king_teleport_reappear_seconds = null
-king_ricochet_bounces = null
-king_laser_screen_reach_multiplier = null
-king_attack_cast_seconds = null
-king_ward_repel_distance = null
-king_ward_repel_cooldown = null
-phase_through_walls_while_flying = null
-platform_search_depth = null
-revive_floor_clearance = null
-level6_boss_sequence_enabled = null
-level6_entrance_delay = null
-level6_entrance_shake_v37_seconds = null
-level6_entrance_shake_v37_strength = null
-level6_marker_hold_seconds = null
-level6_first_phase_hp_v37 = null
-level6_second_phase_hp_v37 = null
-level6_phase_hp_bonus_v48 = null
-level6_phase2_entrance_delay = null
-level6_buffed_guard_health = null
-level6_guard_spell_interval = null
-level6_dissolve_seconds = null
-level6_upper_trigger_radius = null
-level6_marker_raise_pixels = null
-level6_title_display_seconds = null
-level6_spear_height_above_player = null
-level6_boss_area_path = null
-level6_platforms_path = null
-level6_second_identifier_path = null
-level6_third_identifier_path = null
-level6_third_platforms_path = null
-level6_third_phase_sword_hits = null
-level6_phase3_laser_start_delay = null
-level6_climb_laser_gap = null
-level6_climb_laser_warning = null
-level6_final_animation_seconds = null
-level6_camera_zoom_factor = null
-level6_camera_upward_pixels = null
-level6_debug_skip_phase_one_with_1 = null
-level6_debug_skip_phase_two_with_2 = null
-level6_phase2_shake_seconds = null
-level6_phase2_shake_max_pixels = null
 
 [node name="2phaseidentifier" type="Area2D" parent="." unique_id=1271587328]
 position = Vector2(18618, 5815)
@@ -2073,3 +1947,17 @@ position = Vector2(18717, 4854)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="phase3startdetection" unique_id=610141139]
 position = Vector2(5, 46.5)
 shape = SubResource("RectangleShape2D_h11e8")
+
+[node name="AmbienciaLevel6" type="Node2D" parent="." unique_id=814744198]
+script = ExtResource("11_3eqwd")
+
+[node name="abismo_pressagios" type="Node2D" parent="." unique_id=573610523]
+script = ExtResource("12_xo623")
+mostrar_pensamentos = null
+atraso_primeiro_pensamento = null
+intervalo_pensamentos = null
+tempo_frase = null
+duracao_fade = null
+tamanho_fonte = null
+opacidade_fundo = null
+animar_detalhes = null

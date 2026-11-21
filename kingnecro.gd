@@ -1,3 +1,26 @@
+# KING NECRO V80: persistent Phase 3 world fog and optional five-artifact ending.
+# Preserves V79/V78 world fog renderer, V74 HUD canvas, all test keys, and combat.
+# KING NECRO V78: genuinely BLACK opaque-centered world fog and black motes.
+# Fixes the V77 too-faint charcoal texture/low-alpha multiplication;
+# preserves V76 world anchoring, V74 working HUD-canvas drawing, and all tests.
+# KING NECRO V77: true black-to-dark-grey fog and ash colors only.
+# All V76 world anchoring, visibility, test keys and boss mechanics preserved.
+# KING NECRO V76: restores V74's CONFIRMED visible HUD-canvas fog and ash,
+# but PROJECTS stable world-grid coordinates to screen pixels each frame.
+# Player passes through stationary world fog as camera scrolls; no world CanvasLayer.
+# V77 removes lavender/white from fog and particles; vignette remains screen-space.
+# Same boss combat, same test keys. B has a readable 42% black overlay.
+# KING NECRO V74: draw fog, ash, vignette and the test readout on the
+# existing visible player-HUD CanvasLayer (or a safe fallback layer 850).
+# Unlike V73, no atmospheric effect relies on the missing layer-1000 UI.
+# KING NECRO V73: atmospheric UI-canvas renderer: visible fog + hand-animated ash, existing darkness lab intact.
+# KING NECRO V72: SHOW fog and particles above proven darkness tests, using shader-free procedural fog and CPU particles
+# KING NECRO V71: V69 DARKNESS LAB + V70 VOID FOG/PARTICLES TESTS
+# KING NECRO V70: atmospheric Void darkness: reliable V69 key-4 render route,
+# drifting procedural fog, edge vignette, and screen-space GPU smoke / ash.
+# No test keys, debug panel, or changes to the boss's combat and phase logic.
+# KING NECRO V68: restore the ORIGINAL working V55 KingPhaseDarkness CanvasLayer/ColorRect mechanism.
+# Applies the same black overlay during phase 3 and finale; no F9/K, no extra black overlays.
 # KING NECRO V67 (Level 6): darkening on the proven boss-title CanvasLayer;
 # K toggles an independent darkness test (no debugger shortcuts).
 # KING NECRO V66 (Level 6): viewport-wide blackout CanvasLayer independent
@@ -490,8 +513,84 @@ var level6_blackout_layer: CanvasLayer = null
 var level6_blackout_rect: ColorRect = null
 var level6_blackout_log_timer: float = 0.0
 var level6_title_world_dim: ColorRect = null
-var level6_dark_test_k: bool = false
-var level6_dark_test_key_previous: bool = false
+# V70: atmospheric visuals are screen-space children of the proven layer-100
+# ColorRect canvas, and follow the viewport without touching the actual arena.
+var level6_void_fog_rect: ColorRect = null
+var level6_void_fog_material: ShaderMaterial = null
+var level6_void_vignette_rect: ColorRect = null
+var level6_void_vignette_material: ShaderMaterial = null
+var level6_void_smoke_particles: GPUParticles2D = null
+var level6_void_ash_particles: GPUParticles2D = null
+var level6_void_ambient_intensity: float = 0.0
+var level6_void_atmosphere_ready: bool = false
+# V72 atmosphere renders AFTER even the highest V71 darkness test (layer 800).
+# This fixes the fog/particles being obscured by testing ColorRects.
+var level6_void_visual_layer: CanvasLayer = null
+var level6_void_fog_banks: Array[Sprite2D] = []
+var level6_void_fog_places: Array[Vector2] = []
+var level6_void_cpu_smoke: CPUParticles2D = null
+var level6_void_cpu_ash: CPUParticles2D = null
+var level6_void_vignette_sprite: Sprite2D = null
+var level6_void_fog_time: float = 0.0
+var level6_void_viewport_size: Vector2 = Vector2.ZERO
+# V73: atmosphere lives INSIDE the already visible debug UI CanvasLayer.
+# No GPU/CPU emitter or Sprite2D renderer required for this visual diagnostic.
+var level6_fx_root_v73: Control = null
+var level6_fog_panels_v73: Array[TextureRect] = []
+var level6_fog_homes_v73: Array[Vector2] = []
+var level6_ash_motes_v73: Array[TextureRect] = []
+var level6_mote_velocities_v73: Array[Vector2] = []
+var level6_mote_opacities_v73: Array[float] = []
+var level6_vignette_v73: TextureRect = null
+var level6_particle_test_signal_v73: ColorRect = null
+
+
+var level6_dark_test_mode: int = 0
+var level6_dark_test_ui_layer: CanvasLayer = null
+var level6_dark_test_label: Label = null
+var level6_dark_test_test_layer: CanvasLayer = null
+var level6_dark_test_test_rect: ColorRect = null
+var level6_dark_test_layout_layer: CanvasLayer = null
+var level6_dark_test_layout_root: Control = null
+var level6_dark_test_layout_rect: ColorRect = null
+var level6_dark_test_high_layer: CanvasLayer = null
+var level6_dark_test_high_rect: ColorRect = null
+var level6_dark_test_title_rect: ColorRect = null
+var level6_dark_test_intro_reminder: bool = false
+# V71: atmospheric tests can be toggled separately or combined with any method.
+var level6_test_fog: bool = false
+var level6_test_particles: bool = false
+var level6_test_vignette: bool = false
+var level6_dark_test_backing_v74: ColorRect = null
+var level6_fx_parent_is_hud_v74: bool = false
+# V76: the visible HUD CanvasLayer is only a renderer; every atmospheric
+# position is derived from a fixed world cell, then projected by the camera.
+# This avoids the separate V75 CanvasLayer which did not draw in this project.
+var level6_preview_all_v76: bool = false
+# V79: automatic atmosphere is triggered by guard/final-boss HP, independently
+# of the screen blackout. These values ease toward their targets every frame.
+var level6_void_auto_fog_power_v79: float = 0.0
+var level6_void_auto_vignette_power_v79: float = 0.0
+var level6_void_guard_cue_logged_v79: bool = false
+var level6_void_final_cue_logged_v79: bool = false
+# Optional Inspector tuning without changing scripts. Keep black textures.
+@export_range(0.40, 0.90, 0.01) var level6_void_manual_fog_alpha_v79: float = 0.77
+@export_range(0.40, 0.85, 0.01) var level6_void_max_auto_fog_alpha_v79: float = 0.70
+@export_range(0.50, 2.00, 0.05) var level6_void_fog_motion_speed_v79: float = 1.0
+# V80: Phase-three fog has a nonzero floor. It thickens as the King loses HP.
+@export_range(0.25, 0.75, 0.01) var level6_phase3_fog_floor_v80: float = 0.55
+@export var level6_artifact_epilogue_enabled_v80: bool = true
+var level6_artifact_epilogue_started_v80: bool = false
+const LEVEL6_FOG_COLS_V76: int = 9
+const LEVEL6_FOG_ROWS_V76: int = 7
+const LEVEL6_FOG_SPACING_V76: Vector2 = Vector2(365.0, 205.0)
+const LEVEL6_ASH_COLS_V76: int = 13
+const LEVEL6_ASH_ROWS_V76: int = 9
+const LEVEL6_ASH_SPACING_V76: Vector2 = Vector2(150.0, 105.0)
+
+
+
+
 var level6_aura_sprite: Sprite2D = null
 var level6_aura_texture: Texture2D = null
 var level6_void_shader: ShaderMaterial = null
@@ -721,6 +820,7 @@ void fragment() {
 	sprite_tint = Color.WHITE
 	_level6_create_aura()
 	_level6_create_screen_darkness()
+	_level6_dark_test_setup()
 	if is_instance_valid(level6_aura_particles):
 		level6_aura_particles.emitting = false
 		level6_aura_particles.visible = false
@@ -896,48 +996,56 @@ func _level6_keep_hud_above_darkness() -> void:
 				level6_player_hud_layer = candidate
 				level6_player_hud_previous_layer = candidate.layer
 	if is_instance_valid(level6_player_hud_layer):
-		level6_player_hud_layer.layer = 540
+		level6_player_hud_layer.layer = 930
 	if is_instance_valid(king_hud):
-		king_hud.layer = 540
+		king_hud.layer = 930
 
 
 func _level6_create_screen_darkness() -> void:
-	# V67: the VOID / KING title already renders a full-black screen correctly.
-	# Reuse that proven canvas for the gameplay dimmer, rather than allocating
-	# another layer whose visibility has been unreliable.
-	_level6_create_title_overlay()
-	if is_instance_valid(level6_blackout_layer):
-		level6_blackout_layer.visible = false
-	if is_instance_valid(level6_world_darkness):
-		level6_world_darkness.color = level6_world_darkness_original
+	if is_instance_valid(level6_screen_layer) and is_instance_valid(level6_screen_shadow):
+		return
+	# V69 key 4 was confirmed working: root-level CanvasLayer 100 with a
+	# BLACK ColorRect controlled by COLOR.a. Do not revert to V55 modulate.a.
+	level6_screen_layer = CanvasLayer.new()
+	level6_screen_layer.name = "VoidKingDarknessBaseV72"
+	level6_screen_layer.layer = 100
+	level6_screen_layer.follow_viewport_enabled = false
+	# V71: match V69 method 4 exactly, which the user confirmed rendered.
+	# V70 used current_scene.add_child() instead of get_tree().root.
+	get_tree().root.add_child(level6_screen_layer)
+	level6_screen_shadow = ColorRect.new()
+	level6_screen_shadow.name = "AutomaticDarknessKey4V71"
+	level6_screen_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level6_screen_shadow.position = Vector2.ZERO
+	level6_screen_shadow.size = get_viewport_rect().size
+	level6_screen_shadow.color = Color(0.0, 0.0, 0.0, 0.0)
+	level6_screen_layer.add_child(level6_screen_shadow)
 	_level6_keep_hud_above_darkness()
-	print("VOID KING V67: title-canvas darkness ready, size=", get_viewport_rect().size)
+	_level6_create_void_atmosphere()
+	print("VOID KING V79: proven darkness + more mobile world-anchored fog initialized")
 
 
 func _level6_apply_world_darkness(alpha: float) -> void:
-	if not is_instance_valid(level6_title_world_dim):
-		_level6_create_title_overlay()
-	if not is_instance_valid(level6_title_world_dim):
+	if not is_instance_valid(level6_screen_shadow):
+		_level6_create_screen_darkness()
+	if not is_instance_valid(level6_screen_shadow):
 		return
-
-	# K toggles diagnostic darkness, not a Godot debugger shortcut.
-	var key_down: bool = Input.is_physical_key_pressed(KEY_K)
-	if key_down and not level6_dark_test_key_previous:
-		level6_dark_test_k = not level6_dark_test_k
-		print("VOID KING V67: K darkness test = ", level6_dark_test_k)
-	level6_dark_test_key_previous = key_down
-
-	var requested_alpha: float = 0.75 if level6_dark_test_k else clampf(alpha, 0.0, 1.0)
-	level6_title_world_dim.color = Color(0.0, 0.0, 0.0, requested_alpha)
-	level6_title_world_dim.visible = true
-	level6_title_world_dim.position = Vector2.ZERO
-	var viewport_size: Vector2 = get_viewport_rect().size
-	if not level6_title_world_dim.size.is_equal_approx(viewport_size):
-		level6_title_world_dim.size = viewport_size
-	# IMPORTANT: never hide this layer when the introductory words disappear.
-	level6_title_layer.visible = true
-	if is_instance_valid(level6_blackout_layer):
-		level6_blackout_layer.visible = false
+	# The opaque blackout remains reserved for the final victory. During
+	# combat, deliberate partial darkness leaves the fog and attacks visible.
+	var darkness: float = clampf(alpha, 0.0, 1.0)
+	var black_alpha: float = lerpf(darkness * 0.48, darkness, smoothstep(0.75, 1.0, darkness))
+	level6_screen_layer.visible = true
+	level6_screen_shadow.visible = true
+	if level6_dark_test_mode == 0:
+		# Automatic gameplay darkness on the same root-level system as key 4.
+		level6_screen_shadow.modulate.a = 1.0
+		level6_screen_shadow.color = Color(0.0, 0.0, 0.0, black_alpha)
+	elif level6_dark_test_mode != 3:
+		# Manual tests 4-8 must not stack with the regular background dimmer.
+		level6_screen_shadow.modulate.a = 1.0
+		level6_screen_shadow.color = Color(0.0, 0.0, 0.0, 0.0)
+	# Method 3 owns this ColorRect, so leave its color and modulation alone.
+	_level6_update_void_atmosphere(darkness)
 
 
 func _level6_guard_hp_ratio() -> float:
@@ -958,12 +1066,16 @@ func _level6_guard_hp_ratio() -> float:
 
 
 func _level6_update_screen_darkness(delta: float) -> void:
-	# V67 must validate the ACTIVE title-canvas dimmer, not the retired V66
-	# ColorRect. Otherwise the entire update returns before setting alpha.
-	if not is_instance_valid(level6_title_world_dim):
+	if not is_instance_valid(level6_screen_shadow):
 		_level6_create_screen_darkness()
-	if not is_instance_valid(level6_title_world_dim):
+	if not is_instance_valid(level6_screen_shadow):
 		return
+	# V70: reliable key-4 ColorRect color alpha + atmospheric layers.
+	level6_screen_layer.visible = true
+	level6_screen_shadow.visible = true
+	var viewport_size: Vector2 = get_viewport_rect().size
+	if not level6_screen_shadow.size.is_equal_approx(viewport_size):
+		level6_screen_shadow.size = viewport_size
 	var target_alpha: float = 0.0
 	if level6_stage == Level6Stage.PHASE_ONE:
 		if king_shield_phase == KingShieldPhase.SOLO:
@@ -1004,15 +1116,15 @@ func _level6_update_screen_darkness(delta: float) -> void:
 	var darkness_cap: float = 0.88 if level6_stage == Level6Stage.PHASE_THREE else (1.0 if level6_stage in [Level6Stage.THIRD_DEATH, Level6Stage.COMPLETE] else 0.75)
 	var output_alpha: float = clampf(level6_darkness_now, 0.0, darkness_cap)
 	_level6_apply_world_darkness(output_alpha)
+	# One status update every few seconds, not hundreds of warnings per frame.
 	if level6_stage in [Level6Stage.PHASE_THREE, Level6Stage.THIRD_DEATH, Level6Stage.COMPLETE]:
 		level6_blackout_log_timer += delta
-		if level6_blackout_log_timer >= 3.0:
+		if level6_blackout_log_timer >= 4.0:
 			level6_blackout_log_timer = 0.0
-			print("VOID KING V67: dark stage=", level6_stage,
-				" alpha=", level6_title_world_dim.color.a if is_instance_valid(level6_title_world_dim) else -1.0,
-				" visible=", level6_title_world_dim.visible if is_instance_valid(level6_title_world_dim) else false,
-				" rect=", level6_title_world_dim.size if is_instance_valid(level6_title_world_dim) else Vector2.ZERO,
-				" canvas=", level6_title_layer.layer if is_instance_valid(level6_title_layer) else -1)
+			print("VOID KING V71: dark stage=", level6_stage,
+				" base_alpha=", level6_screen_shadow.color.a,
+				" fog=", level6_void_ambient_intensity,
+				" visible=", level6_screen_shadow.is_visible_in_tree())
 
 
 func _level6_rebind_upper_nodes() -> void:
@@ -1110,18 +1222,6 @@ func _level6_create_title_overlay() -> void:
 	level6_title_black.color = Color.BLACK
 	level6_title_black.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	level6_title_layer.add_child(level6_title_black)
-	# Permanent gameplay darkness, separate from the opaque intro-title card.
-	# Both are drawn on this already proven screen-space layer.
-	level6_title_world_dim = ColorRect.new()
-	level6_title_world_dim.name = "GameplayDarknessV67"
-	level6_title_world_dim.color = Color(0.0, 0.0, 0.0, 0.0)
-	level6_title_world_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	level6_title_world_dim.position = Vector2.ZERO
-	level6_title_world_dim.size = get_viewport_rect().size
-	# It belongs BELOW the opaque title card; move it to index zero.
-	level6_title_layer.add_child(level6_title_world_dim)
-	level6_title_layer.move_child(level6_title_world_dim, 0)
-
 	# Dramatic, two-line boss title. No imported fonts or artwork needed.
 	level6_title_text = Label.new()
 	level6_title_text.name = "VoidTitleUpper"
@@ -1275,6 +1375,7 @@ func _level6_upper_height_reached() -> bool:
 func _process(delta: float) -> void:
 	if not level6_mode:
 		return
+	_level6_dark_test_tick()
 	if level6_stage not in [Level6Stage.CLIMB, Level6Stage.SECOND_TITLE, Level6Stage.SECOND_WAIT, Level6Stage.REVEAL]:
 		return
 	if level6_stage == Level6Stage.REVEAL and not level6_second_reveal:
@@ -2377,11 +2478,14 @@ func _level6_start_third_reveal() -> void:
 	_level6_clear_attacks()
 	level6_stage = Level6Stage.PHASE_THREE
 	level6_second_reveal = false
+	# Do not clear the fog between the final climb and the ten-hit duel.
+	level6_void_auto_fog_power_v79 = maxf(level6_void_auto_fog_power_v79,
+		level6_phase3_fog_floor_v80)
 	_level6_create_screen_darkness()
 	level6_darkness_now = maxf(level6_darkness_now, 0.49)
 	_level6_apply_world_darkness(level6_darkness_now)
-	print("VOID KING V67: final duel started; DARKNESS alpha=",
-		level6_title_world_dim.color.a if is_instance_valid(level6_title_world_dim) else -1.0,
+	print("VOID KING V71: final duel started; atmospheric darkness alpha=",
+		level6_screen_shadow.color.a if is_instance_valid(level6_screen_shadow) else -1.0,
 		" / current HP=", hp, "/", max_hp)
 	# Ten real sword hits: override obsolete 3-hit Inspector settings.
 	hp = 10
@@ -2551,7 +2655,7 @@ func _level6_complete_victory() -> void:
 	# On-screen placeholder that confirms the cinematic reached completion.
 	if not is_instance_valid(level6_third_completion_label):
 		var layer: CanvasLayer = CanvasLayer.new()
-		layer.layer = 545
+		layer.layer = 945
 		var layer_parent: Node = get_tree().current_scene
 		if not is_instance_valid(layer_parent):
 			layer_parent = get_tree().root
@@ -2566,6 +2670,179 @@ func _level6_complete_victory() -> void:
 		layer.add_child(label)
 		label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		level6_third_completion_label = label
+	# A self-contained optional conclusion; no separate scene or sprite needed.
+	if level6_artifact_epilogue_enabled_v80 and not level6_artifact_epilogue_started_v80:
+		level6_artifact_epilogue_started_v80 = true
+		_level6_play_artifact_epilogue_v80()
+
+
+func _level6_artifact_epilogue_label_v80(parent: Control, message: String,
+		y: float, size: int, tint: Color, width: float) -> Label:
+	var output: Label = Label.new()
+	output.text = message
+	output.name = "EpilogueText"
+	output.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	output.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	output.position = Vector2(0.0, y)
+	output.size = Vector2(width, float(size) + 36.0)
+	output.add_theme_font_size_override("font_size", size)
+	output.add_theme_color_override("font_color", tint)
+	output.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(output)
+	return output
+
+
+func _level6_play_artifact_epilogue_v80() -> void:
+	# This sequence is deliberately self-contained for a project due today.
+	# It uses the five collected relic names, procedural dunes, and labels.
+	# The old victory signal still fires so a separate ending scene can be
+	# installed later without changing anything else.
+	var scene_root: Node = get_tree().current_scene
+	if not is_instance_valid(scene_root):
+		scene_root = get_tree().root
+	var canvas: CanvasLayer = CanvasLayer.new()
+	canvas.name = "VoidKingFiveRelicsEpilogueV80"
+	canvas.layer = 955
+	scene_root.add_child(canvas)
+	var bounds: Vector2 = get_viewport_rect().size
+	var ui: Control = Control.new()
+	ui.name = "ArtifactEpilogueScreen"
+	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.size = bounds
+	canvas.add_child(ui)
+
+	var black: ColorRect = ColorRect.new()
+	black.color = Color(0.005, 0.005, 0.013, 1.0)
+	black.size = bounds
+	black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(black)
+	black.modulate.a = 0.0
+	var fade: Tween = create_tween()
+	fade.tween_property(black, "modulate:a", 1.0, 1.9)
+	await fade.finished
+	if not is_instance_valid(ui):
+		return
+	if is_instance_valid(level6_third_completion_label):
+		level6_third_completion_label.visible = false
+	if is_instance_valid(level6_dark_test_ui_layer):
+		level6_dark_test_ui_layer.visible = false
+
+	var intro: Label = _level6_artifact_epilogue_label_v80(ui,
+		"THE VOID KING HAS FALLEN", bounds.y * 0.21, 29,
+		Color(0.88, 0.88, 0.94), bounds.x)
+	await get_tree().create_timer(1.7).timeout
+	intro.text = "THE FIVE RELICS BEGIN TO ANSWER"
+	var names: Array[String] = ["SCARAB", "CHALICE", "ANKH", "MASK", "LAPIS LAZULI"]
+	var card_width: float = minf(164.0, maxf(90.0, (bounds.x - 72.0) / 5.0 - 10.0))
+	var card_gap: float = 10.0
+	var start_x: float = (bounds.x - (card_width * 5.0 + card_gap * 4.0)) * 0.5
+	var cards: Array[Panel] = []
+	for i: int in range(5):
+		var plaque: Panel = Panel.new()
+		plaque.name = "Relic_" + names[i].replace(" ", "_")
+		plaque.position = Vector2(start_x + float(i) * (card_width + card_gap), bounds.y * 0.45)
+		plaque.size = Vector2(card_width, 74.0)
+		plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var style: StyleBoxFlat = StyleBoxFlat.new()
+		style.bg_color = Color(0.055, 0.052, 0.071, 0.95)
+		style.border_color = Color(0.71, 0.56, 0.27, 0.92)
+		style.set_border_width_all(2)
+		style.set_corner_radius_all(7)
+		plaque.add_theme_stylebox_override("panel", style)
+		ui.add_child(plaque)
+		var name_label: Label = Label.new()
+		name_label.text = names[i]
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		name_label.size = plaque.size
+		name_label.add_theme_font_size_override("font_size", 15 if i == 4 else 17)
+		name_label.add_theme_color_override("font_color", Color(1.0, 0.83, 0.43))
+		plaque.add_child(name_label)
+		plaque.modulate.a = 0.0
+		cards.append(plaque)
+	for plaque: Panel in cards:
+		var rise: Tween = create_tween()
+		rise.tween_property(plaque, "modulate:a", 1.0, 0.42)
+		await rise.finished
+	await get_tree().create_timer(1.2).timeout
+	intro.text = "NOT TROPHIES. THE KEYS TO THE SURFACE."
+	await get_tree().create_timer(2.2).timeout
+	intro.text = "THE ABYSS FINALLY OPENS ITS GATE."
+
+	# An ancient golden flare dissolves the abyss into a desert sunrise.
+	var flare: ColorRect = ColorRect.new()
+	flare.name = "AncientSealLight"
+	flare.color = Color(1.0, 0.87, 0.61)
+	flare.size = bounds
+	flare.modulate.a = 0.0
+	flare.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(flare)
+	var flash: Tween = create_tween()
+	flash.tween_property(flare, "modulate:a", 1.0, 1.3)
+	await flash.finished
+	if not is_instance_valid(ui):
+		return
+	intro.visible = false
+	for plaque: Panel in cards:
+		plaque.visible = false
+
+	var sky: GradientTexture2D = GradientTexture2D.new()
+	var sunrise: Gradient = Gradient.new()
+	sunrise.set_color(0, Color(0.20, 0.19, 0.34))
+	sunrise.set_color(1, Color(0.95, 0.56, 0.29))
+	sky.gradient = sunrise
+	sky.fill_from = Vector2(0.5, 0.0)
+	sky.fill_to = Vector2(0.5, 1.0)
+	var backdrop: TextureRect = TextureRect.new()
+	backdrop.texture = sky
+	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	backdrop.stretch_mode = TextureRect.STRETCH_SCALE
+	backdrop.size = bounds
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(backdrop)
+	ui.move_child(backdrop, 0)
+	black.visible = false
+	var sun: Polygon2D = Polygon2D.new()
+	sun.name = "NewSun"
+	var sun_points: PackedVector2Array = PackedVector2Array()
+	var sun_center: Vector2 = Vector2(bounds.x * 0.74, bounds.y * 0.38)
+	for point_index: int in range(41):
+		var angle: float = TAU * float(point_index) / 40.0
+		sun_points.append(sun_center + Vector2(cos(angle), sin(angle)) * bounds.y * 0.087)
+	sun.polygon = sun_points
+	sun.color = Color(1.0, 0.85, 0.52, 0.95)
+	ui.add_child(sun)
+	var dunes_back: Polygon2D = Polygon2D.new()
+	dunes_back.name = "DistantDunes"
+	dunes_back.color = Color(0.48, 0.30, 0.29, 1.0)
+	dunes_back.polygon = PackedVector2Array([
+		Vector2(0.0, bounds.y * 0.79), Vector2(bounds.x * 0.24, bounds.y * 0.66),
+		Vector2(bounds.x * 0.51, bounds.y * 0.83), Vector2(bounds.x * 0.81, bounds.y * 0.68),
+		Vector2(bounds.x, bounds.y * 0.80), Vector2(bounds.x, bounds.y),
+		Vector2(0.0, bounds.y)])
+	ui.add_child(dunes_back)
+	var dunes_front: Polygon2D = Polygon2D.new()
+	dunes_front.name = "NearDunes"
+	dunes_front.color = Color(0.23, 0.17, 0.25, 1.0)
+	dunes_front.polygon = PackedVector2Array([
+		Vector2(0.0, bounds.y * 0.91), Vector2(bounds.x * 0.36, bounds.y * 0.78),
+		Vector2(bounds.x * 0.66, bounds.y * 0.92), Vector2(bounds.x, bounds.y * 0.80),
+		Vector2(bounds.x, bounds.y), Vector2(0.0, bounds.y)])
+	ui.add_child(dunes_front)
+	ui.move_child(flare, ui.get_child_count() - 1)
+	var clear_light: Tween = create_tween()
+	clear_light.tween_property(flare, "modulate:a", 0.0, 2.0)
+	await clear_light.finished
+	if not is_instance_valid(ui):
+		return
+	_level6_artifact_epilogue_label_v80(ui, "THE DESERT CHALLENGE",
+		bounds.y * 0.22, 43, Color(1.0, 0.96, 0.83), bounds.x)
+	_level6_artifact_epilogue_label_v80(ui, "THE END",
+		bounds.y * 0.39, 29, Color(1.0, 0.89, 0.63), bounds.x)
+	_level6_artifact_epilogue_label_v80(ui,
+		"The five relics have opened the way home.", bounds.y * 0.56,
+		18, Color(0.99, 0.92, 0.81), bounds.x)
+	print("VOID KING V80: five-artifact ending complete")
 
 
 func _level6_update_attack_patterns(delta: float) -> void:
@@ -3325,7 +3602,7 @@ func _create_king_boss_hud() -> void:
 		return
 	king_hud = CanvasLayer.new()
 	king_hud.name = "VoidKingBossHUD" if level6_mode else "GraveMonarchBossHUD"
-	king_hud.layer = 540 if level6_mode else 110
+	king_hud.layer = 930 if level6_mode else 110
 	# Keep HUD under the current scene, not the SceneTree root. This avoids
 	# stale canvases surviving a reload and only appearing after dying once.
 	var hud_parent: Node = get_tree().current_scene
@@ -6228,8 +6505,8 @@ func tomar_dano(amount: int, _origin: Vector2 = Vector2.ZERO) -> void:
 
 
 func _exit_tree() -> void:
-	# CanvasLayer is attached to SceneTree.root, not the scene root.
-	# Dispose it explicitly on death/level reload to prevent a stuck black screen.
+	# Title screen is attached to SceneTree.root. The atmosphere belongs to
+	# current_scene, so it is also cleaned up when Level 6 unloads.
 	if is_instance_valid(level6_title_layer):
 		level6_title_layer.queue_free()
 	if level6_mode:
@@ -6238,6 +6515,25 @@ func _exit_tree() -> void:
 			level6_blackout_layer.queue_free()
 		if is_instance_valid(level6_screen_layer):
 			level6_screen_layer.queue_free()
+		if is_instance_valid(level6_void_visual_layer):
+			level6_void_visual_layer.queue_free()
+		# V73: the six-method visual lab also creates ROOT CanvasLayers.
+		# Free ALL of them when changing/reloading Level6. Previous versions
+		# leaked these nodes, potentially leaving an old blackout over new FX.
+		if is_instance_valid(level6_dark_test_test_layer):
+			level6_dark_test_test_layer.queue_free()
+		if is_instance_valid(level6_dark_test_layout_layer):
+			level6_dark_test_layout_layer.queue_free()
+		if is_instance_valid(level6_dark_test_high_layer):
+			level6_dark_test_high_layer.queue_free()
+		if is_instance_valid(level6_fx_root_v73):
+			level6_fx_root_v73.queue_free()
+		if is_instance_valid(level6_dark_test_label):
+			level6_dark_test_label.queue_free()
+		if is_instance_valid(level6_dark_test_backing_v74):
+			level6_dark_test_backing_v74.queue_free()
+		if is_instance_valid(level6_dark_test_ui_layer):
+			level6_dark_test_ui_layer.queue_free()
 		if is_instance_valid(level6_world_darkness):
 			if level6_world_darkness_owned:
 				level6_world_darkness.queue_free()
@@ -6410,3 +6706,659 @@ func _draw() -> void:
 	# No 24/7 circular warning in the neutral GUARDED state.
 	if (state == State.GUARDED or state == State.OPENING) and shots_left > 0:
 		draw_arc(body_shape.position, 13.0, 0.0, TAU, 24, Color(1.0, 0.23, 0.30, 0.85), 2.0)
+
+
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
+# V70: VOID ATMOSPHERE. Visuals only; all boss combat remains untouched.
+# This CanvasLayer (100) uses the exact ColorRect color-alpha rendering route
+# that worked with key 4 in V69. No manually placed particle node is required.
+# -----------------------------------------------------------------------------
+func _level6_void_make_particle_texture(pixel_size: int, core_color: Color) -> Texture2D:
+	var image: Image = Image.create(pixel_size, pixel_size, false, Image.FORMAT_RGBA8)
+	var center: Vector2 = Vector2(float(pixel_size - 1), float(pixel_size - 1)) * 0.5
+	var radius: float = float(pixel_size) * 0.5
+	for y: int in range(pixel_size):
+		for x: int in range(pixel_size):
+			var d: float = Vector2(float(x), float(y)).distance_to(center) / radius
+			var opacity: float = pow(1.0 - smoothstep(0.0, 1.0, d), 2.0)
+			image.set_pixel(x, y, Color(core_color.r, core_color.g, core_color.b, core_color.a * opacity))
+	return ImageTexture.create_from_image(image)
+
+
+func _level6_void_make_fog_texture() -> Texture2D:
+	# One low-resolution, translucent, organic cloud image, generated ONCE.
+	# No shader compilation and no manually imported textures required.
+	var width: int = 256
+	var height: int = 128
+	var image_data: Image = Image.create(width, height, false, Image.FORMAT_RGBA8)
+	var noise: FastNoiseLite = FastNoiseLite.new()
+	noise.seed = 72011
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = 0.023
+	noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+	noise.fractal_octaves = 3
+	for y: int in range(height):
+		var fy: float = (float(y) + 0.5) / float(height)
+		var vert_mask: float = 1.0 - smoothstep(0.17, 0.50, absf(fy - 0.50))
+		for x: int in range(width):
+			var fx: float = (float(x) + 0.5) / float(width)
+			var side_mask: float = smoothstep(0.0, 0.15, fx) * (1.0 - smoothstep(0.85, 1.0, fx))
+			var n: float = noise.get_noise_2d(float(x), float(y))
+			# Dense black cores with irregular, feathered edges. Color is
+			# LITERALLY (0,0,0); shape comes only from alpha/noise, not grey RGB.
+			var density: float = smoothstep(-0.33, 0.24, n)
+			var streak: float = 0.13 + 0.87 * pow(density, 0.72)
+			var ribbons: float = 0.86 + 0.14 * sin(fy * 30.0 + n * 2.9 + fx * 6.0)
+			var alpha: float = clampf(vert_mask * side_mask * streak * ribbons * 1.28, 0.0, 1.0)
+			image_data.set_pixel(x, y, Color(0.0, 0.0, 0.0, alpha))
+	return ImageTexture.create_from_image(image_data)
+
+
+func _level6_void_make_vignette_texture() -> Texture2D:
+	var width: int = 256
+	var height: int = 144
+	var image_data: Image = Image.create(width, height, false, Image.FORMAT_RGBA8)
+	for y: int in range(height):
+		for x: int in range(width):
+			var nx: float = (float(x) + 0.5) / float(width) * 2.0 - 1.0
+			var ny: float = (float(y) + 0.5) / float(height) * 2.0 - 1.0
+			var dist: float = Vector2(nx * 0.90, ny * 1.04).length()
+			var edges: float = smoothstep(0.44, 1.06, dist)
+			var bottom: float = smoothstep(0.36, 1.0, (ny + 1.0) * 0.5) * 0.09
+			var opacity: float = clampf(edges * 0.83 + bottom, 0.0, 0.85)
+			image_data.set_pixel(x, y, Color(0.012, 0.009, 0.04, opacity))
+	return ImageTexture.create_from_image(image_data)
+
+
+func _level6_void_fx_panel(texture: Texture2D, label: String) -> TextureRect:
+	var rect: TextureRect = TextureRect.new()
+	rect.name = label
+	rect.texture = texture
+	rect.stretch_mode = TextureRect.STRETCH_SCALE
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.visible = false
+	level6_fx_root_v73.add_child(rect)
+	return rect
+
+
+func _level6_void_world_seed_v76(cx: int, cy: int, salt: float) -> float:
+	# Pure deterministic cell seed, independent of player/camera coordinates.
+	return fposmod(sin(float(cx) * 127.1 + float(cy) * 311.7 + salt) * 43758.5453, 1.0)
+
+
+func _level6_create_void_atmosphere() -> void:
+	if is_instance_valid(level6_fx_root_v73):
+		return
+	if not is_instance_valid(level6_dark_test_ui_layer):
+		_level6_dark_test_setup()
+	if not is_instance_valid(level6_dark_test_ui_layer):
+		return
+
+	# CRITICAL: same parent/CanvasLayer and TextureRect technology as V74.
+	# The screenshot proved this parent really draws fog, ash and status text.
+	_level6_keep_hud_above_darkness()
+	var fx_host: Node = level6_player_hud_layer if is_instance_valid(level6_player_hud_layer) else level6_dark_test_ui_layer
+	level6_fx_root_v73 = Control.new()
+	level6_fx_root_v73.name = "VoidWorldGridProjectedOnVisibleHUD_V76"
+	level6_fx_root_v73.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level6_fx_root_v73.position = Vector2.ZERO
+	level6_fx_root_v73.size = get_viewport_rect().size
+	level6_fx_root_v73.clip_contents = false
+	fx_host.add_child(level6_fx_root_v73)
+	fx_host.move_child(level6_fx_root_v73, 0)
+	level6_fx_parent_is_hud_v74 = is_instance_valid(level6_player_hud_layer)
+
+	# Fog is regenerated only once. All fog banks share ONE texture.
+	var fog_texture: Texture2D = _level6_void_make_fog_texture()
+	level6_fog_panels_v73.clear()
+	for i: int in range(LEVEL6_FOG_COLS_V76 * LEVEL6_FOG_ROWS_V76):
+		var bank: TextureRect = _level6_void_fx_panel(fog_texture, "WorldMist_" + str(i))
+		bank.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		level6_fog_panels_v73.append(bank)
+
+	# Vignette is the one visual that SHOULD stay attached to the screen.
+	level6_vignette_v73 = _level6_void_fx_panel(_level6_void_make_vignette_texture(), "VoidEdgeVignetteV76")
+
+	# Both textures are pure black. Their transparency supplies soft edges.
+	var dot_texture: Texture2D = _level6_void_make_particle_texture(20, Color(0.0, 0.0, 0.0, 1.0))
+	var smoke_texture: Texture2D = _level6_void_make_particle_texture(36, Color(0.0, 0.0, 0.0, 1.0))
+	level6_ash_motes_v73.clear()
+	level6_mote_velocities_v73.clear()
+	level6_mote_opacities_v73.clear()
+	for i: int in range(LEVEL6_ASH_COLS_V76 * LEVEL6_ASH_ROWS_V76):
+		var smoke: bool = i % 7 == 0
+		var mote: TextureRect = _level6_void_fx_panel(smoke_texture if smoke else dot_texture,
+			"WorldSmoke_" + str(i) if smoke else "WorldAsh_" + str(i))
+		mote.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		level6_ash_motes_v73.append(mote)
+		level6_mote_opacities_v73.append(0.26 if smoke else 0.52)
+		level6_mote_velocities_v73.append(Vector2.ZERO)
+
+	level6_void_viewport_size = get_viewport_rect().size
+	level6_void_atmosphere_ready = true
+	print("VOID KING V79: TRUE BLACK WORLD FOG READY; host=", fx_host.get_path(),
+		" fog=", level6_fog_panels_v73.size(), " ash=", level6_ash_motes_v73.size(),
+		" camera=", get_viewport().get_camera_2d())
+
+
+func _level6_update_void_atmosphere(_darkness: float) -> void:
+	if not is_instance_valid(level6_fx_root_v73):
+		_level6_create_void_atmosphere()
+	if not is_instance_valid(level6_fx_root_v73):
+		return
+
+	var screen: Vector2 = get_viewport_rect().size
+	if not level6_void_viewport_size.is_equal_approx(screen):
+		level6_void_viewport_size = screen
+		level6_fx_root_v73.size = screen
+
+	# V79: The visual strength is no longer derived from the black overlay's
+	# opacity. That made fog appear at the wrong times and look too heavy.
+	# The skeleton's HP and the King's LAST TEN hits now drive the two climaxes.
+	var fog_target: float = 0.0
+	var vignette_target: float = 0.0
+	if level6_stage == Level6Stage.PHASE_ONE:
+		if king_shield_phase == KingShieldPhase.SOLO:
+			var first_danger: float = 1.0 - float(hp) / maxf(1.0, float(max_hp))
+			vignette_target = 0.13 + 0.17 * clampf(first_danger, 0.0, 1.0)
+		elif king_shield_phase == KingShieldPhase.SHIELDED:
+			var guard_danger: float = 1.0 - _level6_guard_hp_ratio()
+			# Fog begins below ~60% guard HP and peaks near the final 10%.
+			fog_target = smoothstep(0.40, 0.90, guard_danger)
+			vignette_target = 0.26 + fog_target * 0.58
+			if fog_target >= 0.45 and not level6_void_guard_cue_logged_v79:
+				level6_void_guard_cue_logged_v79 = true
+				print("VOID KING V79: dying skeleton activated BLACK FOG + VIGNETTE")
+		else:
+			# The guard just died; let the ominous effect linger until phase 2.
+			fog_target = 0.65
+			vignette_target = 0.79
+	elif level6_stage == Level6Stage.PHASE_TWO:
+		var second_danger: float = 1.0 - float(hp) / maxf(1.0, float(max_hp))
+		vignette_target = 0.23 + 0.22 * clampf(second_danger, 0.0, 1.0)
+	elif level6_stage == Level6Stage.DISSOLVE_ONE:
+		fog_target = 0.30
+		vignette_target = 0.54
+	elif level6_stage == Level6Stage.DISSOLVE_TWO:
+		# Begin the final fog transition before the climb, rather than reset it.
+		fog_target = 0.27
+		vignette_target = 0.40
+	elif level6_stage == Level6Stage.PHASE_THREE_PENDING:
+		fog_target = 0.34
+		vignette_target = 0.42
+	elif level6_stage == Level6Stage.PHASE_THREE_CLIMB:
+		# The Abyss is already breathing around the player during the climb.
+		fog_target = 0.42
+		vignette_target = 0.44
+	elif level6_stage == Level6Stage.THIRD_REVEAL:
+		fog_target = level6_phase3_fog_floor_v80
+		vignette_target = 0.52
+	elif level6_stage == Level6Stage.PHASE_THREE:
+		var final_danger: float = clampf(1.0 - float(hp) / maxf(1.0, float(max_hp)), 0.0, 1.0)
+		# ALWAYS PRESENT at full HP. Each hit raises density continuously,
+		# with a stronger final-three-hit crescendo. Never drop to zero.
+		fog_target = lerpf(level6_phase3_fog_floor_v80, 1.0,
+			pow(final_danger, 1.15))
+		vignette_target = 0.46 + 0.48 * smoothstep(0.0, 1.0, final_danger)
+		if hp <= 3 and not level6_void_final_cue_logged_v79:
+			level6_void_final_cue_logged_v79 = true
+			print("VOID KING V80: final-three-hit fog and vignette crescendo")
+	elif level6_stage == Level6Stage.THIRD_DEATH:
+		var death_progress: float = level6_third_fx_timer / maxf(0.1,
+			level6_final_animation_seconds)
+		var death_fade: float = 1.0 - smoothstep(0.65, 1.0, death_progress)
+		fog_target = 0.90 * death_fade
+		vignette_target = 0.94 * death_fade
+
+	# Fast enough to show up between hits; slower decay is intentional so the
+	# fog doesn't blink out when the skeleton dies or a phase transitions.
+	var dt: float = maxf(0.0, get_physics_process_delta_time())
+	var fog_rate: float = 0.86 if fog_target > level6_void_auto_fog_power_v79 else 0.42
+	var vignette_rate: float = 1.15 if vignette_target > level6_void_auto_vignette_power_v79 else 0.65
+	level6_void_auto_fog_power_v79 = move_toward(level6_void_auto_fog_power_v79,
+		fog_target, dt * fog_rate)
+	level6_void_auto_vignette_power_v79 = move_toward(level6_void_auto_vignette_power_v79,
+		vignette_target, dt * vignette_rate)
+	var power: float = level6_void_auto_fog_power_v79
+	level6_void_ambient_intensity = power
+	level6_void_fog_time += dt * level6_void_fog_motion_speed_v79
+	var pulse: float = 1.0
+	if level6_stage == Level6Stage.PHASE_THREE and hp <= 3:
+		pulse = 0.96 + 0.04 * sin(level6_void_fog_time * 1.35)
+
+	# V76/V78 PROVEN RENDERER: fixed WORLD coordinates are transformed into
+	# the visible HUD canvas. Fog scrolls past the player, never follows them.
+	var world_to_screen: Transform2D = get_viewport().get_canvas_transform()
+	var screen_to_world: Transform2D = world_to_screen.affine_inverse()
+	var world_center: Vector2 = screen_to_world * (screen * 0.5)
+	var zoom_x: float = maxf(0.15, world_to_screen.x.length())
+	var zoom_y: float = maxf(0.15, world_to_screen.y.length())
+
+	var show_fog: bool = level6_test_fog or power > 0.025
+	# True-black texture retained. Lower opacity than V78 but keep dense cores.
+	var fog_alpha: float = (level6_void_manual_fog_alpha_v79 if level6_test_fog
+		else lerpf(0.23, level6_void_max_auto_fog_alpha_v79, power)) * pulse
+	var grid_x: int = floori(world_center.x / LEVEL6_FOG_SPACING_V76.x)
+	var grid_y: int = floori(world_center.y / LEVEL6_FOG_SPACING_V76.y)
+	for i: int in range(level6_fog_panels_v73.size()):
+		var bank: TextureRect = level6_fog_panels_v73[i]
+		var cx: int = grid_x + i % LEVEL6_FOG_COLS_V76 - 4
+		var cy: int = grid_y + floori(float(i) / float(LEVEL6_FOG_COLS_V76)) - 3
+		var seeded: float = _level6_void_world_seed_v76(cx, cy, 17.0)
+		bank.visible = show_fog and seeded > 0.23
+		if not bank.visible:
+			continue
+		var jitter: Vector2 = Vector2(
+			(_level6_void_world_seed_v76(cx, cy, 31.0) - 0.5) * 190.0,
+			(_level6_void_world_seed_v76(cx, cy, 67.0) - 0.5) * 95.0)
+		# V78 only drifted ~2px/sec. This is roughly 10x faster but still
+		# smooth, with different currents for each cloud bank.
+		var drift: Vector2 = Vector2(
+			sin(level6_void_fog_time * (0.39 + 0.11 * seeded) + seeded * TAU) * 68.0
+				+ sin(level6_void_fog_time * 0.17 + seeded * 4.3) * 27.0,
+			cos(level6_void_fog_time * (0.25 + 0.08 * seeded) + seeded * TAU) * 24.0
+				+ sin(level6_void_fog_time * 0.31 + seeded * 2.0) * 11.0)
+		var world_position: Vector2 = Vector2(float(cx) * LEVEL6_FOG_SPACING_V76.x,
+			float(cy) * LEVEL6_FOG_SPACING_V76.y) + jitter + drift
+		var pixel_center: Vector2 = world_to_screen * world_position
+		var world_width: float = 480.0 + seeded * 90.0
+		var world_height: float = 175.0 + seeded * 45.0
+		var breathing: float = 1.0 + 0.045 * sin(level6_void_fog_time * 0.43 + seeded * TAU)
+		bank.size = Vector2(world_width * zoom_x, world_height * zoom_y) * breathing
+		bank.position = pixel_center - bank.size * 0.5
+		bank.modulate = Color(1.0, 1.0, 1.0,
+			fog_alpha * (0.84 + 0.16 * seeded))
+
+	# Black ash/smoke rises through world-space cells, with periodic respawns.
+	var show_ash: bool = level6_test_particles or power > 0.055
+	var ash_alpha: float = 0.78 if level6_test_particles else lerpf(0.23, 0.64, power)
+	var ash_x: int = floori(world_center.x / LEVEL6_ASH_SPACING_V76.x)
+	var ash_y: int = floori(world_center.y / LEVEL6_ASH_SPACING_V76.y)
+	for i: int in range(level6_ash_motes_v73.size()):
+		var mote: TextureRect = level6_ash_motes_v73[i]
+		var cx: int = ash_x + i % LEVEL6_ASH_COLS_V76 - 6
+		var cy: int = ash_y + floori(float(i) / float(LEVEL6_ASH_COLS_V76)) - 4
+		var seeded: float = _level6_void_world_seed_v76(cx, cy, 109.0)
+		mote.visible = show_ash and seeded > 0.24
+		if not mote.visible:
+			continue
+		var smoke: bool = i % 7 == 0
+		var jitter: Vector2 = Vector2(
+			(_level6_void_world_seed_v76(cx, cy, 119.0) - 0.5) * 115.0,
+			(_level6_void_world_seed_v76(cx, cy, 127.0) - 0.5) * 75.0)
+		var float_motion: Vector2 = Vector2(
+			sin(level6_void_fog_time * (0.48 + 0.14 * seeded) + seeded * TAU) * 18.0,
+			48.0 - fposmod(level6_void_fog_time * (11.0 + 10.0 * seeded)
+				+ seeded * 85.0, 96.0))
+		var world_position: Vector2 = Vector2(float(cx) * LEVEL6_ASH_SPACING_V76.x,
+			float(cy) * LEVEL6_ASH_SPACING_V76.y) + jitter + float_motion
+		var pixel_center: Vector2 = world_to_screen * world_position
+		var diameter: float = (12.0 + seeded * 8.0) if smoke else (3.5 + seeded * 3.3)
+		mote.size = Vector2(diameter * zoom_x, diameter * zoom_y)
+		mote.position = pixel_center - mote.size * 0.5
+		mote.modulate = Color(1.0, 1.0, 1.0,
+			ash_alpha * (0.55 if smoke else 0.95) * (0.83 + 0.17 * seeded))
+
+	# Unlike world fog, the vignette follows the view so the center remains
+	# readable. Present in BOTH boss phases, strongest near the two climaxes.
+	if is_instance_valid(level6_vignette_v73):
+		level6_vignette_v73.position = Vector2.ZERO
+		level6_vignette_v73.size = screen
+		level6_vignette_v73.visible = (level6_test_vignette
+			or level6_void_auto_vignette_power_v79 > 0.025)
+		level6_vignette_v73.modulate.a = (0.63 if level6_test_vignette
+			else clampf(level6_void_auto_vignette_power_v79 * 0.77, 0.0, 0.73))
+
+	if is_instance_valid(level6_particle_test_signal_v73):
+		level6_particle_test_signal_v73.visible = false
+
+# V71: keep tested original darkness methods separate from V70 atmosphere.
+# V71 / DARKNESS METHOD AND ATMOSPHERE LAB
+# The modes are deliberately separate implementations, not aliases for the
+# same draw function. They use the previous versions' actual rendering styles.
+# -----------------------------------------------------------------------------
+func _input(event: InputEvent) -> void:
+	if not level6_mode or not (event is InputEventKey):
+		return
+	var key_event: InputEventKey = event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	var keycode: int = key_event.physical_keycode
+	match keycode:
+		KEY_0:
+			# Exit all manual tests; restore automatic V70 atmosphere.
+			level6_test_fog = false
+			level6_test_particles = false
+			level6_test_vignette = false
+			level6_preview_all_v76 = false
+			_level6_dark_test_select(0)
+			_level6_update_void_atmosphere(level6_darkness_now)
+			return
+		KEY_9:
+			level6_test_fog = not level6_test_fog
+			_level6_update_void_atmosphere(level6_darkness_now)
+			print("VOID KING V79: FOG toggle = ", level6_test_fog)
+			_level6_dark_test_label_update()
+			return
+		KEY_P:
+			level6_test_particles = not level6_test_particles
+			_level6_update_void_atmosphere(level6_darkness_now)
+			print("VOID KING V79: UI MOTES toggle = ", level6_test_particles)
+			_level6_dark_test_label_update()
+			return
+		KEY_V:
+			level6_test_vignette = not level6_test_vignette
+			_level6_update_void_atmosphere(level6_darkness_now)
+			print("VOID KING V79: VIGNETTE toggle = ", level6_test_vignette)
+			_level6_dark_test_label_update()
+			return
+		KEY_B:
+			var all_enabled: bool = level6_test_fog and level6_test_particles and level6_test_vignette and level6_dark_test_mode == 4
+			if all_enabled and level6_preview_all_v76:
+				level6_preview_all_v76 = false
+				level6_test_fog = false
+				level6_test_particles = false
+				level6_test_vignette = false
+				_level6_dark_test_select(0)
+			else:
+				level6_test_fog = true
+				level6_test_particles = true
+				level6_test_vignette = true
+				level6_preview_all_v76 = true
+				_level6_dark_test_select(4)
+			_level6_update_void_atmosphere(level6_darkness_now)
+			print("VOID KING V79: full atmosphere preview = ", not all_enabled)
+			return
+	var next_mode: int = -1
+	match keycode:
+		KEY_3:
+			next_mode = 3
+		KEY_4:
+			next_mode = 4
+		KEY_5:
+			next_mode = 5
+		KEY_6:
+			next_mode = 6
+		KEY_7:
+			next_mode = 7
+		KEY_8:
+			next_mode = 8
+	if next_mode < 0:
+		return
+	level6_preview_all_v76 = false
+	if next_mode == level6_dark_test_mode:
+		next_mode = 0
+	_level6_dark_test_select(next_mode)
+
+func _level6_dark_test_setup() -> void:
+	set_process_input(true)
+	set_process(true)
+	if is_instance_valid(level6_dark_test_ui_layer):
+		return
+	_level6_keep_hud_above_darkness()
+	# The fallback is intentionally lower than the existing HUD layer 930.
+	level6_dark_test_ui_layer = CanvasLayer.new()
+	level6_dark_test_ui_layer.name = "V76_ATMOSPHERE_LAB_FALLBACK"
+	level6_dark_test_ui_layer.layer = 850
+	level6_dark_test_ui_layer.follow_viewport_enabled = false
+	get_tree().root.add_child(level6_dark_test_ui_layer)
+	var visible_ui_parent: Node = level6_player_hud_layer if is_instance_valid(level6_player_hud_layer) else level6_dark_test_ui_layer
+
+	level6_dark_test_backing_v74 = ColorRect.new()
+	level6_dark_test_backing_v74.name = "V76_StatusBacking"
+	level6_dark_test_backing_v74.color = Color(0.035, 0.035, 0.070, 0.81)
+	level6_dark_test_backing_v74.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level6_dark_test_backing_v74.position = Vector2(400.0, 8.0)
+	level6_dark_test_backing_v74.size = Vector2(742.0, 112.0)
+	visible_ui_parent.add_child(level6_dark_test_backing_v74)
+
+	level6_dark_test_label = Label.new()
+	level6_dark_test_label.name = "V76_DarknessFogParticleReadout"
+	level6_dark_test_label.position = Vector2(411.0, 14.0)
+	level6_dark_test_label.size = Vector2(722.0, 104.0)
+	level6_dark_test_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level6_dark_test_label.add_theme_color_override("font_color", Color(0.93, 0.91, 1.0, 1.0))
+	level6_dark_test_label.add_theme_font_size_override("font_size", 13)
+	visible_ui_parent.add_child(level6_dark_test_label)
+	_level6_dark_test_label_update()
+	print("VOID KING V79 LOADED: 3-8=darkness; 9=FOG; P=particles; V=vignette; B=all; 0=reset")
+	print("VOID KING V79: LAB UI host=", visible_ui_parent.get_path(), " boss script=", get_script().resource_path)
+
+
+func _level6_dark_test_select(next_mode: int) -> void:
+	if not is_instance_valid(level6_dark_test_ui_layer):
+		_level6_dark_test_setup()
+	_level6_dark_test_clear_all()
+	level6_dark_test_mode = next_mode
+	_level6_dark_test_tick()
+	var label: String = _level6_dark_test_mode_name()
+	var drawn_rect: ColorRect = _level6_dark_test_active_rect()
+	var in_tree: bool = is_instance_valid(drawn_rect) and drawn_rect.is_visible_in_tree()
+	print("VOID KING V71: darkness key selected = ", next_mode, " | method = ", label,
+		" | node_visible_in_tree = ", in_tree,
+		" | canvas = ", _level6_dark_test_canvas_number(),
+		" | viewport = ", get_viewport_rect().size)
+
+
+func _level6_dark_test_mode_name() -> String:
+	match level6_dark_test_mode:
+		3:
+			return "V55 original: black ColorRect + modulate.a, layer 30"
+		4:
+			return "V62: black ColorRect + color.a, layer 100"
+		5:
+			return "V64: Control/full-rect + color.a, layer 160"
+		6:
+			return "V65: CanvasModulate darkens the world canvas"
+		7:
+			return "V66: root-level black screen, layer 800"
+		8:
+			return "V67: black rectangle on boss title canvas, layer 520"
+		_:
+			return "OFF / normal automatic boss-phase darkness"
+
+
+func _level6_dark_test_canvas_number() -> int:
+	match level6_dark_test_mode:
+		3:
+			return level6_screen_layer.layer if is_instance_valid(level6_screen_layer) else -1
+		4:
+			return level6_dark_test_test_layer.layer if is_instance_valid(level6_dark_test_test_layer) else -1
+		5:
+			return level6_dark_test_layout_layer.layer if is_instance_valid(level6_dark_test_layout_layer) else -1
+		7:
+			return level6_dark_test_high_layer.layer if is_instance_valid(level6_dark_test_high_layer) else -1
+		8:
+			return level6_title_layer.layer if is_instance_valid(level6_title_layer) else -1
+		_:
+			return -1
+
+
+func _level6_dark_test_active_rect() -> ColorRect:
+	match level6_dark_test_mode:
+		3:
+			return level6_screen_shadow
+		4:
+			return level6_dark_test_test_rect
+		5:
+			return level6_dark_test_layout_rect
+		7:
+			return level6_dark_test_high_rect
+		8:
+			return level6_dark_test_title_rect
+		_:
+			return null
+
+
+func _level6_dark_test_clear_all() -> void:
+	# Reset V70's automatic root overlay; never leave modulation at zero.
+	if is_instance_valid(level6_screen_shadow):
+		level6_screen_shadow.modulate.a = 1.0
+		level6_screen_shadow.color = Color(0.0, 0.0, 0.0, 0.0)
+		level6_screen_shadow.visible = true
+	if is_instance_valid(level6_dark_test_test_layer):
+		level6_dark_test_test_layer.visible = false
+	if is_instance_valid(level6_dark_test_layout_layer):
+		level6_dark_test_layout_layer.visible = false
+	if is_instance_valid(level6_dark_test_high_layer):
+		level6_dark_test_high_layer.visible = false
+	if is_instance_valid(level6_dark_test_title_rect):
+		level6_dark_test_title_rect.visible = false
+	if is_instance_valid(level6_world_darkness):
+		level6_world_darkness.color = level6_world_darkness_original
+
+
+func _level6_dark_test_tick() -> void:
+	if not level6_mode:
+		return
+	if level6_dark_test_mode == 0:
+		_level6_dark_test_label_update()
+		return
+	var vp_size: Vector2 = get_viewport_rect().size
+	match level6_dark_test_mode:
+		3:
+			# Exact V55 setup: draw opaque black, animate modulate alpha.
+			_level6_create_screen_darkness()
+			if is_instance_valid(level6_screen_shadow):
+				level6_screen_layer.visible = true
+				level6_screen_shadow.visible = true
+				level6_screen_shadow.color = Color.BLACK
+				level6_screen_shadow.modulate.a = 0.83
+				if not level6_screen_shadow.size.is_equal_approx(vp_size):
+					level6_screen_shadow.size = vp_size
+		4:
+			# V62 setup: ColorRect's actual color alpha, no anchors to fight.
+			if not is_instance_valid(level6_dark_test_test_rect):
+				level6_dark_test_test_layer = CanvasLayer.new()
+				level6_dark_test_test_layer.name = "V71_Method4_V62_ColorAlpha"
+				level6_dark_test_test_layer.layer = 100
+				get_tree().root.add_child(level6_dark_test_test_layer)
+				level6_dark_test_test_rect = ColorRect.new()
+				level6_dark_test_test_rect.name = "ColorAlphaTest"
+				level6_dark_test_test_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				level6_dark_test_test_layer.add_child(level6_dark_test_test_rect)
+			level6_dark_test_test_layer.visible = true
+			level6_dark_test_test_rect.visible = true
+			level6_dark_test_test_rect.color = Color(0.0, 0.0, 0.0, 0.27 if level6_preview_all_v76 else 0.83)
+			level6_dark_test_test_rect.position = Vector2.ZERO
+			if not level6_dark_test_test_rect.size.is_equal_approx(vp_size):
+				level6_dark_test_test_rect.size = vp_size
+		5:
+			# V64: separate fixed-size Control parent, anchored ColorRect child.
+			if not is_instance_valid(level6_dark_test_layout_rect):
+				level6_dark_test_layout_layer = CanvasLayer.new()
+				level6_dark_test_layout_layer.name = "V71_Method5_V64_ViewportControl"
+				level6_dark_test_layout_layer.layer = 160
+				get_tree().root.add_child(level6_dark_test_layout_layer)
+				level6_dark_test_layout_root = Control.new()
+				level6_dark_test_layout_root.name = "ViewportRoot"
+				level6_dark_test_layout_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				level6_dark_test_layout_layer.add_child(level6_dark_test_layout_root)
+				level6_dark_test_layout_root.size = vp_size
+				level6_dark_test_layout_rect = ColorRect.new()
+				level6_dark_test_layout_rect.name = "StretchedAlphaTest"
+				level6_dark_test_layout_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				level6_dark_test_layout_root.add_child(level6_dark_test_layout_rect)
+				level6_dark_test_layout_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			level6_dark_test_layout_layer.visible = true
+			level6_dark_test_layout_rect.visible = true
+			level6_dark_test_layout_rect.color = Color(0.0, 0.0, 0.0, 0.83)
+			if not level6_dark_test_layout_root.size.is_equal_approx(vp_size):
+				level6_dark_test_layout_root.size = vp_size
+		6:
+			# V65: RGB multiplication, not a separate ColorRect.
+			if not is_instance_valid(level6_world_darkness):
+				var scene_root: Node = get_tree().current_scene
+				if not is_instance_valid(scene_root):
+					scene_root = get_parent()
+				if is_instance_valid(scene_root):
+					for child: Node in scene_root.get_children():
+						if child is CanvasModulate:
+							level6_world_darkness = child as CanvasModulate
+							level6_world_darkness_owned = false
+							break
+					if not is_instance_valid(level6_world_darkness):
+						level6_world_darkness = CanvasModulate.new()
+						level6_world_darkness.name = "V71_Method6_V65_CanvasModulate"
+						scene_root.add_child(level6_world_darkness)
+						level6_world_darkness_owned = true
+					level6_world_darkness_original = level6_world_darkness.color
+			if is_instance_valid(level6_world_darkness):
+				level6_world_darkness.visible = true
+				level6_world_darkness.color = Color(0.17, 0.17, 0.17, 1.0)
+		7:
+			# V66: highest-level plain rectangle, above HUD and parallax.
+			if not is_instance_valid(level6_dark_test_high_rect):
+				level6_dark_test_high_layer = CanvasLayer.new()
+				level6_dark_test_high_layer.name = "V71_Method7_V66_HighCanvas"
+				level6_dark_test_high_layer.layer = 800
+				level6_dark_test_high_layer.follow_viewport_enabled = false
+				get_tree().root.add_child(level6_dark_test_high_layer)
+				level6_dark_test_high_rect = ColorRect.new()
+				level6_dark_test_high_rect.name = "HighCanvasBlackout"
+				level6_dark_test_high_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				level6_dark_test_high_layer.add_child(level6_dark_test_high_rect)
+			level6_dark_test_high_layer.visible = true
+			level6_dark_test_high_rect.visible = true
+			level6_dark_test_high_rect.color = Color(0.0, 0.0, 0.0, 0.83)
+			level6_dark_test_high_rect.position = Vector2.ZERO
+			if not level6_dark_test_high_rect.size.is_equal_approx(vp_size):
+				level6_dark_test_high_rect.size = vp_size
+		8:
+			# V67: use the same canvas as the already-functioning VOID/KING title.
+			if not is_instance_valid(level6_title_layer):
+				_level6_create_title_overlay()
+			if is_instance_valid(level6_title_layer):
+				if not is_instance_valid(level6_dark_test_title_rect):
+					level6_dark_test_title_rect = ColorRect.new()
+					level6_dark_test_title_rect.name = "V71_Method8_V67_TitleDarkness"
+					level6_dark_test_title_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+					level6_title_layer.add_child(level6_dark_test_title_rect)
+					level6_title_layer.move_child(level6_dark_test_title_rect, 0)
+				level6_title_layer.visible = true
+				# Never interrupt intro-title choreography while testing.
+				if level6_stage != Level6Stage.INTRO_TITLE:
+					level6_title_layer.layer = 520
+					if is_instance_valid(level6_title_black):
+						level6_title_black.visible = false
+					if is_instance_valid(level6_title_text):
+						level6_title_text.visible = false
+					if is_instance_valid(level6_title_king_text):
+						level6_title_king_text.visible = false
+				level6_dark_test_title_rect.visible = true
+				level6_dark_test_title_rect.color = Color(0.0, 0.0, 0.0, 0.83)
+				level6_dark_test_title_rect.position = Vector2.ZERO
+				if not level6_dark_test_title_rect.size.is_equal_approx(vp_size):
+					level6_dark_test_title_rect.size = vp_size
+	_level6_dark_test_label_update()
+
+
+func _level6_dark_test_label_update() -> void:
+	if not is_instance_valid(level6_dark_test_label):
+		return
+	var active_rect: ColorRect = _level6_dark_test_active_rect()
+	var draw_status: String = "auto alpha=" + str(snappedf(level6_screen_shadow.color.a, 0.01)) if is_instance_valid(level6_screen_shadow) else "auto overlay MISSING"
+	if level6_dark_test_mode == 6:
+		draw_status = "CanvasModulate=" + str(level6_world_darkness.color) if is_instance_valid(level6_world_darkness) else "CanvasModulate MISSING"
+	elif level6_dark_test_mode > 0:
+		draw_status = "test node visible=" + str(active_rect.is_visible_in_tree()) + " | alpha=" + str(active_rect.color.a) if is_instance_valid(active_rect) else "test node MISSING"
+	var fog_visible: int = 0
+	for bank: TextureRect in level6_fog_panels_v73:
+		if is_instance_valid(bank) and bank.is_visible_in_tree():
+			fog_visible += 1
+	var ash_visible: int = 0
+	for mote: TextureRect in level6_ash_motes_v73:
+		if is_instance_valid(mote) and mote.is_visible_in_tree():
+			ash_visible += 1
+	level6_dark_test_label.text = (
+        "VOID KING V79 MOVING BLACK FOG + AUTO CLIMAXES  3-8=dark  9=FOG  P=ash  V=vignette  B=ALL  0=reset\n"
+		+ "DARK " + str(level6_dark_test_mode) + " " + _level6_dark_test_mode_name() + " | " + draw_status + "\n"
+		+ "FOG=" + str(level6_test_fog) + " PARTICLES=" + str(level6_test_particles)
+		+ " VIGNETTE=" + str(level6_test_vignette) + " | stage=" + str(level6_stage) + "\n"
+		+ "V74 HUD canvas=" + str(level6_fx_parent_is_hud_v74)
+		+ " fog drawn=" + str(fog_visible) + " ash drawn=" + str(ash_visible)
+		+ " | B preview=" + str(level6_preview_all_v76)
+	)

@@ -1,6 +1,11 @@
 
 extends Area2D
 
+# THE DESERT CHALLENGE
+# Pergaminho dos artefatos.
+# Preserva as animacoes e o texto educativo.
+# Atualiza o pressagio do quinto artefato.
+
 @export_group("Tamanho do Pergaminho")
 @export_range(0.5, 0.95, 0.01) var largura_tela: float = 0.86
 @export_range(0.3, 0.85, 0.01) var altura_tela: float = 0.58
@@ -35,35 +40,84 @@ var aviso: Label
 var tempo_letras: float = 0.0
 var total_letras: int = 0
 
+
 const DADOS: Dictionary = {
 	"escaravelho": {
 		"titulo": "Escaravelho de Khepri",
-		"descricao": "No Egito Antigo, escaravelhos eram usados como amuletos de proteção e renascimento. Khepri, deus associado ao sol nascente, simbolizava a renovação diária da vida.",
-		"dica": "* Talvez este símbolo abra algo esquecido nas areias..."
+		"descricao": (
+			"No Egito Antigo, escaravelhos eram usados "
+			+ "como amuletos de proteção e renascimento. "
+			+ "Khepri, deus associado ao sol nascente, "
+			+ "simbolizava a renovação diária da vida."
+		),
+		"dica": (
+			"* O escaravelho parece vibrar entre seus dedos. "
+			+ "Por um instante, você sente que algo sob as "
+			+ "ruínas acaba de mudar."
+		)
 	},
 
 	"calice": {
 		"titulo": "Cálice de Lótus",
-		"descricao": "Encontrado na tumba de Tutancâmon, o Cálice de Lótus é um objeto de alabastro. A flor de lótus representava o renascimento e a renovação da vida no Egito Antigo.",
-		"dica": "* Talvez este cálice tenha outra finalidade..."
+		"descricao": (
+			"Encontrado na tumba de Tutancâmon, o Cálice "
+			+ "de Lótus é um objeto de alabastro. A flor "
+			+ "de lótus representava o renascimento e a "
+			+ "renovação da vida no Egito Antigo."
+		),
+		"dica": (
+			"* O cálice fica inexplicavelmente frio. "
+			+ "Muito abaixo de você, algo parece ter cedido."
+		)
 	},
 
 	"ankh": {
 		"titulo": "Ankh da Vida",
-		"descricao": "O Ankh era um dos principais símbolos do Egito Antigo. Representava a vida e aparecia frequentemente nas mãos dos deuses em pinturas e relevos religiosos.",
-		"dica": "* Uma antiga porta talvez reconheça este símbolo..."
+		"descricao": (
+			"O Ankh era um dos principais símbolos do "
+			+ "Egito Antigo. Representava a vida e aparecia "
+			+ "frequentemente nas mãos dos deuses em "
+			+ "pinturas e relevos religiosos."
+		),
+		"dica": (
+			"* Três relíquias reunidas. Você se pergunta "
+			+ "se elas foram escondidas para serem "
+			+ "encontradas... ou para nunca serem tocadas."
+		)
 	},
 
 	"mascara": {
 		"titulo": "Máscara Funerária",
-		"descricao": "Máscaras funerárias cobriam os rostos de algumas múmias egípcias. Estavam associadas à identidade do falecido e às crenças sobre a vida após a morte.",
-		"dica": "* Talvez os mortos ainda guardem algum segredo..."
+		"descricao": (
+			"Máscaras funerárias cobriam os rostos de "
+			+ "algumas múmias egípcias. Estavam associadas "
+			+ "à identidade do falecido e às crenças "
+			+ "sobre a vida após a morte."
+		),
+		"dica": (
+			"* A máscara parece encará-lo de volta. "
+			+ "Pela primeira vez, você pensa em abandonar "
+			+ "a procura."
+		)
 	},
 
 	"lapislazulidofarao": {
 		"titulo": "Lápis-Lazúli dos Faraós",
-		"descricao": "O lápis-lazúli era uma pedra muito valorizada pelos egípcios. Importada de regiões distantes, era usada em joias, amuletos e objetos religiosos.",
-		"dica": "* Esta parece ser a última peça de algo maior..."
+		"descricao": (
+			"O lápis-lazúli era uma pedra muito valorizada "
+			+ "pelos egípcios. Importada de regiões distantes, "
+			+ "era usada em joias, amuletos e objetos religiosos."
+		),
+		"dica": (
+			"* Você viu a escuridão consumir o Necromancer "
+			+ "até ele desaparecer sem deixar vestígios.\n\n"
+			+ "A última pedra pulsa em sua mão. "
+			+ "As outras quatro relíquias parecem responder.\n\n"
+			+ "Agora você entende por que algo tentou "
+			+ "impedir sua passagem.\n\n"
+			+ "Talvez essas cinco peças nunca tenham "
+			+ "sido uma chave. Talvez fossem um selo."
+		)
 	}
 }
 
@@ -75,12 +129,10 @@ func configurar_por_artefato(id: String) -> void:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
-	# Impede que o pergaminho abra sozinho.
 	if artefato_id.is_empty():
 		queue_free()
 		return
 
-	# Sem hitbox durante toda a interface.
 	collision_layer = 0
 	collision_mask = 0
 	monitoring = false
@@ -117,24 +169,17 @@ func _criar_interface() -> bool:
 	raiz_ui.mouse_filter = Control.MOUSE_FILTER_STOP
 	camada.add_child(raiz_ui)
 
-	# Escurecimento do fundo.
 	fundo = ColorRect.new()
 	fundo.size = tamanho_tela
-	fundo.color = Color(
-		0.02, 0.015, 0.03, 0.0
-	)
+	fundo.color = Color(0.02, 0.015, 0.03, 0.0)
 	fundo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	raiz_ui.add_child(fundo)
 
 	var fade_fundo: Tween = create_tween()
 	fade_fundo.tween_property(
-		fundo,
-		"color:a",
-		escurecimento,
-		0.35
+		fundo, "color:a", escurecimento, 0.35
 	)
 
-	# Sprite do pergaminho.
 	if not sprite_original.sprite_frames.has_animation(
 		"abrindo"
 	):
@@ -155,10 +200,8 @@ func _criar_interface() -> bool:
 	if ultimo_frame < 0:
 		return false
 
-	var textura: Texture2D = (
-		frames.get_frame_texture(
-			"abrindo", ultimo_frame
-		)
+	var textura: Texture2D = frames.get_frame_texture(
+		"abrindo", ultimo_frame
 	)
 
 	if textura == null:
@@ -174,9 +217,6 @@ func _criar_interface() -> bool:
 
 	raiz_ui.add_child(sprite_tela)
 
-	# Mede somente os pixels visiveis.
-	# Isso evita que margens transparentes
-	# diminuam o tamanho do pergaminho.
 	var tamanho_textura: Vector2 = textura.get_size()
 
 	var area_visivel: Rect2i = Rect2i(
@@ -189,14 +229,16 @@ func _criar_interface() -> bool:
 	if imagem != null:
 		var area_usada: Rect2i = imagem.get_used_rect()
 
-		if area_usada.size.x > 0 and area_usada.size.y > 0:
+		if (
+			area_usada.size.x > 0
+			and area_usada.size.y > 0
+		):
 			area_visivel = area_usada
 
 	var tamanho_visivel: Vector2 = Vector2(
 		area_visivel.size
 	)
 
-	# Tamanho REAL desejado na tela.
 	var largura_final: float = (
 		tamanho_tela.x * largura_tela
 	)
@@ -205,16 +247,11 @@ func _criar_interface() -> bool:
 		tamanho_tela.y * altura_tela
 	)
 
-	# Escala horizontal e vertical separadas.
-	# Permite um pergaminho largo e alto,
-	# com espaco suficiente para o texto.
 	sprite_tela.scale = Vector2(
 		largura_final / maxf(tamanho_visivel.x, 1.0),
 		altura_final / maxf(tamanho_visivel.y, 1.0)
 	)
 
-	# Centraliza a ARTE visivel, nao as
-	# margens transparentes da textura.
 	var centro_visivel: Vector2 = (
 		Vector2(area_visivel.position)
 		+ tamanho_visivel * 0.5
@@ -229,7 +266,6 @@ func _criar_interface() -> bool:
 		centro - deslocamento * sprite_tela.scale
 	)
 
-	# Texto dentro da parte central de papel.
 	texto = RichTextLabel.new()
 	texto.bbcode_enabled = true
 	texto.scroll_active = false
@@ -239,7 +275,6 @@ func _criar_interface() -> bool:
 	)
 	texto.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Margens deixam os rolos laterais livres.
 	texto.size = Vector2(
 		largura_final * 0.64,
 		altura_final * 0.66
@@ -262,15 +297,9 @@ func _criar_interface() -> bool:
 	texto.visible_characters = 0
 	texto.hide()
 
-	# Instrucao fora do pergaminho.
 	aviso = Label.new()
-	aviso.text = (
-		"E / ENTER / ESPAÇO ou clique para fechar"
-	)
-
-	aviso.horizontal_alignment = (
-		HORIZONTAL_ALIGNMENT_CENTER
-	)
+	aviso.text = "E / ENTER / ESPAÇO ou clique para fechar"
+	aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	aviso.size = Vector2(
 		tamanho_tela.x * 0.85,
@@ -282,9 +311,7 @@ func _criar_interface() -> bool:
 		centro.y + altura_final * 0.5 + 15.0
 	)
 
-	aviso.add_theme_font_size_override(
-		"font_size", 16
-	)
+	aviso.add_theme_font_size_override("font_size", 16)
 
 	aviso.add_theme_color_override(
 		"font_color",
@@ -324,7 +351,6 @@ func _configurar_texto() -> void:
 		)
 	)
 
-	# Titulo, texto historico e segredo.
 	texto.text = (
 		"[center]"
 		+ "[font_size=23][b]"
@@ -345,7 +371,6 @@ func _configurar_texto() -> void:
 func _ao_terminar_animacao() -> void:
 	match estado:
 		Estado.ABRINDO:
-			# Para no ultimo frame.
 			sprite_tela.stop()
 
 			sprite_tela.frame = (
@@ -368,10 +393,7 @@ func _process(delta: float) -> void:
 	if estado != Estado.ESCREVENDO:
 		return
 
-	tempo_letras += (
-		delta * letras_por_segundo
-	)
-
+	tempo_letras += delta * letras_por_segundo
 	var quantidade: int = int(tempo_letras)
 
 	if quantidade > 0:
@@ -388,8 +410,10 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if estado != Estado.ESCREVENDO \
-	and estado != Estado.PRONTO:
+	if (
+		estado != Estado.ESCREVENDO
+		and estado != Estado.PRONTO
+	):
 		return
 
 	var confirmar: bool = false
@@ -414,14 +438,12 @@ func _input(event: InputEvent) -> void:
 
 	get_viewport().set_input_as_handled()
 
-	# Primeiro aperto: completa o texto.
 	if estado == Estado.ESCREVENDO:
 		texto.visible_characters = total_letras
 		estado = Estado.PRONTO
 		aviso.show()
 		return
 
-	# Segundo aperto: fecha o pergaminho.
 	if estado == Estado.PRONTO:
 		_fechar_pergaminho()
 
@@ -431,12 +453,11 @@ func _fechar_pergaminho() -> void:
 		return
 
 	estado = Estado.FECHANDO
-
 	texto.hide()
 	aviso.hide()
 
-	# Fade out do fundo.
 	var fade_fundo: Tween = create_tween()
+
 	fade_fundo.tween_property(
 		fundo,
 		"color:a",
@@ -444,7 +465,6 @@ func _fechar_pergaminho() -> void:
 		0.35
 	)
 
-	# Abertura ao contrario = fechamento.
 	sprite_tela.play_backwards("abrindo")
 
 
