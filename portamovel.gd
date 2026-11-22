@@ -1,6 +1,88 @@
 extends StaticBody2D
 
 
+class BloqueioMusicaPortao extends Node:
+	var audios: Array[Node] = []
+	var relogio_buses: float = 0.0
+
+	func _ready() -> void:
+		process_mode = Node.PROCESS_MODE_ALWAYS
+		process_priority = 10000
+		process_physics_priority = 10000
+		get_tree().node_added.connect(_registrar_audio)
+		_indexar_audios(get_tree().root)
+		_mutar_buses_musicais()
+		_parar_musicas()
+
+	func _indexar_audios(no_atual: Node) -> void:
+		_registrar_audio(no_atual)
+		for filho in no_atual.get_children():
+			_indexar_audios(filho)
+
+	func _registrar_audio(no_atual: Node) -> void:
+		if no_atual is AudioStreamPlayer or no_atual is AudioStreamPlayer2D or no_atual is AudioStreamPlayer3D:
+			if not audios.has(no_atual):
+				audios.append(no_atual)
+
+	func _process(delta: float) -> void:
+		relogio_buses += delta
+		if relogio_buses >= 0.3:
+			relogio_buses = 0.0
+			_mutar_buses_musicais()
+		_parar_musicas()
+
+	func _physics_process(_delta: float) -> void:
+		_parar_musicas()
+
+	func _mutar_buses_musicais() -> void:
+		for indice in range(AudioServer.get_bus_count()):
+			var nome_bus: String = String(AudioServer.get_bus_name(indice)).to_lower()
+			if _nome_indica_musica(nome_bus):
+				AudioServer.set_bus_mute(indice, true)
+
+	func _nome_indica_musica(nome: String) -> bool:
+		for termo in ["music", "musica", "música", "bgm", "trilha", "theme", "tema", "soundtrack", "song", "canção", "cancao"]:
+			if nome.contains(termo):
+				return true
+		return false
+
+	func _nome_indica_efeito(nome: String) -> bool:
+		for termo in ["sfx", "effect", "efeito", "vento", "wind", "passo", "step", "jump", "pulo", "dash", "ataque", "attack", "hurt", "damage", "hit", "impact", "explosion", "explosao", "somvento", "voice", "voz", "click", "foot"]:
+			if nome.contains(termo):
+				return true
+		return false
+
+	func _e_musica(no_audio: Node) -> bool:
+		var nome_no: String = String(no_audio.name).to_lower()
+		var caminho_no: String = String(no_audio.get_path()).to_lower()
+		var nome_bus: String = String(no_audio.get("bus")).to_lower()
+		var fluxo: AudioStream = no_audio.get("stream") as AudioStream
+		var caminho_stream: String = ""
+		if fluxo != null:
+			caminho_stream = (fluxo.resource_path + " " + fluxo.resource_name).to_lower()
+
+		if _nome_indica_musica(nome_bus) or _nome_indica_musica(nome_no) or _nome_indica_musica(caminho_no) or _nome_indica_musica(caminho_stream):
+			return true
+		if caminho_stream.contains("/ost/") or nome_no.begins_with("ost_"):
+			return true
+
+		if fluxo != null and fluxo.get_length() >= 20.0:
+			if not _nome_indica_efeito(nome_no) and not _nome_indica_efeito(caminho_stream):
+				return true
+		return false
+
+	func _parar_musicas() -> void:
+		for indice in range(audios.size() - 1, -1, -1):
+			var no_audio: Node = audios[indice]
+			if not is_instance_valid(no_audio):
+				audios.remove_at(indice)
+				continue
+			if not no_audio.is_inside_tree():
+				continue
+			if _e_musica(no_audio) and bool(no_audio.get("playing")):
+				no_audio.call("stop")
+
+
 @export_group("Portao")
 @export_range(3.0, 15.0, 0.1) var duracao_abertura: float = 7.0
 @export var distancia_subida: float = 500.0
@@ -1304,6 +1386,16 @@ func _limpar_ritual() -> void:
 	artefatos_visuais.clear()
 
 
+func _travar_musicas_apos_portao() -> void:
+	var raiz: Window = get_tree().root
+	if raiz.has_node("BloqueioMusicaPortao"):
+		return
+	var trava := BloqueioMusicaPortao.new()
+	trava.name = "BloqueioMusicaPortao"
+	trava.process_mode = Node.PROCESS_MODE_ALWAYS
+	raiz.add_child(trava)
+
+
 func iniciar_abertura() -> void:
 	if not desafio_concluido or not decisao_confirmada:
 		return
@@ -1311,6 +1403,7 @@ func iniciar_abertura() -> void:
 	if portao_abrindo:
 		return
 
+	_travar_musicas_apos_portao()
 	GerenciadorArtefatos.registrar_abertura_portao()
 	portao_abrindo = true
 
@@ -1942,7 +2035,7 @@ func _input(event: InputEvent) -> void:
 	if not key.pressed or key.echo:
 		return
 
-	if key.keycode in [KEY_1, KEY_KP_1] or key.physical_keycode == KEY_1:
+	if bool(get_tree().root.get_meta(&"tdc_dev_mode", false)) and (key.keycode in [KEY_1, KEY_KP_1] or key.physical_keycode == KEY_1):
 		if etapa_desafio in [
 			EtapaDesafio.PREPARANDO,
 			EtapaDesafio.MENU,

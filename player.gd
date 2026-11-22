@@ -222,8 +222,7 @@ var standing_shape: RectangleShape2D
 var standing_position: Vector2
 var wall_jump_lock: float = 0.0
 
-# Level 6 temporarily grants the four artifact abilities without collecting
-# or recording any artifact; levels 1-5 still require the real relics.
+# Habilidades somente por reliquias coletadas, em todas as fases.
 var todas_habilidades_fase_seis: bool = false
 var fallidentifier_ativo: bool = false
 
@@ -253,7 +252,7 @@ func _cena_eh_fase_seis() -> bool:
 
 
 func _tem_habilidade(tipo: String) -> bool:
-	return todas_habilidades_fase_seis or GerenciadorArtefatos.possui_artefato(tipo)
+	return GerenciadorArtefatos.possui_artefato(tipo)
 
 
 func _cachear_hitboxes_espada() -> void:
@@ -643,6 +642,69 @@ var fundo_escuridao: ColorRect = null
 var authored_sword_transform: Transform2D
 @onready var attack_area_j: Area2D = get_node_or_null("AttackAreaJ") as Area2D
 
+
+
+# O codigo e digitado apenas no teclado numerico. Nada e exibido ao jogador.
+const DEV_NUMPAD_CODE: String = "45201304"
+var _dev_sequence_position: int = 0
+
+func _input(event: InputEvent) -> void:
+	if not event is InputEventKey:
+		return
+	var key: InputEventKey = event as InputEventKey
+	if not key.pressed or key.echo:
+		return
+	var kp_value: int = -1
+	var code: int = key.keycode
+	if code < KEY_KP_0 or code > KEY_KP_9:
+		code = key.physical_keycode
+	if code >= KEY_KP_0 and code <= KEY_KP_9:
+		kp_value = code - KEY_KP_0
+	if not bool(get_tree().root.get_meta(&"tdc_dev_mode", false)):
+		if kp_value < 0:
+			_dev_sequence_position = 0
+			return
+		var digit: String = str(kp_value)
+		if digit == DEV_NUMPAD_CODE.substr(_dev_sequence_position, 1):
+			_dev_sequence_position += 1
+		else:
+			_dev_sequence_position = 1 if digit == "4" else 0
+		if _dev_sequence_position >= DEV_NUMPAD_CODE.length():
+			_dev_sequence_position = 0
+			_unlock_dev_mode()
+			get_viewport().set_input_as_handled()
+		return
+	if key.keycode in [KEY_0, KEY_KP_0] or key.physical_keycode in [KEY_0, KEY_KP_0]:
+		var current: Node = get_tree().current_scene
+		if is_instance_valid(current):
+			var current_name: String = current.scene_file_path.get_file().get_basename().to_lower().replace("_", "")
+			if current_name == "level6":
+				return  # O King executa o teleporte dentro da arena.
+		_developer_go_to_king()
+		get_viewport().set_input_as_handled()
+
+
+func _unlock_dev_mode() -> void:
+	get_tree().root.set_meta(&"tdc_dev_mode", true)
+	for relic: String in GerenciadorArtefatos.TODOS:
+		if relic not in GerenciadorArtefatos.coletados:
+			GerenciadorArtefatos.coletados.append(relic)
+	if not ResourceLoader.exists("res://level_5.tscn"):
+		push_warning("DEV MODE: res://level_5.tscn não encontrado")
+		return
+	print("DEV MODE: liberado; cinco relíquias; indo para Level 5")
+	get_tree().call_deferred("change_scene_to_file", "res://level_5.tscn")
+
+
+func _developer_go_to_king() -> void:
+	if not bool(get_tree().root.get_meta(&"tdc_dev_mode", false)):
+		return
+	if not ResourceLoader.exists("res://level_6.tscn"):
+		push_warning("DEV MODE: res://level_6.tscn não encontrado")
+		return
+	get_tree().root.set_meta(&"tdc_dev_warp_to_king", true)
+	get_tree().call_deferred("change_scene_to_file", "res://level_6.tscn")
+
 # =====================================================
 # READY
 # =====================================================
@@ -659,9 +721,7 @@ func _ready() -> void:
 	_prepare_action_animations()
 	_fit_knight_attack_shape()
 	_cachear_hitboxes_espada()
-	todas_habilidades_fase_seis = _cena_eh_fase_seis()
-	if todas_habilidades_fase_seis:
-		print("[PLAYER] Fase 6: habilidades liberadas temporariamente.")
+	todas_habilidades_fase_seis = false
 	add_to_group(
 		"player"
 	)

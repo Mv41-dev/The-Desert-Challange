@@ -1807,7 +1807,7 @@ tile_set = SubResource("TileSet_ebum8")
 
 [node name="Player" parent="." unique_id=267222214 instance=ExtResource("2_yxwl1")]
 z_index = 3
-position = Vector2(1948, 18240)
+position = Vector2(2000, 18238)
 
 [node name="HUD" parent="." unique_id=2002812259 instance=ExtResource("hud_fases")]
 

@@ -2436,6 +2436,66 @@ func _level6_debug_warp_player_to_upper_arena() -> void:
 		push_warning("VOID KING V53: no upper platform found for debug teleport; check TileMap collisions.")
 
 
+
+func _level6_debug_warp_to_boss() -> void:
+	if not level6_mode or not bool(get_tree().root.get_meta(&"tdc_dev_mode", false)):
+		return
+	if not is_instance_valid(target):
+		target = get_tree().get_first_node_in_group(&"player") as CharacterBody2D
+	if not is_instance_valid(target):
+		return
+	if level6_stage in [Level6Stage.THIRD_DEATH, Level6Stage.COMPLETE]:
+		return
+	if level6_stage in [Level6Stage.PHASE_TWO, Level6Stage.DISSOLVE_TWO, Level6Stage.PHASE_THREE_PENDING, Level6Stage.PHASE_THREE_CLIMB]:
+		_level6_debug_warp_player_to_upper_arena()
+		return
+	var center: Vector2 = global_position
+	if level6_stage == Level6Stage.PHASE_THREE:
+		_level6_refresh_third_nodes()
+		if not level6_third_markers.is_empty():
+			center = level6_third_markers[0].global_position
+	else:
+		var boss_marker: Marker2D = _level6_center_phase_one_marker()
+		if is_instance_valid(boss_marker):
+			center = boss_marker.global_position
+		elif is_instance_valid(level6_arena):
+			center = level6_arena.global_position
+	var landing: Vector2 = center + Vector2(-120.0, -80.0)
+	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	for dx: float in [-145.0, 145.0, -225.0, 225.0, 0.0]:
+		var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(
+			center + Vector2(dx, -260.0), center + Vector2(dx, 430.0), terrain_mask)
+		query.exclude = [target.get_rid(), get_rid()]
+		query.collide_with_areas = false
+		var hit: Dictionary = space.intersect_ray(query)
+		if hit.is_empty() or Vector2(hit.get("normal", Vector2.ZERO)).y > -0.65:
+			continue
+		landing = Vector2(hit.get("position", center)) + Vector2(0.0, -40.0)
+		break
+	target.global_position = landing
+	target.velocity = Vector2.ZERO
+	target.reset_physics_interpolation()
+	if level6_stage == Level6Stage.HIDDEN or level6_stage == Level6Stage.WAITING:
+		_level6_wander_active = false
+		_level6_wander_completed = true
+		_level6_wander_dialogue_queue.clear()
+		_level6_wander_dialogue_showing = false
+		_level6_wander_hide_dialogue()
+		level6_stage = Level6Stage.WAITING
+		level6_stage_timer = 1.3
+	print("DEV MODE: teleportado para a arena do Void King")
+
+
+func _level6_debug_warp_from_scene_load() -> void:
+	await get_tree().process_frame
+	if not is_inside_tree() or not bool(get_tree().root.get_meta(&"tdc_dev_mode", false)):
+		return
+	if not bool(get_tree().root.get_meta(&"tdc_dev_warp_to_king", false)):
+		return
+	get_tree().root.set_meta(&"tdc_dev_warp_to_king", false)
+	_level6_debug_warp_to_boss()
+
+
 func _level6_debug_skip_to_phase_two() -> void:
 	if level6_stage != Level6Stage.PHASE_ONE:
 		return
@@ -2478,12 +2538,13 @@ func _level6_update(delta: float) -> void:
 	if not is_instance_valid(target):
 		target = get_tree().get_first_node_in_group(&"player") as CharacterBody2D
 	_level6_artifact_bind_player()
-	var one_down: bool = Input.is_physical_key_pressed(KEY_1)
-	if level6_debug_skip_phase_one_with_1 and one_down and not level6_debug_one_was_down:
+	var dev_enabled: bool = bool(get_tree().root.get_meta(&"tdc_dev_mode", false))
+	var one_down: bool = dev_enabled and (Input.is_physical_key_pressed(KEY_1) or Input.is_key_pressed(KEY_KP_1))
+	if dev_enabled and level6_debug_skip_phase_one_with_1 and one_down and not level6_debug_one_was_down:
 		_level6_debug_skip_to_phase_two()
 	level6_debug_one_was_down = one_down
-	var two_down: bool = Input.is_physical_key_pressed(KEY_2)
-	if level6_debug_skip_phase_two_with_2 and two_down and not level6_debug_two_was_down:
+	var two_down: bool = dev_enabled and (Input.is_physical_key_pressed(KEY_2) or Input.is_key_pressed(KEY_KP_2))
+	if dev_enabled and level6_debug_skip_phase_two_with_2 and two_down and not level6_debug_two_was_down:
 		_level6_debug_skip_to_phase_three()
 	level6_debug_two_was_down = two_down
 	_level6_update_screen_darkness(delta)
@@ -3485,11 +3546,22 @@ func _collapse_rescue_text(message: String, hold: float) -> void:
 		if not is_instance_valid(_collapse_flash_label):
 			return
 		_collapse_flash_label.visible_characters = i + 1
-		await get_tree().create_timer(0.035).timeout
+		var letra: String = message.substr(i, 1)
+		var tempo: float = 0.054
+		if letra in [".", "!", "?", "…"]:
+			tempo += 0.22
+		elif letra == ",":
+			tempo += 0.11
+		await get_tree().create_timer(tempo).timeout
+	if not is_instance_valid(_collapse_flash_label):
+		return
 	await get_tree().create_timer(hold).timeout
+	if not is_instance_valid(_collapse_flash_label):
+		return
 	var fade: Tween = create_tween()
-	fade.tween_property(_collapse_flash_label, "modulate:a", 0.0, 0.45)
+	fade.tween_property(_collapse_flash_label, "modulate:a", 0.0, 0.72)
 	await fade.finished
+	await get_tree().create_timer(1.30).timeout
 
 
 func _collapse_place_player_on_ground() -> void:
@@ -3532,13 +3604,19 @@ func _collapse_place_player_on_ground() -> void:
 
 
 func _collapse_run_white_rescue() -> void:
-	await get_tree().create_timer(2.75).timeout
+	await get_tree().create_timer(4.25).timeout
 	if not is_inside_tree():
 		return
-	await _collapse_rescue_text("Eu vi o chão chegando.", 1.45)
-	await _collapse_rescue_text("As cinco relíquias apareceram de repente.", 1.35)
-	await _collapse_rescue_text("E a queda parou.", 1.70)
-	await get_tree().create_timer(2.25).timeout
+	await _collapse_rescue_text("Eu vi o chão chegando.", 2.90)
+	await _collapse_rescue_text("Fechei os olhos.", 3.15)
+	await _collapse_rescue_text("...", 3.35)
+	await _collapse_rescue_text("Mas o impacto não veio.", 3.20)
+	await _collapse_rescue_text("Eu parei. No meio da queda.", 3.40)
+	await _collapse_rescue_text("Quando abri os olhos... vi as relíquias.", 3.45)
+	await _collapse_rescue_text("As cinco.", 3.10)
+	await _collapse_rescue_text("...", 3.65)
+	await _collapse_rescue_text("Agora não consigo enxergar nada.", 4.20)
+	await get_tree().create_timer(5.0).timeout
 	if not is_inside_tree():
 		return
 
@@ -5622,6 +5700,8 @@ func _ready() -> void:
 	_activate_king_mode()
 	_level6_initialize()
 	_level6_artifact_bind_player()
+	if level6_mode and bool(get_tree().root.get_meta(&"tdc_dev_warp_to_king", false)):
+		call_deferred("_level6_debug_warp_from_scene_load")
 
 
 func _begin_king_shield_phase() -> void:
@@ -7410,12 +7490,16 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 		level6_particle_test_signal_v73.visible = false
 
 func _input(event: InputEvent) -> void:
-	if not level6_mode or not (event is InputEventKey):
+	if not level6_mode or not bool(get_tree().root.get_meta(&"tdc_dev_mode", false)) or not (event is InputEventKey):
 		return
 	var key_event: InputEventKey = event as InputEventKey
 	if not key_event.pressed or key_event.echo:
 		return
 	var keycode: int = key_event.physical_keycode
+	if keycode in [KEY_0, KEY_KP_0] or key_event.keycode in [KEY_0, KEY_KP_0]:
+		_level6_debug_warp_to_boss()
+		get_viewport().set_input_as_handled()
+		return
 	if keycode in [KEY_3, KEY_KP_3] or key_event.keycode in [KEY_3, KEY_KP_3]:
 		if level6_stage not in [Level6Stage.THIRD_DEATH, Level6Stage.COMPLETE]:
 			if not is_instance_valid(target):

@@ -413,7 +413,7 @@ next_scene_path = "uid://cmqqddqgytqv7"
 
 [node name="Player" parent="." unique_id=267222214 instance=ExtResource("1_cp4ax")]
 z_index = 3
-position = Vector2(3452, -187)
+position = Vector2(-4717, -1403)
 
 [node name="HUD" parent="." unique_id=2131151673 instance=ExtResource("hud_fases")]
 
@@ -458,9 +458,6 @@ position = Vector2(949, 173)
 
 [node name="skeleton3" parent="." unique_id=615045580 instance=ExtResource("14_o1mlc")]
 position = Vector2(-4120, -1309)
-
-[node name="charbody2d2" parent="." unique_id=129879535 instance=ExtResource("15_o1mlc")]
-position = Vector2(-3843, -1086)
 
 [node name="charbody2d3" parent="." unique_id=269164853 instance=ExtResource("13_vcgqq")]
 position = Vector2(-4124, -687)
@@ -557,3 +554,6 @@ position = Vector2(6766, -496)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="fallidentifier" unique_id=1503395515]
 position = Vector2(38.5, 8506)
 shape = SubResource("RectangleShape2D_3o1bh")
+
+[node name="charbody2d2" parent="." unique_id=237678958 instance=ExtResource("13_vcgqq")]
+position = Vector2(-3743, -1122)

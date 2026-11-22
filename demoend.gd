@@ -5,9 +5,9 @@ extends Area2D
 @export_file("*.tscn") var caminho_fase_6: String = "res://level_6.tscn"
 
 @export_group("Narracao")
-@export_range(0.010, 0.085, 0.002) var tempo_letra: float = 0.028
-@export_range(0.0, 0.22, 0.01) var pausa_espaco: float = 0.035
-@export_range(0.0, 0.6, 0.02) var pausa_pontuacao: float = 0.24
+@export_range(0.010, 0.085, 0.002) var tempo_letra: float = 0.052
+@export_range(0.0, 0.22, 0.01) var pausa_espaco: float = 0.045
+@export_range(0.0, 0.6, 0.02) var pausa_pontuacao: float = 0.34
 @export var permitir_acelerar_texto: bool = true
 @export var pedir_tecla_ao_final: bool = false
 
@@ -88,28 +88,62 @@ func _atualizar_layout() -> void:
 
 
 func _rodar_queda() -> void:
-	await _esperar(1.20)
-	await _frase("Algo veio atrás de você.", 1.55)
-	await _esperar(0.40)
-	await _frase("Você correu.", 1.20)
-	await _esperar(0.35)
-	await _frase("Não viu a armadilha.", 1.50)
+	await _esperar(3.30)
+	await _frase("...", 1.84)
+	await _esperar(3.30)
+
+	await _frase("Eu... ainda estou caindo?", 2.58)
+	await _esperar(1.50)
+	await _frase("Já era pra eu ter batido no chão.", 2.45)
+	await _esperar(2.04)
+	await _frase("Não consigo ver nada.", 2.31)
+	await _esperar(1.80)
+
+	await _frase("...", 1.77)
+	await _esperar(2.64)
+
+	await _frase("Eu lembro do portão.", 2.11)
+	await _esperar(1.44)
+	await _frase("Tinha alguma coisa vindo atrás de mim.", 2.38)
+	await _esperar(1.50)
+	await _frase("Eu corri...", 2.24)
+	await _esperar(1.62)
+	await _frase("E aí o chão cedeu.", 2.18)
 	await _pulsar_queda()
-	await _esperar(0.35)
-	await _frase("A luz se afastava.", 1.90)
-	await _esperar(0.45)
-	await _frase("Você continuava caindo.", 2.15)
-	await _esperar(0.60)
-	await _frase("A escuridão chegou primeiro.", 2.30)
-	await _esperar(0.70)
-	await _frase("A escuridão começa a te consumir.", 2.60)
-	await _esperar(0.75)
-	await _frase("Não...", 0.85)
-	await _esperar(0.35)
-	await _frase("NÃO!", 0.70, true)
-	await _esperar(0.55)
-	await _frase("ACORDE!", 1.80, true)
-	await _esperar(0.55)
+	await _esperar(2.28)
+
+	await _frase("A luz lá em cima foi ficando menor.", 2.52)
+	await _esperar(1.80)
+	await _frase("Depois... desapareceu.", 2.24)
+	await _esperar(2.52)
+
+	await _frase("...", 2.24)
+	await _esperar(3.00)
+
+	await _frase("Nem o vento eu escuto mais.", 2.58)
+	await _esperar(2.10)
+	await _frase("Eu não sei quanto tempo passou.", 2.52)
+	await _esperar(2.40)
+	await _frase("Será que eu já cheguei ao fundo...?", 2.79)
+	await _esperar(2.22)
+
+	await _frase("...", 2.11)
+	await _esperar(3.12)
+
+	await _frase("Tem alguma coisa aqui.", 2.11)
+	await _esperar(1.86)
+	await _frase("Na escuridão.", 2.11)
+	await _esperar(1.92)
+	await _frase("Está chegando perto.", 2.38)
+	await _esperar(2.22)
+
+	await _frase("...", 2.18)
+	await _esperar(4.00)
+
+	await _frase("Você ainda não conseguiu o que queria.", 3.10)
+	await _esperar(2.30)
+	await _frase("ACORDE!", 2.24, true)
+	await _esperar(1.92)
 
 	if pedir_tecla_ao_final:
 		pode_continuar = true
@@ -118,6 +152,7 @@ func _rodar_queda() -> void:
 		entrada.tween_property(continuar, "modulate:a", 1.0, 0.55)
 	else:
 		_entrar_no_abismo()
+
 
 func _frase(frase: String, tempo_apos: float, urgente: bool = false) -> void:
 	if not is_instance_valid(texto):
@@ -139,24 +174,24 @@ func _frase(frase: String, tempo_apos: float, urgente: bool = false) -> void:
 		if acelerando:
 			continue
 		var caractere: String = frase.substr(i, 1)
-		var pausa: float = tempo_letra
+		var pausa: float = maxf(tempo_letra, 0.045)
 		if caractere == " ":
-			pausa += pausa_espaco
+			pausa += maxf(pausa_espaco, 0.04)
 		elif caractere in [".", "!", "?", ":", ";"]:
-			pausa += pausa_pontuacao
+			pausa += maxf(pausa_pontuacao, 0.30)
 		elif caractere == ",":
-			pausa += pausa_pontuacao * 0.58
+			pausa += maxf(pausa_pontuacao, 0.30) * 0.58
 		elif caractere == "\n":
-			pausa += pausa_pontuacao * 0.9
+			pausa += maxf(pausa_pontuacao, 0.30) * 0.9
 		await _esperar(pausa)
 
 	texto.visible_characters = -1
 	await _esperar(tempo_apos)
 	var saida: Tween = create_tween()
 	saida.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	saida.tween_property(texto, "modulate:a", 0.0, 0.42)
+	saida.tween_property(texto, "modulate:a", 0.0, 0.70)
 	await saida.finished
-	await _esperar(0.18)
+	await _esperar(0.50)
 
 
 func _pulsar_queda() -> void:

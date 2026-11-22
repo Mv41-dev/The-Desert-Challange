@@ -1,5 +1,3 @@
-# Menacing Skeleton V28 - varied royal two/three-hit strings and lower reborn HP
-# Menacing Skeleton V29 - no fake alive ghost; corpse itself revives frame by frame
 # Menacing Skeleton V27 - grounded ghost fade-in over corpse
 # Menacing Skeleton V26 - one-second genuine navigation-stall teleport to safe terrain
 # Menacing Skeleton V25 - larger resurrected body, matching hurtbox and modest sword scale
@@ -65,6 +63,17 @@ enum Slash { FRONT, SIDE, DOWN }
 @export var advancing_slam_warning_seconds: float = 1.10
 @export var advancing_slam_distance: float = 104.0
 @export var advancing_slam_seconds: float = 0.30
+
+@export_group("Solo Boss Arena")
+@export var solo_arena_barriers: bool = true
+@export_range(1.0, 4.0, 0.25) var solo_hp_multiplier: float = 2.0
+@export_range(100, 500, 10) var solo_boss_min_hp: int = 270
+@export var solo_arena_fallback_padding: float = 530.0
+
+@export_group("Solo Boss Combat Stages")
+@export_range(0.50, 0.80, 0.05) var solo_stage_two_threshold: float = 0.65
+@export_range(0.15, 0.45, 0.05) var solo_stage_three_threshold: float = 0.30
+@export_range(0.3, 1.5, 0.05) var solo_stage_transition_pause: float = 0.85
 
 @export_group("Jump Slam and Evasion")
 @export_range(0.0, 1.0) var jump_slam_chance: float = 0.30
@@ -163,14 +172,10 @@ enum Slash { FRONT, SIDE, DOWN }
 
 
 @export_group("Artifact Buff Integration")
-# 0 is the default until you connect artifact pickup to Global's metadata.
-# Your artifact pickups should increment Global.set_meta("artifacts_collected", count).
-# An Inspector override is available if you want to test all buffs immediately.
+# Preserved so existing scenes and King summon setup can still load.
+# Neither Inspector test override grants artifacts to the Player anymore.
 @export_range(-1, 4, 1) var test_artifact_count_override: int = -1
-# DEBUG: Activate all four artifact benefits automatically when this boss
-# spots and engages the player, regardless of collected artifacts.
-# Set to false later to restore the normal artifact progression.
-@export var debug_grant_all_artifact_buffs_on_engage: bool = true
+@export var debug_grant_all_artifact_buffs_on_engage: bool = false
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
@@ -210,8 +215,6 @@ var warning_frame_count: int = 0
 var strike_commit_remaining: float = 0.0
 var combo_order: Array[Slash] = [Slash.DOWN, Slash.SIDE, Slash.FRONT]
 var combo_pause_remaining: float = 0.0
-var royal_combo_active: bool = false
-var royal_combo_lockout_attacks: int = 0
 var death_animation_playing: bool = false
 var authored_attack_area_transform: Transform2D
 var authored_sprite_transform: Transform2D
@@ -253,9 +256,6 @@ var royal_revive_preview: AnimatedSprite2D = null
 @export_range(1.05, 1.5, 0.05) var royal_reborn_visual_multiplier: float = 1.25
 @export_range(1.05, 1.5, 0.05) var royal_reborn_body_multiplier: float = 1.20
 @export_range(1.0, 1.3, 0.05) var royal_reborn_attack_multiplier: float = 1.10
-@export_group("Royal Reborn Combo Rhythm")
-@export_range(0.2, 0.85, 0.05) var royal_combo_opener_chance: float = 0.58
-@export_range(0.14, 0.40, 0.01) var royal_combo_followup_warning: float = 0.23
 var royal_reborn_growth_applied: bool = false
 var royal_reborn_floor_lift: float = 0.0
 
@@ -268,10 +268,54 @@ var royal_original_collision_mask: int = 0
 var stuck_timer: float = 0.0
 var stuck_anchor_x: float = 0.0
 var stuck_teleport_cooldown: float = 0.0
+var solo_arena_walls: Array[StaticBody2D] = []
+var solo_boss_stage: int = 1
+var solo_stage_flash_remaining: float = 0.0
+var solo_low_hp_dash_combo: bool = false
+var is_level3_arena_boss: bool = false
+var level3_boss_hud: CanvasLayer = null
+var level3_boss_hud_bar: ProgressBar = null
+var level3_boss_hud_status: Label = null
+
+func _is_level3_arena_boss() -> bool:
+	if bool(get_meta(&"king_necromancer_summon", false)):
+		return false
+	var scene_root: Node = get_tree().current_scene
+	if not is_instance_valid(scene_root) or not scene_root.is_ancestor_of(self):
+		scene_root = self
+		while scene_root.get_parent() != null and scene_root.get_parent() != get_tree().root:
+			scene_root = scene_root.get_parent()
+	var scene_name: String = scene_root.scene_file_path.get_file().get_basename().to_lower().replace("_", "")
+	if scene_name.is_empty():
+		scene_name = String(scene_root.name).to_lower().replace("_", "")
+	if scene_name != "level3":
+		return false
+	var left_marker: Node2D = scene_root.find_child("bossclosearena", true, false) as Node2D
+	var right_marker: Node2D = scene_root.find_child("bossclosearena2", true, false) as Node2D
+	if not is_instance_valid(left_marker) or not is_instance_valid(right_marker):
+		return false
+	var min_x: float = minf(left_marker.global_position.x, right_marker.global_position.x)
+	var max_x: float = maxf(left_marker.global_position.x, right_marker.global_position.x)
+	if global_position.x < min_x - 150.0 or global_position.x > max_x + 150.0:
+		return false
+	if scene_root.has_meta(&"tdc_level3_menacing_boss_id"):
+		var claimed_id: int = int(scene_root.get_meta(&"tdc_level3_menacing_boss_id"))
+		if claimed_id != get_instance_id():
+			return false
+	scene_root.set_meta(&"tdc_level3_menacing_boss_id", get_instance_id())
+	return true
 
 func _ready() -> void:
 	royal_original_collision_layer = collision_layer
 	royal_original_collision_mask = collision_mask
+	is_level3_arena_boss = _is_level3_arena_boss()
+	if is_level3_arena_boss:
+		max_hp = 270
+		pursuit_speed *= 1.08
+		attack_interval *= 0.90
+		endlag *= 0.90
+		jump_slam_chance = minf(0.42, jump_slam_chance + 0.07)
+		close_lunge_chance = minf(0.35, close_lunge_chance + 0.05)
 	hp = maxi(1, max_hp)
 	royal_guard_index = int(get_meta(&"king_guard_index", -1))
 	tactical_side = -1.0 if royal_guard_index == 0 else 1.0
@@ -324,6 +368,7 @@ func _physics_process(delta: float) -> void:
 	obstacle_jump_cd = maxf(0.0, obstacle_jump_cd - delta)
 	stuck_teleport_cooldown = maxf(0.0, stuck_teleport_cooldown - delta)
 	damage_white_flash = maxf(0.0, damage_white_flash - delta)
+	solo_stage_flash_remaining = maxf(0.0, solo_stage_flash_remaining - delta)
 	if _is_desperate() and not low_hp_phase_seen:
 		low_hp_phase_seen = true
 		attacks_since_fatigue = 0
@@ -370,9 +415,12 @@ func _physics_process(delta: float) -> void:
 	if mode == Mode.STRIKE:
 		_check_strike_hit_window()
 	# Preserve attack warning coloration, with a short white hit flash on damage.
-	if damage_white_flash > 0.0:
+	if is_level3_arena_boss and solo_stage_flash_remaining > 0.0:
+		var pulse: float = 0.47 + 0.18 * sin(solo_stage_flash_remaining * 19.0)
+		sprite.self_modulate = original_sprite_color.lerp(Color(0.71, 0.49, 0.92), pulse)
+	elif damage_white_flash > 0.0:
 		sprite.self_modulate = Color.WHITE
-	elif mode == Mode.WARNING or (royal_combo_active and mode == Mode.RECOVER and combo_pause_remaining > 0.0):
+	elif mode == Mode.WARNING or (is_level3_arena_boss and mode == Mode.JUMP_SLAM):
 		sprite.self_modulate = attack_warning_color
 	elif mode not in [Mode.EXHAUSTED, Mode.STUNNED]:
 		sprite.self_modulate = original_sprite_color
@@ -517,15 +565,15 @@ func _ensure_player_pass_through() -> void:
 
 
 func _get_collected_artifacts() -> int:
-	if test_artifact_count_override >= 0:
-		return test_artifact_count_override
-	# The project has no artifact-state API attached to this script, so use a
-	# stable single metadata key that can be written by the pickup logic.
-	return clampi(int(Global.get_meta("artifacts_collected", 0)), 0, 4)
+	return GerenciadorArtefatos.quantidade_coletada()
 
 func _begin_fight() -> void:
 	engaged = true
 	mode = Mode.CHASE
+	if is_level3_arena_boss:
+		if solo_arena_barriers:
+			call_deferred("_spawn_solo_arena_barriers")
+		call_deferred("_create_level3_boss_hud")
 	attack_cd = 0.60 + (0.70 * float(royal_guard_index) if royal_guard_index >= 0 else randf_range(0.0, 0.25))
 	# King's summons are elite guards, not independent artifact minibosses.
 	# Their attacks/parry behavior stays intact without changing Kris's buffs.
@@ -533,7 +581,7 @@ func _begin_fight() -> void:
 		if is_instance_valid(target) and target.has_method(&"begin_menacing_skeleton_fight"):
 			target.call(
 				&"begin_menacing_skeleton_fight",
-				4 if debug_grant_all_artifact_buffs_on_engage else _get_collected_artifacts()
+				_get_collected_artifacts()
 			)
 	fight_started.emit()
 
@@ -741,60 +789,60 @@ func _start_attack_pattern() -> void:
 	mode = Mode.WARNING
 	combo_index = 0
 	combo_pause_remaining = 0.0
-	var purple: bool = bool(get_meta(&"king_reborn_elite", false))
-	# Previous tuning gave the purple version huge jump/lunge probabilities,
-	# so almost every swing was a one-hit special. Choose a real 2-3 swing
-	# string on some openings, then FORCE 1-2 noncombo attacks afterward.
-	royal_combo_active = false
-	var eligible_combo: bool = purple and _target_in_melee_range()
-	if purple and royal_combo_lockout_attacks > 0:
-		royal_combo_lockout_attacks -= 1
-	elif eligible_combo and randf() < royal_combo_opener_chance:
-		royal_combo_active = true
-		royal_combo_lockout_attacks = randi_range(1, 2)
-	point_blank_attack = _target_at_point_blank() and not royal_combo_active
-	var gap: float = absf(target.global_position.x - global_position.x)
-	jump_slam = not royal_combo_active and gap <= jump_slam_range and randf() < jump_slam_chance and not test_move(global_transform, Vector2(0.0, -48.0))
-	lunge_attack = not royal_combo_active and not jump_slam and (not _target_in_melee_range() or (not point_blank_attack and randf() < close_lunge_chance))
-	advancing_slam = not royal_combo_active and not jump_slam and not lunge_attack and not point_blank_attack and randf() < advancing_slam_chance
+	solo_low_hp_dash_combo = false
+	point_blank_attack = _target_at_point_blank()
+	var gap := absf(target.global_position.x - global_position.x)
+	jump_slam = gap <= jump_slam_range and randf() < jump_slam_chance and not test_move(global_transform, Vector2(0.0, -48.0))
+	lunge_attack = not jump_slam and (not _target_in_melee_range() or (not point_blank_attack and randf() < close_lunge_chance))
+	advancing_slam = not jump_slam and not lunge_attack and not point_blank_attack and randf() < advancing_slam_chance
+	if _solo_low_hp_dash_unlocked() and not jump_slam:
+		var late_dash_roll: float = randf()
+		if late_dash_roll < 0.32:
+			lunge_attack = true
+			advancing_slam = false
+			point_blank_attack = false
+		elif late_dash_roll < 0.64:
+			lunge_attack = false
+			advancing_slam = true
+			point_blank_attack = false
+		elif late_dash_roll < 0.89:
+			lunge_attack = false
+			advancing_slam = false
+			point_blank_attack = false
+			solo_low_hp_dash_combo = true
 	combo_order.assign([Slash.DOWN, Slash.SIDE, Slash.FRONT])
-	if royal_combo_active:
-		# Real authored hit frames for every swing, not a damage simulation.
-		# Mostly 2-hit strings, occasionally 3; don't chain one after another.
-		match randi_range(0, 2):
-			0:
-				combo_order.assign([Slash.DOWN, Slash.FRONT])
-			1:
-				combo_order.assign([Slash.SIDE, Slash.DOWN])
-			_:
-				combo_order.assign([Slash.FRONT, Slash.SIDE])
-		if randf() < 0.40:
-			combo_order.append(Slash.SIDE if combo_order[0] == Slash.DOWN else Slash.FRONT)
-	elif purple:
-		# Between combo sequences, purple uses one clean special or normal
-		# slash; it shouldn't sneak in a second 3-swing string immediately.
-		var single_options: Array[Slash] = [Slash.DOWN, Slash.SIDE, Slash.FRONT]
-		combo_order.assign([single_options[randi_range(0, 2)]])
-	elif not jump_slam and not point_blank_attack and not lunge_attack and not advancing_slam and randf() < alternate_combo_chance:
+	if bool(get_meta(&"king_reborn_elite", false)) and not jump_slam and not lunge_attack and not advancing_slam and not point_blank_attack:
+		# Purple resurrection earns five/six authored strikes, not faster
+		# invisible hits. The windup for the opener remains visible.
+		combo_order.append(Slash.SIDE)
+		combo_order.append(Slash.DOWN)
+		if randf() < 0.50:
+			combo_order.append(Slash.FRONT)
+	if not jump_slam and not point_blank_attack and not lunge_attack and not advancing_slam and randf() < alternate_combo_chance:
+		var previous_length: int = combo_order.size()
 		if randf() < 0.5:
 			combo_order.assign([Slash.DOWN, Slash.FRONT, Slash.SIDE])
 		else:
 			combo_order.assign([Slash.SIDE, Slash.DOWN, Slash.FRONT])
+		if bool(get_meta(&"king_reborn_elite", false)):
+			combo_order.append(Slash.FRONT)
+			if previous_length >= 5:
+				combo_order.append(Slash.SIDE)
 	velocity.x = 0.0
 	lunge_backstep_remaining = 0.0
 	_face_player()
 	committed_target_x = target.global_position.x
 
 	if lunge_attack:
-		var direction: float = 1.0 if facing_right else -1.0
-		var retreat: float = clampf(lunge_max_distance - gap - lunge_past_target, 0.0, lunge_retreat_distance)
+		var direction := 1.0 if facing_right else -1.0
+		var retreat := clampf(lunge_max_distance - gap - lunge_past_target, 0.0, lunge_retreat_distance)
 		lunge_backstep_direction = -direction
 		lunge_backstep_remaining = _safe_backstep_distance(lunge_backstep_direction, retreat)
 		warning_duration = lunge_warning_seconds
 		warning_frame_count = 1 if _pose_attack(Slash.FRONT) else 0
 		sprite.self_modulate = attack_warning_color
 	else:
-		var opener: Slash = combo_order[0]
+		var opener := combo_order[0]
 		if point_blank_attack and not jump_slam:
 			opener = [Slash.DOWN, Slash.SIDE, Slash.FRONT][randi_range(0, 2)]
 			combo_order[0] = opener
@@ -805,12 +853,15 @@ func _start_attack_pattern() -> void:
 			warning_duration = maxf(warning_duration, point_blank_warning_seconds)
 		warning_frame_count = 0
 		if _pose_attack(opener):
-			var frame_count: int = sprite.sprite_frames.get_frame_count(sprite.animation)
+			var frame_count := sprite.sprite_frames.get_frame_count(sprite.animation)
 			warning_frame_count = clampi(_hit_frame(opener), 0, frame_count - 1)
 		sprite.self_modulate = attack_warning_color
-	warning_duration = maxf(0.78 if purple else 0.95, warning_duration)
+	# Keep the telegraph readable even if an existing .tscn Inspector override
+	# still contains the old short warning seconds. Strike speed is unchanged.
+	warning_duration = maxf(0.75 if bool(get_meta(&"king_reborn_elite", false)) else 0.95, warning_duration)
 	recovery_remaining = maxf(0.01, warning_duration)
-
+	if jump_slam and is_level3_arena_boss:
+		_start_jump_slam()
 
 func _warning_visible_at(world_position: Vector2) -> bool:
 	var visible_area := get_viewport_rect().grow(-12.0)
@@ -884,6 +935,8 @@ func _start_jump_slam() -> void:
 	mode = Mode.JUMP_SLAM
 	jump_slam_airborne = false
 	jump_slam_elapsed = 0.0
+	if is_level3_arena_boss:
+		sprite.self_modulate = attack_warning_color
 	velocity = Vector2(0.0, -absf(jump_slam_launch_speed))
 	if warning_frame_count > 0:
 		sprite.set_frame_and_progress(warning_frame_count - 1, 0.0)
@@ -917,6 +970,9 @@ func _pose_attack(slash: Slash) -> bool:
 
 
 func _begin_strike(slash: Slash) -> void:
+	if solo_low_hp_dash_combo and combo_index > 0 and is_instance_valid(target):
+		_face_player()
+		committed_target_x = target.global_position.x
 	active_slash = slash
 	attack_hit_done = false
 	strike_elapsed = 0.0
@@ -934,6 +990,8 @@ func _begin_strike(slash: Slash) -> void:
 	strike_duration = maxf(0.06, point_blank_swing_seconds if close_swing else combo_swing_seconds)
 	strike_dash_seconds = minf(strike_duration, combo_dash_seconds)
 	strike_dash_distance = combo_dash_distance
+	if solo_low_hp_dash_combo:
+		strike_dash_distance = maxf(strike_dash_distance, 70.0)
 	strike_first_frame = warning_frame_count if combo_index == 0 else 0
 	if advancing_slam:
 		strike_duration = maxf(0.06, advancing_slam_seconds)
@@ -949,7 +1007,7 @@ func _begin_strike(slash: Slash) -> void:
 		strike_duration = maxf(0.22, distance / maxf(1.0, lunge_speed))
 		strike_dash_seconds = strike_duration
 		strike_first_frame = mini(1, sprite.sprite_frames.get_frame_count(sprite.animation) - 1)
-	if jump_slam or close_swing or (not lunge_attack and _target_at_point_blank()):
+	if jump_slam or close_swing or (not lunge_attack and (not is_level3_arena_boss or (not advancing_slam and not solo_low_hp_dash_combo)) and _target_at_point_blank()):
 		strike_dash_distance = 0.0
 	strike_first_frame = clampi(strike_first_frame, 0, sprite.sprite_frames.get_frame_count(sprite.animation) - 1)
 	if close_swing and not jump_slam and combo_index == 0:
@@ -1021,6 +1079,154 @@ func _on_animation_finished() -> void:
 			queue_free()
 
 
+
+func _spawn_solo_arena_barriers() -> void:
+	if not engaged or mode == Mode.DEAD or not is_instance_valid(target):
+		return
+	if not solo_arena_walls.is_empty() or not is_level3_arena_boss:
+		return
+	var scene_root: Node = get_tree().current_scene
+	if not is_instance_valid(scene_root):
+		return
+	var left_x: float = minf(target.global_position.x, global_position.x) - solo_arena_fallback_padding
+	var right_x: float = maxf(target.global_position.x, global_position.x) + solo_arena_fallback_padding
+	var edge_a: Node2D = scene_root.find_child("bossclosearena", true, false) as Node2D
+	var edge_b: Node2D = scene_root.find_child("bossclosearena2", true, false) as Node2D
+	if is_instance_valid(edge_a) and is_instance_valid(edge_b):
+		if absf(edge_a.global_position.x - edge_b.global_position.x) >= 220.0:
+			left_x = minf(edge_a.global_position.x, edge_b.global_position.x)
+			right_x = maxf(edge_a.global_position.x, edge_b.global_position.x)
+			left_x = minf(left_x, minf(target.global_position.x, global_position.x) - 95.0)
+			right_x = maxf(right_x, maxf(target.global_position.x, global_position.x) + 95.0)
+	var wall_y: float = (target.global_position.y + global_position.y) * 0.5 - 60.0
+	var player_body: CollisionObject2D = target as CollisionObject2D
+	var wall_layer: int = 1
+	if is_instance_valid(player_body) and player_body.collision_mask != 0:
+		wall_layer = player_body.collision_mask
+	_create_solo_arena_wall(scene_root, "MenacingArenaBarrierLeft", Vector2(left_x, wall_y), wall_layer)
+	_create_solo_arena_wall(scene_root, "MenacingArenaBarrierRight", Vector2(right_x, wall_y), wall_layer)
+
+
+func _create_solo_arena_wall(scene_root: Node, wall_name: String, position_world: Vector2, wall_layer: int) -> void:
+	var wall: StaticBody2D = StaticBody2D.new()
+	wall.name = wall_name
+	wall.collision_layer = wall_layer
+	wall.collision_mask = 0
+	wall.add_to_group("king_arena_seal")
+	wall.add_to_group("menacing_arena_seal")
+
+	var collision: CollisionShape2D = CollisionShape2D.new()
+	var rectangle: RectangleShape2D = RectangleShape2D.new()
+	rectangle.size = Vector2(112.0, 200000.0)
+	collision.shape = rectangle
+	wall.add_child(collision)
+
+	var visual: Polygon2D = Polygon2D.new()
+	visual.polygon = PackedVector2Array([
+		Vector2(-56.0, -10000.0),
+		Vector2(56.0, -10000.0),
+		Vector2(56.0, 10000.0),
+		Vector2(-56.0, 10000.0)
+	])
+	visual.color = Color(0.005, 0.006, 0.011, 0.77)
+	visual.z_index = 35
+	wall.add_child(visual)
+
+	scene_root.add_child(wall)
+	wall.global_position = position_world
+	solo_arena_walls.append(wall)
+
+
+func _remove_solo_arena_barriers() -> void:
+	for wall: StaticBody2D in solo_arena_walls:
+		if is_instance_valid(wall) and not wall.is_queued_for_deletion():
+			wall.queue_free()
+	solo_arena_walls.clear()
+
+
+func _create_level3_boss_hud() -> void:
+	if not is_level3_arena_boss or not engaged or mode == Mode.DEAD:
+		return
+	if is_instance_valid(level3_boss_hud):
+		return
+	level3_boss_hud = CanvasLayer.new()
+	level3_boss_hud.name = "MenacingSkeletonBossHUD"
+	level3_boss_hud.layer = 110
+	var scene_root: Node = get_tree().current_scene
+	if not is_instance_valid(scene_root):
+		return
+	scene_root.add_child(level3_boss_hud)
+	var frame: VBoxContainer = VBoxContainer.new()
+	frame.name = "BossHeader"
+	frame.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	frame.anchor_left = 0.5
+	frame.anchor_right = 0.5
+	frame.offset_left = -246.0
+	frame.offset_right = 246.0
+	frame.offset_top = 16.0
+	frame.offset_bottom = 94.0
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level3_boss_hud.add_child(frame)
+	var title: Label = Label.new()
+	title.text = "MENACING SKELETON"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 17)
+	title.add_theme_color_override("font_color", Color(0.96, 0.82, 0.92))
+	title.add_theme_color_override("font_outline_color", Color(0.015, 0.010, 0.023))
+	title.add_theme_constant_override("outline_size", 4)
+	frame.add_child(title)
+	level3_boss_hud_bar = ProgressBar.new()
+	level3_boss_hud_bar.name = "MenacingHP"
+	level3_boss_hud_bar.custom_minimum_size = Vector2(470.0, 18.0)
+	level3_boss_hud_bar.min_value = 0.0
+	level3_boss_hud_bar.max_value = float(max_hp)
+	level3_boss_hud_bar.value = float(hp)
+	level3_boss_hud_bar.show_percentage = true
+	level3_boss_hud_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var bar_bg: StyleBoxFlat = StyleBoxFlat.new()
+	bar_bg.bg_color = Color(0.07, 0.02, 0.12, 0.94)
+	bar_bg.border_color = Color(0.80, 0.37, 0.98)
+	bar_bg.set_border_width_all(2)
+	level3_boss_hud_bar.add_theme_stylebox_override("background", bar_bg)
+	var bar_fill: StyleBoxFlat = StyleBoxFlat.new()
+	bar_fill.bg_color = Color(0.71, 0.21, 0.91)
+	level3_boss_hud_bar.add_theme_stylebox_override("fill", bar_fill)
+	frame.add_child(level3_boss_hud_bar)
+	level3_boss_hud_status = Label.new()
+	level3_boss_hud_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	level3_boss_hud_status.add_theme_font_size_override("font_size", 13)
+	level3_boss_hud_status.add_theme_color_override("font_color", Color(1.0, 0.86, 0.96))
+	frame.add_child(level3_boss_hud_status)
+	_update_level3_boss_hud()
+
+
+func _update_level3_boss_hud() -> void:
+	if not is_level3_arena_boss:
+		return
+	if is_instance_valid(level3_boss_hud_bar):
+		level3_boss_hud_bar.max_value = float(max_hp)
+		level3_boss_hud_bar.value = float(hp)
+		level3_boss_hud_bar.tooltip_text = "MENACING SKELETON HP: %d / %d" % [hp, max_hp]
+	if is_instance_valid(level3_boss_hud_status):
+		if hp <= 100 and hp > 0:
+			level3_boss_hud_status.text = "LAST STAND  |  %d / %d HP" % [hp, max_hp]
+		else:
+			level3_boss_hud_status.text = "PHASE %d  |  %d / %d HP" % [solo_boss_stage, hp, max_hp]
+
+
+func _remove_level3_boss_hud() -> void:
+	if is_instance_valid(level3_boss_hud) and not level3_boss_hud.is_queued_for_deletion():
+		level3_boss_hud.queue_free()
+	level3_boss_hud = null
+	level3_boss_hud_bar = null
+	level3_boss_hud_status = null
+
+
+func _exit_tree() -> void:
+	_remove_solo_arena_barriers()
+	_remove_level3_boss_hud()
+
+
 func _end_strike() -> void:
 	velocity.x = 0.0
 	combo_index += 1
@@ -1028,18 +1234,12 @@ func _end_strike() -> void:
 	if jump_slam or point_blank_attack or lunge_attack or advancing_slam or combo_index >= combo_order.size():
 		_finish_attack_pattern()
 		return
-	var followup_pause: float = (royal_combo_followup_warning if royal_combo_active
-		else (point_blank_followup_pause if point_blank_attack else combo_followup_pause))
+	var followup_pause := point_blank_followup_pause if point_blank_attack else combo_followup_pause
 	combo_pause_remaining = maxf(0.01, followup_pause)
-	# Show the upcoming swing pose throughout the short follow-up tell.
-	if royal_combo_active and combo_index < combo_order.size():
-		_pose_attack(combo_order[combo_index])
-		sprite.self_modulate = attack_warning_color
 	mode = Mode.RECOVER
 
 
 func _finish_attack_pattern() -> void:
-	royal_combo_active = false
 	sprite.self_modulate = original_sprite_color
 	if attacks_since_fatigue >= fatigue_threshold:
 		_start_exhausted()
@@ -1195,8 +1395,12 @@ func _on_parried() -> void:
 			amount = maxi(1, int(possible_damage))
 	hp = maxi(0, hp - amount)
 	health_changed.emit(hp, max_hp)
+	_update_level3_boss_hud()
 	if hp <= 0:
 		_die()
+		return
+	_update_solo_boss_stage()
+	if solo_stage_flash_remaining > 0.0:
 		return
 	mode = Mode.RECOVER
 	recovery_remaining = parry_cancel_recovery
@@ -1207,6 +1411,55 @@ func _on_parried() -> void:
 	sprite.self_modulate = Color(0.55, 0.97, 1.0)
 	_set_animation(animation_hurt)
 
+
+
+func _solo_low_hp_dash_unlocked() -> bool:
+	return is_level3_arena_boss and hp > 0 and hp <= 100
+
+
+func _update_solo_boss_stage() -> void:
+	if not is_level3_arena_boss or mode == Mode.DEAD:
+		return
+	if max_hp <= 0:
+		return
+	var hp_ratio: float = float(hp) / float(max_hp)
+	var next_stage: int = 1
+	if hp_ratio <= solo_stage_three_threshold:
+		next_stage = 3
+	elif hp_ratio <= solo_stage_two_threshold:
+		next_stage = 2
+	if next_stage <= solo_boss_stage:
+		return
+	while solo_boss_stage < next_stage:
+		solo_boss_stage += 1
+		pursuit_speed *= 1.06
+		attack_interval *= 0.91
+		endlag *= 0.91
+		jump_slam_chance = minf(0.48, jump_slam_chance + 0.04)
+		close_lunge_chance = minf(0.40, close_lunge_chance + 0.035)
+		alternate_combo_chance = minf(0.47, alternate_combo_chance + 0.06)
+		fatigue_after_min_attacks += 1
+		fatigue_after_max_attacks += 1
+		fatigue_duration_min *= 0.94
+		fatigue_duration_max *= 0.94
+	# A brief visible breather announces the new attack rhythm.
+	# The regular warning durations do not get shortened.
+	_update_level3_boss_hud()
+	if engaged:
+		mode = Mode.RECOVER
+		combo_index = 0
+		combo_pause_remaining = 0.0
+		attack_hit_done = true
+		jump_slam = false
+		lunge_attack = false
+		advancing_slam = false
+		point_blank_attack = false
+		velocity.x = 0.0
+		recovery_remaining = maxf(0.3, solo_stage_transition_pause)
+		attack_cd = maxf(attack_cd, 0.45)
+		solo_stage_flash_remaining = recovery_remaining
+		_set_animation(animation_idle)
+		queue_redraw()
 
 func _is_desperate() -> bool:
 	return hp > 0 and float(hp) <= float(max_hp) * desperation_hp_ratio
@@ -1318,9 +1571,11 @@ func _apply_damage(amount: int) -> void:
 		return
 	hp = maxi(0, hp - amount)
 	health_changed.emit(hp, max_hp)
+	_update_level3_boss_hud()
 	if hp <= 0:
 		_die()
 		return
+	_update_solo_boss_stage()
 	# V18: HP is real; flash WHITE for 0.12s without resetting the attack.
 	damage_white_flash = 0.12
 	# V17: Damage DOES NOT interrupt his warning, slash, dash, or combo.
@@ -1333,6 +1588,8 @@ func _die() -> void:
 	if mode == Mode.DEAD:
 		return
 	mode = Mode.DEAD
+	_remove_solo_arena_barriers()
+	_remove_level3_boss_hud()
 	royal_corpse_ready = false
 	royal_reviving_stage = 0
 	set_meta(&"king_royal_reviving", false)
@@ -1414,19 +1671,15 @@ func begin_royal_resurrection(reborn_hp: int = 110) -> bool:
 	if not can_be_royally_revived():
 		return false
 	royal_corpse_ready = false
-	# Stage 3 now means the corpse itself plays its authored death frames
-	# backward. Stages 1/2 and their misleading fully-alive ghost are gone.
-	royal_reviving_stage = 3
+	royal_reviving_stage = 1
 	royal_revive_elapsed = 0.0
 	set_meta(&"king_royal_reviving", true)
 	set_meta(&"king_reborn_elite", true)
 	set_meta(&"king_guard_buffed", true)
 	set_meta(&"king_royal_revive_count", int(get_meta(&"king_royal_revive_count", 0)) + 1)
 	# Reuses the SAME body and hitboxes. No duplicated active enemy node.
-	max_hp = maxi(45, reborn_hp)
-	# The body gradually regains HP as it reconstructs. It cannot fight or
-	# be hit until the last reverse-death frame is complete.
-	hp = 1
+	max_hp = maxi(90, reborn_hp)
+	hp = max_hp
 	pursuit_speed = 205.0
 	attack_interval = 0.22
 	attack_interval_random = 0.09
@@ -1465,21 +1718,56 @@ func begin_royal_resurrection(reborn_hp: int = 110) -> bool:
 	fatigue_duration_max = 1.75
 	tactical_retreat_chance = 0.16
 	activation_radius = 1000.0
-	# Absolutely NO separate fully-formed ghost or clone during resurrection.
-	# Keep this same dead sprite, start on the final death frame, and reverse
-	# each frame slowly until its living appearance is reached.
+	# Purple shading belongs to the resurrected skeleton, not the corpse.
 	original_sprite_color = Color(0.72, 0.38, 1.0)
+	sprite.self_modulate = Color(0.49, 0.24, 0.70)
 	if is_instance_valid(royal_revive_preview):
 		royal_revive_preview.queue_free()
-	royal_revive_preview = null
-	sprite.stop()
-	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_death):
-		var final_frame: int = maxi(0, sprite.sprite_frames.get_frame_count(animation_death) - 1)
-		sprite.animation = animation_death
-		sprite.set_frame_and_progress(final_frame, 0.0)
-	# Subtle color recovery on the original body, not an apparition above it.
-	sprite.self_modulate = Color(0.49, 0.24, 0.70)
+	royal_revive_preview = AnimatedSprite2D.new()
+	royal_revive_preview.name = "RoyalResurrectionGhost"
+	royal_revive_preview.sprite_frames = sprite.sprite_frames
+	royal_revive_preview.transform = sprite.transform
+	royal_revive_preview.flip_h = sprite.flip_h
+	royal_revive_preview.centered = sprite.centered
+	royal_revive_preview.offset = sprite.offset
+	royal_revive_preview.z_index = sprite.z_index + 2
+	royal_revive_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	royal_revive_preview.modulate = Color(0.74, 0.40, 1.0, 0.0)
+	add_child(royal_revive_preview)
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_idle):
+		royal_revive_preview.animation = animation_idle
+		royal_revive_preview.frame = 0
+	royal_revive_preview.stop()
+	royal_revive_preview.scale = sprite.scale * 1.12 * maxf(1.05, royal_reborn_visual_multiplier)
+	_align_royal_ghost_feet_to_corpse()
 	return true
+
+func _align_royal_ghost_feet_to_corpse() -> void:
+	# The idle-frame ghost is taller than the collapsed death-frame corpse.
+	# Align its bottom to the real collider's floor, not the corpse sprite's
+	# center. This is why the enlarged fade-in previously floated in midair.
+	if not is_instance_valid(royal_revive_preview):
+		return
+	if not body_shape.shape is RectangleShape2D:
+		royal_revive_preview.position = sprite.position
+		return
+	var body_rect: RectangleShape2D = body_shape.shape as RectangleShape2D
+	var feet_y: float = body_shape.position.y + body_rect.size.y * absf(body_shape.scale.y) * 0.5
+	var frame_texture: Texture2D = null
+	if (royal_revive_preview.sprite_frames != null
+		and royal_revive_preview.sprite_frames.has_animation(royal_revive_preview.animation)
+		and royal_revive_preview.sprite_frames.get_frame_count(royal_revive_preview.animation) > 0):
+		frame_texture = royal_revive_preview.sprite_frames.get_frame_texture(royal_revive_preview.animation, 0)
+	if frame_texture == null:
+		royal_revive_preview.position = sprite.position
+		return
+	var image_height: float = float(frame_texture.get_height())
+	var bottom_offset: float = (image_height * 0.5 if royal_revive_preview.centered else image_height)
+	bottom_offset += royal_revive_preview.offset.y
+	royal_revive_preview.position = Vector2(
+		body_shape.position.x - royal_revive_preview.offset.x * royal_revive_preview.scale.x,
+		feet_y - bottom_offset * absf(royal_revive_preview.scale.y) - 2.0
+	)
 
 
 func _apply_royal_reborn_growth() -> void:
@@ -1506,31 +1794,45 @@ func _apply_royal_reborn_growth() -> void:
 
 
 func _update_royal_resurrection(delta: float) -> void:
-	# The resurrected Menacing IS the corpse on the floor. Do not create a
-	# complete idle sprite and fade it in ahead of the real resurrection.
-	if royal_reviving_stage != 3:
-		return
 	royal_revive_elapsed += delta
-	# Preserve the King's existing casting timer: old ghost/hold/reverse
-	# durations now all contribute to ONE gradual reverse-death sequence.
-	var resurrection_duration: float = maxf(3.2,
-		royal_revive_ghost_seconds + royal_revive_hold_seconds + royal_revive_reverse_seconds)
-	var progress: float = clampf(royal_revive_elapsed / resurrection_duration, 0.0, 1.0)
-	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_death):
-		var frame_total: int = sprite.sprite_frames.get_frame_count(animation_death)
-		if frame_total > 0:
-			# Reverse through EVERY authored death frame, including both ends.
-			var reverse_step: int = mini(frame_total - 1, int(floor(progress * float(frame_total))))
-			var reverse_frame: int = frame_total - 1 - reverse_step
-			sprite.animation = animation_death
+	if royal_reviving_stage == 1:
+		# 2.2 seconds: a transparent purple ghost slowly forms ABOVE the corpse.
+		var progress: float = clampf(royal_revive_elapsed / maxf(0.05, royal_revive_ghost_seconds), 0.0, 1.0)
+		if is_instance_valid(royal_revive_preview):
+			royal_revive_preview.modulate.a = 0.88 * progress
+			royal_revive_preview.scale = sprite.scale * maxf(1.05, royal_reborn_visual_multiplier) * lerpf(1.12, 1.0, progress)
+			_align_royal_ghost_feet_to_corpse()
+		if progress >= 1.0:
+			royal_reviving_stage = 2
+			royal_revive_elapsed = 0.0
+		return
+	if royal_reviving_stage == 2:
+		# 0.9 seconds: hold the visible ghost before the body moves at all.
+		var hold_progress: float = clampf(royal_revive_elapsed / maxf(0.05, royal_revive_hold_seconds), 0.0, 1.0)
+		if is_instance_valid(royal_revive_preview):
+			royal_revive_preview.modulate.a = 0.88 * (1.0 - 0.15 * hold_progress)
+			_align_royal_ghost_feet_to_corpse()
+		if hold_progress >= 1.0:
+			if is_instance_valid(royal_revive_preview):
+				royal_revive_preview.queue_free()
+			royal_revive_preview = null
+			royal_reviving_stage = 3
+			royal_revive_elapsed = 0.0
+			# The ghost merges into a larger, physically hittable royal body.
+			_apply_royal_reborn_growth()
+			# Now the enlarged body plays its death frames backward.
 			sprite.stop()
-			sprite.set_frame_and_progress(reverse_frame, 0.0)
-	hp = clampi(int(round(lerpf(1.0, float(max_hp), progress))), 1, max_hp)
-	# Gradually restore the body's royal purple, keeping the same visible sprite.
-	sprite.self_modulate = Color(0.49, 0.24, 0.70).lerp(original_sprite_color, progress)
-	if progress >= 1.0:
-		_finish_royal_resurrection()
-
+			sprite.self_modulate = original_sprite_color
+		return
+	if royal_reviving_stage == 3:
+		# 1.6 seconds: clearly visible reversed death animation.
+		var reverse_progress: float = clampf(royal_revive_elapsed / maxf(0.05, royal_revive_reverse_seconds), 0.0, 1.0)
+		if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation_death):
+			var last: int = maxi(0, sprite.sprite_frames.get_frame_count(animation_death) - 1)
+			sprite.animation = animation_death
+			sprite.set_frame_and_progress(clampi(int(floor(float(last) * (1.0 - reverse_progress))), 0, last), 0.0)
+		if reverse_progress >= 1.0:
+			_finish_royal_resurrection()
 
 func _finish_royal_resurrection() -> void:
 	if royal_reviving_stage != 3 or mode != Mode.DEAD:
@@ -1539,8 +1841,6 @@ func _finish_royal_resurrection() -> void:
 	royal_revive_elapsed = 0.0
 	set_meta(&"king_royal_reviving", false)
 	royal_corpse_ready = false
-	# Grow the restored living body only after the last reverse-death frame.
-	_apply_royal_reborn_growth()
 	# Lift half of the physical height increase once, preserving feet-on-floor.
 	if royal_reborn_floor_lift > 0.0:
 		global_position.y -= royal_reborn_floor_lift

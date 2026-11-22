@@ -2,7 +2,7 @@ extends Node
 
 @export_group("Cena final")
 @export var player_path: NodePath = ^"../Player"
-@export_range(1.0, 15.0, 0.5) var tempo_observando: float = 5.0
+@export_range(1.0, 15.0, 0.5) var tempo_observando: float = 6.0
 @export_range(0.4, 4.0, 0.1) var duracao_escurecer: float = 1.8
 @export_range(0.2, 4.0, 0.1) var silencio_no_escuro: float = 1.4
 
@@ -11,24 +11,30 @@ extends Node
 @export_range(0.01, 0.12, 0.005) var intervalo_letra: float = 0.04
 @export_range(0.5, 6.0, 0.1) var tempo_leitura: float = 2.1
 @export_range(0.1, 2.0, 0.05) var duracao_desaparecer: float = 0.55
-@export_range(1.0, 8.0, 0.5) var pausa_antes_do_fim: float = 3.0
+@export_range(1.0, 8.0, 0.5) var pausa_antes_do_fim: float = 5.0
+@export_range(0.0, 5.0, 0.1) var pausa_entre_falas: float = 1.9
 
 const FALAS: Array[String] = [
 	"Eu... escapei?",
-	"Estou mesmo de volta à superfície?",
-	"Por que aquelas relíquias eram tão bem guardadas?",
-	"Não era só por serem antigas. Elas me salvaram... mais de uma vez.",
-	"Será que tinham mesmo algum tipo de magia?",
-	"Magia capaz de salvar alguém da morte...?",
-	"Talvez seja por isso que eu conseguia enfrentar aquelas criaturas.",
-	"As sombras... o vazio... aquele rei.",
-	"Eu conseguia feri-los. Mas sem as relíquias...?",
-	"Talvez a primeira daquelas coisas já tivesse acabado comigo.",
-	"Bom... pelo menos eu saí de lá.",
+	"Esse é mesmo o céu?",
+	"Eu achei que não ia sair de lá.",
 	"...",
+	"Por que aquelas relíquias eram tão bem guardadas?",
+	"No começo, achei que fossem só coisas antigas.",
+	"Mas elas me salvaram. Mais de uma vez.",
+	"Naquela queda... elas apareceram de novo.",
+	"...",
+	"Será que tinham mesmo algum tipo de magia?",
+	"E aqueles monstros? Como foi que eu consegui lutar contra eles?",
+	"Eu mal conseguia encarar aquelas sombras.",
+	"Mesmo assim, meus golpes funcionavam.",
+	"Sem as relíquias, talvez a primeira sombra já tivesse dado conta de mim.",
+	"...",
+	"Eu não sei o que tinha naquele lugar.",
+	"E não vou voltar pra descobrir.",
+	"Mas eu saí. Estou aqui.",
 	"E agora...?"
 ]
-
 enum Etapa {
 	ESPERANDO_BRANCO,
 	OBSERVANDO,
@@ -37,6 +43,7 @@ enum Etapa {
 	DIGITANDO,
 	LENDO,
 	SUMINDO,
+	PAUSA_ENTRE_FALAS,
 	ESPERANDO_FIM,
 	MOSTRANDO_FIM,
 	CONCLUIDO
@@ -47,6 +54,8 @@ var _tempo: float = 0.0
 var _relogio_letras: float = 0.0
 var _indice_fala: int = 0
 var _letras: int = 0
+var _pausa_atual: float = 0.0
+var _fala_anterior: String = ""
 var _player: CharacterBody2D = null
 var _camada: CanvasLayer = null
 var _fundo: ColorRect = null
@@ -112,14 +121,22 @@ func _process(delta: float) -> void:
 				if _indice_fala >= FALAS.size():
 					_mudar_etapa(Etapa.ESPERANDO_FIM)
 				else:
-					_comecar_proxima_fala()
+					_pausa_atual = pausa_entre_falas
+					if _fala_anterior == "...":
+						_pausa_atual += 2.0
+					_mudar_etapa(Etapa.PAUSA_ENTRE_FALAS)
+
+		Etapa.PAUSA_ENTRE_FALAS:
+			_tempo += delta
+			if _tempo >= _pausa_atual:
+				_comecar_proxima_fala()
 
 		Etapa.ESPERANDO_FIM:
 			_tempo += delta
 			if _tempo >= pausa_antes_do_fim:
-					_mudar_etapa(Etapa.MOSTRANDO_FIM)
-					_final.visible = true
-					_final.modulate.a = 0.0
+				_mudar_etapa(Etapa.MOSTRANDO_FIM)
+				_final.visible = true
+				_final.modulate.a = 0.0
 
 		Etapa.MOSTRANDO_FIM:
 			_tempo += delta
@@ -224,6 +241,7 @@ func _comecar_proxima_fala() -> void:
 		return
 	var texto_atual: String = FALAS[_indice_fala]
 	_indice_fala += 1
+	_fala_anterior = texto_atual
 	_fala.text = texto_atual
 	_fala.visible_characters = 0
 	_fala.modulate.a = 1.0
