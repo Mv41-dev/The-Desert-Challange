@@ -1,6 +1,6 @@
 # Player V54: dash-attack softlock recovery, animation restore, input buffering
 # Player V53: Level 5 attack-hitbox optimization + temporary Level 6 ability unlock
-# Based on V52: artifact progression, chalice shield, double jump, 40ms dash cooldown
+# Based on V52: artifact progression, chalice shield, double jump, 40ms cooldown after dash
 # Based on V51: King hurtbox integrated into verified V50 attack system; movement unchanged
 # V50 - conservative patch on user-provided WORKING player.gd baseline.
 extends CharacterBody2D
@@ -211,7 +211,7 @@ var recuperacao_dano_restante: float = 0.0
 var dash_remaining: float = 0.0
 var dash_direction: float = 1.0
 var dash_used: bool = false # legacy variable, no longer gates the dash
-@export_range(0.04, 1.0, 0.01) var dash_cooldown: float = 0.04
+@export_range(0.30, 1.0, 0.01) var dash_cooldown: float = 0.30
 var dash_cooldown_remaining: float = 0.0
 @export_range(1.0, 120.0, 1.0) var calice_shield_recharge: float = 30.0
 var calice_shield_cooldown: float = 0.0
@@ -225,6 +225,7 @@ var wall_jump_lock: float = 0.0
 # Level 6 temporarily grants the four artifact abilities without collecting
 # or recording any artifact; levels 1-5 still require the real relics.
 var todas_habilidades_fase_seis: bool = false
+var fallidentifier_ativo: bool = false
 
 # Sword shape nodes are stable; caching avoids recursive tree searches every
 # physics tick during a swing. Geometry still uses their current transforms.
@@ -281,6 +282,8 @@ func _register_ability_key(action: StringName, key: Key) -> void:
 
 func _update_artifact_movement(delta: float) -> bool:
 	if estado != Estado.NORMAL and estado != Estado.ATAQUE:
+		if dash_remaining > 0.0:
+			dash_cooldown_remaining = maxf(0.30, dash_cooldown)
 		dash_remaining = 0.0
 		slide_remaining = 0.0
 		_try_stand()
@@ -320,7 +323,6 @@ func _update_artifact_movement(delta: float) -> bool:
 		dash_direction = signf(direction) if absf(direction) > 0.01 else (1.0 if olhando_direita else -1.0)
 		_virar(dash_direction)
 		dash_remaining = dash_duration
-		dash_cooldown_remaining = maxf(0.04, dash_cooldown)
 		dash_used = true
 	if dash_remaining > 0.0:
 		# LMB during a dash is queued for immediately after the dash. It
@@ -335,6 +337,7 @@ func _update_artifact_movement(delta: float) -> bool:
 		if is_on_wall():
 			dash_remaining = 0.0
 		if dash_remaining <= 0.0:
+			dash_cooldown_remaining = maxf(0.30, dash_cooldown)
 			# End the dash visually on the very same physics frame instead
 			# of leaving its final animation frame active indefinitely.
 			anim.speed_scale = 1.0
@@ -359,7 +362,22 @@ func _update_artifact_movement(delta: float) -> bool:
 		move_and_slide()
 		_atualizar_animacao_movimento(direction)
 		return true
-	if not is_on_floor() and is_on_wall_only() and velocity.y >= 0.0 and _tem_habilidade("escaravelho"):
+	var arena_seal_contact: bool = false
+	for collision_index: int in range(get_slide_collision_count()):
+		var contact: KinematicCollision2D = get_slide_collision(collision_index)
+		if contact == null:
+			continue
+		var collider: Object = contact.get_collider()
+		if collider is Node and (collider as Node).is_in_group("king_arena_seal"):
+			arena_seal_contact = true
+			break
+	if (
+		not arena_seal_contact
+		and not is_on_floor()
+		and is_on_wall_only()
+		and velocity.y >= 0.0
+		and _tem_habilidade("escaravelho")
+	):
 		var normal := get_wall_normal()
 		if direction * normal.x < -0.01:
 			if tempo_buffer_restante > 0.0:
@@ -647,6 +665,7 @@ func _ready() -> void:
 	add_to_group(
 		"player"
 	)
+	_conectar_fallidentifier()
 
 
 	posicao_inicial = global_position
@@ -703,6 +722,48 @@ func _ready() -> void:
 	)
 
 
+func _conectar_fallidentifier() -> void:
+	var cena: Node = get_parent()
+	if cena == null:
+		return
+	var area: Area2D = cena.find_child("fallidentifier", true, false) as Area2D
+	if area == null:
+		return
+	area.monitoring = true
+	area.collision_mask |= collision_layer
+	if not area.body_entered.is_connected(_ao_entrar_fallidentifier):
+		area.body_entered.connect(_ao_entrar_fallidentifier)
+
+
+func _ao_entrar_fallidentifier(corpo: Node2D) -> void:
+	if corpo != self or fallidentifier_ativo:
+		return
+	fallidentifier_ativo = true
+	tempo_invulneravel_restante = 9999.0
+	velocity = Vector2.ZERO
+	dash_remaining = 0.0
+	slide_remaining = 0.0
+	wall_jump_lock = 0.0
+	tempo_buffer_restante = 0.0
+	tempo_coyote_restante = 0.0
+	recuperacao_dano_restante = 0.0
+	golpe_em_fila = false
+	atingidos_no_golpe.clear()
+	miniboss_parry_armed = false
+	estado = Estado.NORMAL
+	anim.speed_scale = 1.0
+	anim.modulate.a = 1.0
+	if is_instance_valid(attack_area_j):
+		attack_area_j.monitoring = false
+	for grupo: StringName in [&"inimigo", &"necromancer", &"menacing_skeleton", &"skeleton_skull"]:
+		for inimigo: Node in get_tree().get_nodes_in_group(grupo):
+			if inimigo == self or not is_instance_valid(inimigo):
+				continue
+			inimigo.set_physics_process(false)
+			inimigo.set_process(false)
+	_tocar(&"fall")
+
+
 # =====================================================
 # PHYSICS
 # =====================================================
@@ -710,6 +771,24 @@ func _ready() -> void:
 func _physics_process(
 	delta: float
 ) -> void:
+	if fallidentifier_ativo:
+		_atualizar_temporizador_queda(delta)
+		velocity.x = 0.0
+		if not is_on_floor():
+			var velocidade_limite: float = MAX_FALL_SPEED
+			var gravidade_atual: float = GRAVITY * gravidade_queda
+			if queda_profunda_ativa:
+				var tempo_extra: float = maxf(0.0, tempo_caindo - tempo_antes_queda_profunda)
+				gravidade_atual *= pow(crescimento_exponencial_queda, tempo_extra)
+				velocidade_limite = velocidade_maxima_queda_profunda
+			velocity.y = minf(velocity.y + gravidade_atual * delta, velocidade_limite)
+		elif velocity.y > 0.0:
+			velocity.y = 0.0
+		move_and_slide()
+		_atualizar_escuridao_queda()
+		_atualizar_animacao_movimento(0.0)
+		return
+
 	_atualizar_temporizador_queda(
 		delta
 	)
@@ -1199,6 +1278,9 @@ func forcar_tela_preta() -> void:
 # =====================================================
 
 func resetar_para_inicio() -> void:
+	fallidentifier_ativo = false
+	if is_instance_valid(attack_area_j):
+		attack_area_j.monitoring = true
 	dash_remaining = 0.0
 	dash_used = false
 	dash_cooldown_remaining = 0.0
@@ -1392,6 +1474,8 @@ func is_swinging() -> bool:
 
 
 func solicitar_ataque() -> void:
+	if fallidentifier_ativo:
+		return
 	if dash_remaining > 0.0:
 		golpe_em_fila = true
 		return
@@ -1710,6 +1794,8 @@ func tomar_dano(
 	quantidade: int,
 	origem: Vector2 = Vector2.ZERO
 ) -> void:
+	if fallidentifier_ativo:
+		return
 	if (
 		quantidade <= 0
 		or estado == Estado.MORTO
@@ -1800,6 +1886,8 @@ func tomar_dano(
 # =====================================================
 
 func morrer() -> void:
+	if fallidentifier_ativo:
+		return
 	if estado == Estado.MORTO:
 		return
 

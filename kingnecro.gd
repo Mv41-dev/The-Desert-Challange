@@ -1,110 +1,3 @@
-# KING NECRO V80: persistent Phase 3 world fog and optional five-artifact ending.
-# Preserves V79/V78 world fog renderer, V74 HUD canvas, all test keys, and combat.
-# KING NECRO V78: genuinely BLACK opaque-centered world fog and black motes.
-# Fixes the V77 too-faint charcoal texture/low-alpha multiplication;
-# preserves V76 world anchoring, V74 working HUD-canvas drawing, and all tests.
-# KING NECRO V77: true black-to-dark-grey fog and ash colors only.
-# All V76 world anchoring, visibility, test keys and boss mechanics preserved.
-# KING NECRO V76: restores V74's CONFIRMED visible HUD-canvas fog and ash,
-# but PROJECTS stable world-grid coordinates to screen pixels each frame.
-# Player passes through stationary world fog as camera scrolls; no world CanvasLayer.
-# V77 removes lavender/white from fog and particles; vignette remains screen-space.
-# Same boss combat, same test keys. B has a readable 42% black overlay.
-# KING NECRO V74: draw fog, ash, vignette and the test readout on the
-# existing visible player-HUD CanvasLayer (or a safe fallback layer 850).
-# Unlike V73, no atmospheric effect relies on the missing layer-1000 UI.
-# KING NECRO V73: atmospheric UI-canvas renderer: visible fog + hand-animated ash, existing darkness lab intact.
-# KING NECRO V72: SHOW fog and particles above proven darkness tests, using shader-free procedural fog and CPU particles
-# KING NECRO V71: V69 DARKNESS LAB + V70 VOID FOG/PARTICLES TESTS
-# KING NECRO V70: atmospheric Void darkness: reliable V69 key-4 render route,
-# drifting procedural fog, edge vignette, and screen-space GPU smoke / ash.
-# No test keys, debug panel, or changes to the boss's combat and phase logic.
-# KING NECRO V68: restore the ORIGINAL working V55 KingPhaseDarkness CanvasLayer/ColorRect mechanism.
-# Applies the same black overlay during phase 3 and finale; no F9/K, no extra black overlays.
-# KING NECRO V67 (Level 6): darkening on the proven boss-title CanvasLayer;
-# K toggles an independent darkness test (no debugger shortcuts).
-# KING NECRO V66 (Level 6): viewport-wide blackout CanvasLayer independent
-# of CanvasModulate/parallax canvases. Hold F9 to test 70% blackout even
-# outside phase 3. HUD/title/victory text remain above the effect.
-# KING NECRO V65 (Level 6): FIX invisible darkness. Animate CanvasModulate
-# on the actual Level6 world canvas, not a ColorRect in an unrelated layer.
-# Keep boss/Player HUD and cinematic text in CanvasLayers unaffected.
-# KING NECRO V64 (Level 6): Root-viewport darkness overlay above the game world,
-# screen-space offsets (no conflicting stretched anchors, no per-frame warnings).
-# KING NECRO V62 (Level 6): Fix the world darkening overlay by setting actual ColorRect alpha,
-# raising the layer above world visuals (but below HUD), and introducing darkness during final climb.
-# KING NECRO V61 (Level 6): King waits between summit markers before trigger;
-# on phase3startdetection he begins teleporting among phase-three markers
-# every 3.7s. Final duel ONLY has Light Spears and arena-wide Void slashes.
-# Strong progressive darkness and gentle last-three-hit void pulse.
-# KING NECRO V60 (Level 6): Ten-hit stationary summit duel, aimed slashes
-# emitted from the boss between phase-three markers, animated warning,
-# stronger progressive darkness, and immediate Void rise at summit detection.
-# KING NECRO V59 (Level 6): Final Void ascent starts ONLY inside phase3startdetection;
-# thinner, faster, ONE-AT-A-TIME warning slashes and hitboxes.
-# KING NECRO V58 (Level 6): Last climb uses telegraphed instant slashes,
-# not downward sliding lasers. Press 2 in phase two to test the final ascent.
-# All other V57 systems preserved.
-# King Necromancer V57: fix boss3phase TileMapLayer being permanently disabled.
-# Reveal phase-three platforms when the final ascent begins, with their tile collisions.
-# King Necromancer V56: Level 6 phase-three ascent, 3-hit final duel, cinematic void implosion.
-# KING V55: intangible Void King body, high-only Light Spear formations,
-# real terrain collisions (no noclip), and pronounced phase-one/guard darkening.
-# KING V54: Level 6 skull volleys REPLACED by staggered 5-7 Light Spears.
-# Each spear fades in separately, follows the player for 0.725s, locks for
-# the final 0.025s, then launches. Rare pair spawns; no formation overlaps.
-# KING V53: phase-one debug key 1, compact light spears, and opening Void emergence.
-# KING V52: smaller two-line Void King title; ensure rising void begins with phase 2.
-# KING V51: RisingVoid active on first title, rises at phase-2 trigger; cinematic two-line VOID KING title.
-# KING V48: +75 HP to each Level 6 phase; longer FIRST-entrance-only title;
-# no second-phase title; immediately steering but momentum-limited accelerating / braking Void skulls.
-# KING V47: cinematic Void title (1s) before both shake entrances, zoomed-out centered phase-two camera,
-# raised marker appearances, 360-degree diverse skull origins, extended sweeping wall, marker-anchored cut patterns.
-# KING V46: fix phase-two marker naming mismatch (actual scene: 2phasebosspawns), prevent repeated warning spam.
-# V44: Phase-2 supervisor in _process (independent from boss physics/attack loop), marker-height trigger, guaranteed shake/reveal; preserves V43 attacks.
-# KING V42: reliable phase-2 detection and marker spawn; stronger second entrance shake; replace ball-headed VoidDashEcho with clean cut combos.
-# KING V41: no white-orb offensive cast pose; 3.3-second dash-through Void wall with dense drifting afterimages.
-# KING V39 LEVEL 6: hard phase-marker lock, no purple crown, void elite hit flash, boss gauntlet spells, swords/echoes, phased skulls, cinematic departure.
-# KING V38 LEVEL 6: reliable sword hits, white shader hit-flash + impact motes, black/white royal lasers.
-# V37 LEVEL 6: 150HP phase 1 -> 1HP shield and one Void Menacing; 2s crescendo shake; 2phaseidentifier delayed 150HP phase 2; new marker-based spells; smooth darkening; no summons in phase 2.
-# V34 - smaller King body and sword hurtbox; full-screen alternating laser/safe-space columns with offset shifting over three waves
-# V33 - bosscolider / BossNoSpawnZone protection for King teleports and spectral skull origins; lasers and skeletons unchanged
-# V32 - +100 HP, three shifting-safe-lane pillar waves, new combo patterns, moving distant guard perches, 1s skull phasing
-# V31 - +100 boss HP, new post-guard finale attacks, strong arena-spanning five-bounce ricochets and uncropped beam visuals
-# V35 - +0.22s extra visible warning on every royal laser before its damage frame
-# V30 - teleports run on their own 4-second clock even during long royal laser sequences; robust collision-only perch search
-# V29 - restore reliable perches: reject underground teleport but allow giant art above camera; hold/attack cadence fixed
-# V24 - aerial prowling, reflected X-slashes, combo patterns, shorter purple guards
-# V23 - keep massive King visually above/outside guard fights; exposed slash storm; preserve V16 damage
-# V22 - keep boss high, compact shield visuals, active post-shield attacks, verified V16 damage
-# V21 - restored verified V16 damage/hurtbox path, with high natural guard hover
-# V27 - Actual teleports in tight zoomed-in arenas: physical-ground safety, not whole-art screen fit
-# V26 - Reliable multi-perch Radiance teleports, with wider safe destination search
-# V25 - Radiance-style 4-second teleport perches with reversed death reveal; long infinite-looking ricochets
-# V16 - independent King patrol (no player X/Y tracking); fixed-position guard retreat
-# V15 - King retreats to the far edge while his Menacing guards fight; no new teleports or player changes
-# V14 - 1% royal ward with hit repulsion; slash-heavy Last Stand; slower rarer skull volleys
-# King Necromancer V13: guaranteed Last Stand after first purple guard, King revival casting animation, bigger skulls
-# King Necromancer V12: one purple guard at a time, no King spells during revival/fight, properly spaced revivals
-# King Necromancer V11: repeated in-place royal resurrection; real hitbox-width slashes; active king
-# King Necromancer V10: true sword damage, post-shield Radiance combat, single purple resurrected Menacing
-# King Necromancer V9.8: independent guard roles + readable warning overrides
-# V9.7 - timed shield at 10s, two Menacing guards, automatic shield shatter, rare attacks while guards fight, HUD on first encounter
-# V9.6 - safer distant spectral skull spawns, delayed and eased tracking
-# V9.5 - HUD visibility, immediate black-hit feedback, global post-attack 1s pause
-# V9.4 - slower skull spawn rhythm, smaller King, clearer damage feedback
-# V9.3 - stronger spectral skull tracking; remove unreachable directional skull walls
-# V9.2 - Fix shield pulse reference after V9.1 rename
-# V9.1 - Fix duplicate local pulse declaration in shield drawing
-# V9 - two-stage Grave Monarch: unshielded solo, black hit flash; single buffed Menacing shield phase; shield break then defenseless execution; larger skulls
-# V8 - rapid slashes, 4-wave Radiance-style skull walls with guaranteed safe gaps, Menacing 25HP + readable tells
-# V7 - King hittable at all active times; arena-spanning thick purple slashes; orbiting spectral skulls with 0.5s warnings and 15s volley cooldown
-# V6 - royal slash telegraphs, fast expansion/fade, two Radiance-like attack patterns
-# V49 - Level 6 skulls had a 75ms gap, too short to be visually distinguishable.
-# V50 - A visible 750ms (0.75s) gap between spawns; strict max 4 skulls, one per timer event.
-# KING NECROMANCER - Independent boss scene, no Level 5 auto-detection
-# Attach ONLY to the kingnecro.tscn root CharacterBody2D.
-# Preserves V5 Grave Monarch combat, Menacing-only guards and platform revival.
 extends CharacterBody2D
 
 signal health_changed(current: int, maximum: int)
@@ -119,7 +12,7 @@ const REVIVE_LOOP_FIRST := 4
 const REVIVE_LOOP_LAST := 7
 const MAX_BUFFED_SKELETONS := 2
 const LEVEL6_SKULL_MAX: int = 4
-const LEVEL6_SKULL_STAGGER_SECONDS: float = 0.75 # 750ms, 75% of one second
+const LEVEL6_SKULL_STAGGER_SECONDS: float = 0.75
 
 @export var max_hp: int = 30
 @export var activation_range: float = 280.0
@@ -137,11 +30,8 @@ const LEVEL6_SKULL_STAGGER_SECONDS: float = 0.75 # 750ms, 75% of one second
 @export var skull_speed: float = 245.0
 @export var skull_damage: int = 1
 
-# This script is ONLY for the kingnecro.tscn scene; every instance is the King.
-# Normal necromancers continue using necromancer.gd and never become Kings.
 @export_group("King Necromancer")
 @export_range(40, 600, 5) var king_max_hp: int = 340
-# Multiplies this scene's original sprite scale to make the King imposing.
 @export_range(3.5, 7.0, 0.1) var king_visual_scale: float = 4.6
 @export_range(1.0, 2.0, 0.05) var king_hover_speed_multiplier: float = 1.45
 @export_range(1.0, 2.0, 0.05) var king_skull_speed_multiplier: float = 1.18
@@ -164,13 +54,10 @@ const LEVEL6_SKULL_STAGGER_SECONDS: float = 0.75 # 750ms, 75% of one second
 @export_range(10.0, 40.0, 0.5) var king_skull_volley_cooldown: float = 20.0
 @export_range(0.25, 0.8, 0.05) var king_skull_charge_duration: float = 0.50
 @export_range(0.5, 4.0, 0.1) var king_skull_terrain_phase_time: float = 1.0
-# Stronger but still rate-limited pursuit: no instantaneous 180-degree turns.
 @export_range(0.7, 5.0, 0.1) var king_skull_turn_rate: float = 2.15
 @export_range(170.0, 420.0, 10.0) var king_skull_min_spawn_distance: float = 260.0
 @export_range(0.0, 0.8, 0.05) var king_skull_tracking_delay: float = 0.30
 @export_range(0.1, 1.2, 0.05) var king_skull_tracking_ramp: float = 0.45
-# Legacy Level 6 Inspector properties retained for compatibility, but V48
-# makes Level 6 skulls start steering as soon as their 0.5s charge ends.
 @export_range(1.15, 2.5, 0.05) var level6_skull_tracking_delay: float = 1.15
 @export_range(0.85, 2.0, 0.05) var level6_skull_tracking_ramp: float = 0.85
 @export_range(0.50, 2.20, 0.05) var level6_skull_turn_rate_v48: float = 1.35
@@ -183,20 +70,16 @@ const LEVEL6_SKULL_STAGGER_SECONDS: float = 0.75 # 750ms, 75% of one second
 @export_range(0.35, 1.25, 0.05) var king_wall_wave_interval: float = 0.85
 
 @export_group("King's Menacing Skeleton Guards")
-# Drag your existing Menacing Skeleton .tscn here. V4 also checks common paths.
 @export var king_menacing_skeleton_scene: PackedScene
 @export var king_elite_total_waves: int = 2
-# The first two guards are NORMAL Menacing Skeletons. Only the one revived
-# after shield break becomes the purple, high-powered version.
 @export_range(15, 80, 5) var king_normal_guard_hp: int = 25
 @export_range(45, 130, 5) var king_reborn_guard_hp: int = 70
 @export_range(4.0, 20.0, 0.5) var king_revival_after_shield_seconds: float = 7.0
 @export_range(3.0, 20.0, 0.5) var king_reborn_boss_spell_interval: float = 5.8
 @export_range(1, 8, 1) var king_max_total_resurrections: int = 4
-# V12 caps active resurrected guards at one, even if a saved scene overrides this value.
 @export_range(1, 3, 1) var king_max_active_purple_guards: int = 1
 @export_range(6.0, 30.0, 0.5) var king_repeat_revival_delay: float = 11.5
-@export_range(25, 120, 5) var king_elite_hp: int = 55 # legacy setting, no longer forces normal guards to be elite
+@export_range(25, 120, 5) var king_elite_hp: int = 55
 @export_range(5.0, 15.0, 0.5) var king_shield_appear_delay: float = 10.0
 @export_range(6.0, 20.0, 0.5) var king_guard_attack_interval: float = 10.0
 @export_range(0.0, 15.0, 0.5) var king_first_elite_delay: float = 1.0
@@ -219,15 +102,12 @@ const LEVEL6_SKULL_STAGGER_SECONDS: float = 0.75 # 750ms, 75% of one second
 @export_range(0.0, 1.0, 0.05) var king_repeat_revival_chance: float = 0.80
 @export_range(3.0, 9.0, 0.25) var king_guard_teleport_interval: float = 5.5
 @export_group("King Standoff While Guards Fight")
-# Guard encounters should feel like a fight against the skeletons, not a
-# simultaneous melee with the King's enormous shield/hurtbox.
 @export_range(260.0, 650.0, 10.0) var king_guard_standoff_distance: float = 400.0
 @export_range(140.0, 600.0, 10.0) var king_guard_retreat_speed: float = 290.0
 @export_range(2.0, 8.0, 0.5) var king_guard_retarget_cooldown: float = 4.5
 @export_group("King Independent Hover")
 @export_range(25.0, 190.0, 5.0) var king_patrol_horizontal_radius: float = 120.0
 @export_range(12.0, 100.0, 5.0) var king_patrol_vertical_radius: float = 35.0
-# Guard-only movement: does NOT modify the working sword-hit logic.
 @export_range(0.08, 0.28, 0.01) var king_guard_height_ratio: float = 0.14
 @export_range(180.0, 400.0, 10.0) var king_guard_chase_distance: float = 235.0
 @export_range(180.0, 1100.0, 20.0) var king_guard_flight_acceleration: float = 520.0
@@ -251,8 +131,6 @@ const LEVEL6_SKULL_STAGGER_SECONDS: float = 0.75 # 750ms, 75% of one second
 @export_range(35.0, 160.0, 5.0) var king_ward_repel_distance: float = 95.0
 @export_range(0.4, 2.0, 0.1) var king_ward_repel_cooldown: float = 0.85
 
-# Platform arena support: fly through solid walls/floors, but land on a REAL
-# platform via a downward terrain raycast before reviving a skeleton.
 @export_group("Wall Phasing and Platform Revival")
 @export var phase_through_walls_while_flying: bool = true
 @export_range(360.0, 2000.0, 20.0) var platform_search_depth: float = 900.0
@@ -266,7 +144,6 @@ const LEVEL6_SKULL_STAGGER_SECONDS: float = 0.75 # 750ms, 75% of one second
 @export_range(2.5, 4.0, 0.1) var level6_marker_hold_seconds: float = 3.7
 @export_range(20, 500, 10) var level6_first_phase_hp_v37: int = 150
 @export_range(20, 500, 10) var level6_second_phase_hp_v37: int = 150
-# Additive: works even when both original 150-HP exports were saved in the Inspector.
 @export_range(0, 300, 5) var level6_phase_hp_bonus_v48: int = 75
 @export_range(0.5, 5.0, 0.1) var level6_phase2_entrance_delay: float = 2.0
 @export_range(25, 150, 5) var level6_buffed_guard_health: int = 70
@@ -276,21 +153,27 @@ const LEVEL6_SKULL_STAGGER_SECONDS: float = 0.75 # 750ms, 75% of one second
 @export_range(0.0, 100.0, 5.0) var level6_marker_raise_pixels: float = 46.0
 @export_range(0.5, 4.0, 0.1) var level6_title_display_seconds: float = 1.8
 @export_range(90.0, 260.0, 5.0) var level6_spear_height_above_player: float = 145.0
-# Exact names in level_6.tscn; no TileMapLayer script required.
 @export var level6_boss_area_path: NodePath = NodePath("../bossarena")
 @export var level6_platforms_path: NodePath = NodePath("../boss2phase")
 @export var level6_second_identifier_path: NodePath = NodePath("../2phaseidentifier")
 
 @export_group("Level 6: Third Phase / Final Climb")
 @export var level6_third_identifier_path: NodePath = NodePath("../phase3startdetection")
-# Separate tilemap painted for the final climb. In the scene it is boss3phase.
 @export var level6_third_platforms_path: NodePath = NodePath("../boss3phase")
-# Independent of Inspector values saved from earlier three-hit versions.
 @export_range(1, 30, 1) var level6_third_phase_sword_hits: int = 10
 @export_range(3.0, 8.0, 0.25) var level6_phase3_laser_start_delay: float = 5.0
 @export_range(0.9, 3.0, 0.1) var level6_climb_laser_gap: float = 1.55
 @export_range(0.5, 2.0, 0.1) var level6_climb_laser_warning: float = 0.85
 @export_range(3.0, 9.0, 0.25) var level6_final_animation_seconds: float = 5.75
+
+@export_group("V87 - Final Collapse After King Death")
+@export_range(2.0, 12.0, 0.25) var level6_collapse_rumble_seconds: float = 5.0
+@export_range(7.0, 15.0, 0.25) var level6_collapse_fall_seconds: float = 10.0
+@export_range(1.0, 8.0, 0.25) var level6_collapse_hide_tiles_seconds: float = 5.0
+@export_range(6.0, 48.0, 1.0) var level6_collapse_max_shake: float = 30.0
+@export_range(2000.0, 20000.0, 100.0) var level6_collapse_fallback_fall_distance: float = 6200.0
+@export var level6_collapse_optional_ground_marker: NodePath = NodePath("")
+@export_file("*.tscn") var level6_collapse_level7_scene: String = "res://level_7.tscn"
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
@@ -315,7 +198,6 @@ class Skull:
 	var orbit_sign: float = 1.0
 	var wobble_seed: float = 0.0
 	var base_scale: Vector2 = Vector2.ONE
-	# V48: inertial velocity and the speed it tries to rebuild after a turn.
 	var velocity: Vector2 = Vector2.ZERO
 	var cruise_speed: float = 0.0
 
@@ -338,11 +220,8 @@ class RoyalSlash:
 	var fired: bool = false
 	var ricochet: bool = false
 	var bounce_impact: bool = false
-	# -1 uses the normal King slash width; final-climb slashes use 19 px.
 	var width_override: float = -1.0
-	# V60: third-duel slash warnings pulse from the King's hand toward the player.
 	var phase3_pulsing_warning: bool = false
-
 
 
 var state: State = State.DORMANT
@@ -371,7 +250,6 @@ var hover_side: float = 1.0
 var sprite_tint: Color
 var original_collision_mask: int = 0
 
-# The King shares the same skeleton/revival logic as regular Necromancers.
 var is_king: bool = false
 var king_barrage_count: int = 0
 var king_barrage_is_fan: bool = false
@@ -386,7 +264,7 @@ var king_hp_label: Label = null
 var king_hud: CanvasLayer = null
 var king_hud_bar: ProgressBar = null
 var king_hud_status: Label = null
-var king_special_kind: int = 0  # 0 none, 1 gravefall, 2 royal sweep, 3 crown burst
+var king_special_kind: int = 0
 var king_special_round: int = 0
 var king_sweep_y: Array[float] = []
 var king_sweep_spawn_x: float = 0.0
@@ -413,9 +291,6 @@ var king_wall_spawn_timer: float = 0.0
 var king_wall_from_side: bool = true
 var king_wall_round: int = 0
 
-# Phase flow: SOLO -> SHIELDED (2 normal guards) -> BREAKING -> EXPOSED.
-# EXPOSED is NOT passive: full spells resume and the King can take damage.
-# A SINGLE purple Menacing can be revived after a short delay.
 enum KingShieldPhase { SOLO, SHIELDED, BREAKING, EXPOSED }
 var king_shield_phase: KingShieldPhase = KingShieldPhase.SOLO
 var king_shield_hit_fx: float = 0.0
@@ -439,8 +314,6 @@ var king_reborn_guards: Array[CharacterBody2D] = []
 var king_revival_cast_fx: float = 0.0
 var king_last_revived_id: int = -1
 var king_was_purple_guard_active: bool = false
-# The King cannot be finished before the first purple guard is defeated;
-# then he recovers HP and enters a real final spell phase.
 var king_last_stand_started: bool = false
 var king_last_stand_intro_timer: float = 0.0
 var king_revival_cast_total: float = 0.0
@@ -457,7 +330,6 @@ var king_solo_attacks_since_guard: int = 0
 var king_solo_reposition_timer: float = 0.0
 var king_solo_flight_velocity: Vector2 = Vector2.ZERO
 var king_solo_perch_index: int = -1
-# 0=visible/holding; 1=vanish with death frames; 2=reappear with reverse death frames.
 var king_tp_phase: int = 0
 var king_tp_elapsed: float = 0.0
 var king_tp_hold_remaining: float = 4.0
@@ -465,10 +337,7 @@ var king_tp_destination: Vector2 = Vector2.ZERO
 var king_tp_guard_mode: bool = false
 var king_tp_last_perch: int = -1
 var king_tp_failed_attempts: int = 0
-# During normal/purple guard battles the King teleports away ONE time,
-# then stays on that distant safe perch until the guards are defeated.
 var king_tp_guard_perch_locked: bool = false
-# Level 5 protected spawn shapes, collected from named Area2D nodes or group.
 var king_no_spawn_shapes: Array[CollisionShape2D] = []
 var king_no_spawn_scanned: bool = false
 var king_guard_perch_clock: float = 0.0
@@ -477,9 +346,6 @@ var king_attack_cast_total: float = 0.0
 var king_final_pattern_round: int = 0
 
 
-# V40: marker-locked Void King, true skull noclip, dash-wall, readable attack waves, subtle HUD.
-# Level6 mode is independent of the earlier V35 shield/revival progression.
-# It only activates inside Level6/level_6.tscn, preserving the old fight elsewhere.
 enum Level6Stage {
 	HIDDEN, WAITING, SHAKING, REVEAL, PHASE_ONE,
 	DISSOLVE_ONE, CLIMB, SECOND_WAIT, PHASE_TWO, DISSOLVE_TWO, PHASE_THREE_PENDING,
@@ -489,6 +355,63 @@ enum Level6Stage {
 var level6_mode: bool = false
 var level6_stage: Level6Stage = Level6Stage.HIDDEN
 var level6_stage_timer: float = 0.0
+
+@export_group("Level 6 - King Exploration Entrance")
+@export var level6_wander_entrance_enabled: bool = true
+@export var level6_wander_area1_path: NodePath = NodePath("../wanderarea1")
+@export var level6_wander_area2_path: NodePath = NodePath("../wanderarea2")
+@export_range(3.0, 16.0, 0.5) var level6_wander_awakening_delay: float = 9.0
+@export_range(2.0, 9.0, 0.25) var level6_wander_pre_shake_seconds: float = 5.5
+@export_range(0.0, 20.0, 0.5) var level6_wander_pre_shake_strength: float = 8.5
+@export_range(2.0, 7.0, 0.25) var level6_wander_final_shake_seconds: float = 3.5
+@export_range(0.5, 3.0, 0.1) var level6_wander_reveal_seconds: float = 1.2
+@export_range(15.0, 70.0, 1.0) var level6_wander_letters_per_second: float = 33.0
+@export var level6_wander_block_retreat: bool = true
+@export_range(70.0, 350.0, 10.0) var level6_wander_retreat_wall_distance: float = 150.0
+@export_range(500.0, 200000.0, 100.0) var level6_wander_retreat_wall_height: float = 200000.0
+@export_range(1.0, 6.0, 0.1) var level6_wander_dialogue_hold: float = 2.0
+var _level6_wander_area1: Area2D = null
+var _level6_wander_area2: Area2D = null
+var _level6_wander_active: bool = false
+var _level6_wander_2_inside_last: bool = false
+var _level6_wander_1_inside_last: bool = false
+var _level6_wander_2_first_visit: bool = false
+var _level6_wander_first_contact: Vector2 = Vector2.ZERO
+var _level6_wander_left_first_contact: bool = false
+var _level6_wander_retreat_wall: StaticBody2D = null
+var _level6_wander_opposite_wall: StaticBody2D = null
+var _level6_wander_1_visited: bool = false
+var _level6_wander_completed: bool = false
+var _level6_wander_dialogue_layer: CanvasLayer = null
+var _level6_wander_dialogue_panel: Control = null
+var _level6_wander_dialogue_text: Label = null
+var _level6_wander_dialogue_glyph_left: Label = null
+var _level6_wander_dialogue_glyph_right: Label = null
+var _level6_wander_dialogue_queue: Array[String] = []
+var _level6_wander_dialogue_line: String = ""
+var _level6_wander_dialogue_elapsed: float = 0.0
+var _level6_wander_dialogue_showing: bool = false
+
+
+@export_group("Level 6 - Artifact Mercy")
+@export var level6_artifact_mercy_enabled: bool = true
+@export_range(1, 5, 1) var level6_artifact_mercy_max_saves: int = 3
+@export_range(1.0, 5.0, 0.1) var level6_artifact_black_hold: float = 2.8
+@export_range(0.0, 4.0, 0.1) var level6_artifact_silent_black_seconds: float = 1.4
+@export_range(0.0, 3.0, 0.1) var level6_artifact_after_rescue_black_seconds: float = 1.2
+@export_range(0.5, 4.0, 0.1) var level6_artifact_safe_grace: float = 2.5
+@export_range(15.0, 90.0, 1.0) var level6_artifact_text_speed: float = 34.0
+
+var _level6_artifact_saves_used: int = 0
+var _level6_artifact_rescue_active: bool = false
+var _level6_artifact_bound_player: CharacterBody2D = null
+var _level6_artifact_prev_tree_paused: bool = false
+var _level6_artifact_overlay: CanvasLayer = null
+var _level6_artifact_screen: ColorRect = null
+var _level6_artifact_label: Label = null
+var _level6_artifact_message: String = ""
+var _level6_artifact_awaiting_restart: bool = false
+
 var level6_perch_timer: float = 0.0
 var level6_guard_started: bool = false
 var level6_guard_retry: float = 0.0
@@ -508,13 +431,11 @@ var level6_title_king_text: Label = null
 var level6_darkness_now: float = 0.0
 var level6_world_darkness: CanvasModulate = null
 var level6_world_darkness_original: Color = Color.WHITE
-var level6_world_darkness_owned: bool = false # old modifier remains unused in V66
+var level6_world_darkness_owned: bool = false
 var level6_blackout_layer: CanvasLayer = null
 var level6_blackout_rect: ColorRect = null
 var level6_blackout_log_timer: float = 0.0
 var level6_title_world_dim: ColorRect = null
-# V70: atmospheric visuals are screen-space children of the proven layer-100
-# ColorRect canvas, and follow the viewport without touching the actual arena.
 var level6_void_fog_rect: ColorRect = null
 var level6_void_fog_material: ShaderMaterial = null
 var level6_void_vignette_rect: ColorRect = null
@@ -523,8 +444,6 @@ var level6_void_smoke_particles: GPUParticles2D = null
 var level6_void_ash_particles: GPUParticles2D = null
 var level6_void_ambient_intensity: float = 0.0
 var level6_void_atmosphere_ready: bool = false
-# V72 atmosphere renders AFTER even the highest V71 darkness test (layer 800).
-# This fixes the fog/particles being obscured by testing ColorRects.
 var level6_void_visual_layer: CanvasLayer = null
 var level6_void_fog_banks: Array[Sprite2D] = []
 var level6_void_fog_places: Array[Vector2] = []
@@ -533,8 +452,6 @@ var level6_void_cpu_ash: CPUParticles2D = null
 var level6_void_vignette_sprite: Sprite2D = null
 var level6_void_fog_time: float = 0.0
 var level6_void_viewport_size: Vector2 = Vector2.ZERO
-# V73: atmosphere lives INSIDE the already visible debug UI CanvasLayer.
-# No GPU/CPU emitter or Sprite2D renderer required for this visual diagnostic.
 var level6_fx_root_v73: Control = null
 var level6_fog_panels_v73: Array[TextureRect] = []
 var level6_fog_homes_v73: Array[Vector2] = []
@@ -557,29 +474,21 @@ var level6_dark_test_high_layer: CanvasLayer = null
 var level6_dark_test_high_rect: ColorRect = null
 var level6_dark_test_title_rect: ColorRect = null
 var level6_dark_test_intro_reminder: bool = false
-# V71: atmospheric tests can be toggled separately or combined with any method.
 var level6_test_fog: bool = false
 var level6_test_particles: bool = false
 var level6_test_vignette: bool = false
 var level6_dark_test_backing_v74: ColorRect = null
 var level6_fx_parent_is_hud_v74: bool = false
-# V76: the visible HUD CanvasLayer is only a renderer; every atmospheric
-# position is derived from a fixed world cell, then projected by the camera.
-# This avoids the separate V75 CanvasLayer which did not draw in this project.
 var level6_preview_all_v76: bool = false
-# V79: automatic atmosphere is triggered by guard/final-boss HP, independently
-# of the screen blackout. These values ease toward their targets every frame.
 var level6_void_auto_fog_power_v79: float = 0.0
 var level6_void_auto_vignette_power_v79: float = 0.0
 var level6_void_guard_cue_logged_v79: bool = false
 var level6_void_final_cue_logged_v79: bool = false
-# Optional Inspector tuning without changing scripts. Keep black textures.
 @export_range(0.40, 0.90, 0.01) var level6_void_manual_fog_alpha_v79: float = 0.77
 @export_range(0.40, 0.85, 0.01) var level6_void_max_auto_fog_alpha_v79: float = 0.70
 @export_range(0.50, 2.00, 0.05) var level6_void_fog_motion_speed_v79: float = 1.0
-# V80: Phase-three fog has a nonzero floor. It thickens as the King loses HP.
 @export_range(0.25, 0.75, 0.01) var level6_phase3_fog_floor_v80: float = 0.55
-@export var level6_artifact_epilogue_enabled_v80: bool = true
+@export var level6_artifact_epilogue_enabled_v80: bool = false
 var level6_artifact_epilogue_started_v80: bool = false
 const LEVEL6_FOG_COLS_V76: int = 9
 const LEVEL6_FOG_ROWS_V76: int = 7
@@ -587,8 +496,6 @@ const LEVEL6_FOG_SPACING_V76: Vector2 = Vector2(365.0, 205.0)
 const LEVEL6_ASH_COLS_V76: int = 13
 const LEVEL6_ASH_ROWS_V76: int = 9
 const LEVEL6_ASH_SPACING_V76: Vector2 = Vector2(150.0, 105.0)
-
-
 
 
 var level6_aura_sprite: Sprite2D = null
@@ -614,8 +521,6 @@ var level6_void_walls: Array[VoidWall] = []
 var level6_aura_particles: CPUParticles2D = null
 var level6_particle_texture: Texture2D = null
 var level6_last_burst_at: Vector2 = Vector2.ZERO
-# V38: a short damage lock prevents the Player and the boss-side sword fallback
-# from registering the same strike twice. Does not affect invulnerable phases.
 var level6_hit_lock: float = 0.0
 var level6_player_swing_seen: bool = false
 var level6_player_swing_frame: int = -1
@@ -623,10 +528,8 @@ var level6_fallback_hit_for_swing: bool = false
 var level6_guard_flash_timers: Dictionary = {}
 var level6_guard_previous_hp: Dictionary = {}
 var level6_void_swords: Array[VoidSword] = []
-# Testing only: press physical '1' during phase 1 to begin phase 2 immediately.
 @export var level6_debug_skip_phase_one_with_1: bool = true
 var level6_debug_one_was_down: bool = false
-# Testing only: 2 ends phase 2 and immediately starts the final ascent.
 @export var level6_debug_skip_phase_two_with_2: bool = true
 var level6_debug_two_was_down: bool = false
 var level6_dash_echoes: Array[VoidDashEcho] = []
@@ -650,6 +553,35 @@ var level6_third_completion_label: Label = null
 var level6_final_shake_camera: Camera2D = null
 var level6_final_camera_offset: Vector2 = Vector2.ZERO
 
+var _collapse_step: int = 0
+var _collapse_level7_transition_started: bool = false
+var _collapse_elapsed: float = 0.0
+var _collapse_total_elapsed: float = 0.0
+var _collapse_tiles: Array[Dictionary] = []
+var _collapse_tiles_restored: bool = true
+var _collapse_player_physics: bool = true
+var _collapse_player_mask: int = 1
+var _collapse_player_process: bool = true
+var _collapse_player_start_y: float = 0.0
+var _collapse_player_goal_y: float = 0.0
+var _collapse_expected_ground_y: float = 0.0
+var _collapse_player_start_x: float = 0.0
+var _collapse_ui: CanvasLayer = null
+var _collapse_fog_root: Control = null
+var _collapse_white_shroud: ColorRect = null
+var _collapse_white_fog: Array[TextureRect] = []
+var _collapse_fog_texture: Texture2D = null
+var _collapse_wind_texture: Texture2D = null
+var _collapse_fog_clock: float = 0.0
+var _collapse_debris_timer: float = 0.0
+var _collapse_burst_timer: float = 0.0
+var _collapse_white_particle_count: int = 0
+var _collapse_emitters: Array[CPUParticles2D] = []
+var _collapse_relics: Array[AnimatedSprite2D] = []
+var _collapse_flash: CanvasLayer = null
+var _collapse_flash_bg: ColorRect = null
+var _collapse_flash_label: Label = null
+
 class VoidRainLaser:
 	var x: float = 0.0
 	var head_y: float = 0.0
@@ -667,7 +599,7 @@ class VoidSword:
 	var direction: Vector2 = Vector2.DOWN
 	var elapsed: float = 0.0
 	var delay: float = 0.0
-	var warning: float = 0.75  # visible aim period, in seconds
+	var warning: float = 0.75
 	var fade_time: float = 0.24
 	var aim_lock_time: float = 0.025
 	var launched: bool = false
@@ -683,8 +615,6 @@ class VoidWall:
 	var travel: float = 3.30
 	var width: float = 58.0
 	var last_damage_time: float = -1.0
-	# One successful dodge protects against this same sweeping wall for
-	# its remaining lifetime; the normal dash is shorter than its visual width.
 	var dashed_through: bool = false
 	var sweep_history: Array[float] = []
 
@@ -715,8 +645,6 @@ func _level6_initialize() -> void:
 	level6_mode = _level6_detect_scene()
 	if not level6_mode:
 		return
-	# An airborne Void King is not a solid wall. Keep CollisionShape2D enabled
-	# for sword-to-hurtbox geometry, but never physically collide with Player.
 	collision_layer = 0
 	collision_mask = 0
 	level6_stage = Level6Stage.HIDDEN
@@ -749,6 +677,20 @@ func _level6_initialize() -> void:
 			level6_arena.body_entered.connect(_level6_on_boss_area_entered)
 	else:
 		push_warning("KING V37: bossarena Area2D missing; phase 1 cannot auto-start.")
+	if not level6_wander_area1_path.is_empty():
+		_level6_wander_area1 = get_node_or_null(level6_wander_area1_path) as Area2D
+	if not level6_wander_area2_path.is_empty():
+		_level6_wander_area2 = get_node_or_null(level6_wander_area2_path) as Area2D
+	if scene_root != null:
+		if not is_instance_valid(_level6_wander_area1):
+			_level6_wander_area1 = scene_root.find_child("wanderarea1", true, false) as Area2D
+		if not is_instance_valid(_level6_wander_area2):
+			_level6_wander_area2 = scene_root.find_child("wanderarea2", true, false) as Area2D
+	_level6_wander_active = (level6_wander_entrance_enabled
+		and is_instance_valid(_level6_wander_area1)
+		and is_instance_valid(_level6_wander_area2))
+	if level6_wander_entrance_enabled and not _level6_wander_active:
+		push_warning("KING ENTRANCE V81: wanderarea1 or wanderarea2 missing; using original bossarena trigger.")
 	if not level6_second_identifier_path.is_empty():
 		level6_second_identifier = get_node_or_null(level6_second_identifier_path) as Area2D
 	if level6_second_identifier == null and scene_root != null:
@@ -767,11 +709,9 @@ func _level6_initialize() -> void:
 	if level6_climb_layer == null and scene_root != null:
 		level6_climb_layer = scene_root.find_child("boss2phase", true, false) as TileMapLayer
 	if level6_climb_layer != null:
-		level6_climb_layer.enabled = false  # Hide VISUALS AND COLLISIONS until the climb.
+		level6_climb_layer.enabled = false
 	else:
 		push_warning("KING V36: boss2phase TileMapLayer not found.")
-	# V57: The V56 phase-three controller forgot this entirely. The layer
-	# stayed disabled in the Inspector, so no final-climb platforms appeared.
 	level6_third_climb_layer = _level6_find_third_climb_layer()
 	if is_instance_valid(level6_third_climb_layer):
 		level6_third_climb_layer.enabled = false
@@ -797,19 +737,17 @@ func _level6_initialize() -> void:
 		king_crown_root = null
 	if is_instance_valid(king_hud):
 		king_hud.visible = false
-	# Stop the large old purple tint. A shader turns all RED source pixels WHITE,
-	# and the rest of the sprite into an inky black/charcoal silhouette.
 	var void_shader := Shader.new()
 	void_shader.code = """shader_type canvas_item;
 uniform float hit_flash : hint_range(0.0, 1.0) = 0.0;
 void fragment() {
-    vec4 tex = texture(TEXTURE, UV);
-    float red_pixel = step(0.29, tex.r) * step(tex.g * 1.50, tex.r) * step(tex.b * 1.35, tex.r);
-    vec3 dark_body = vec3(0.021, 0.022, 0.029) + tex.rgb * 0.032;
-    vec3 col = mix(dark_body, vec3(1.0, 1.0, 1.0), red_pixel);
-    // Modulate cannot flash this shader when COLOR is overwritten; use a uniform.
-    col = mix(col, vec3(1.0, 1.0, 1.0), hit_flash);
-    COLOR = vec4(col, tex.a);
+	vec4 tex = texture(TEXTURE, UV);
+	float red_pixel = step(0.29, tex.r) * step(tex.g * 1.50, tex.r) * step(tex.b * 1.35, tex.r);
+	vec3 dark_body = vec3(0.021, 0.022, 0.029) + tex.rgb * 0.032;
+	vec3 col = mix(dark_body, vec3(1.0, 1.0, 1.0), red_pixel);
+	// Modulate cannot flash this shader when COLOR is overwritten; use a uniform.
+	col = mix(col, vec3(1.0, 1.0, 1.0), hit_flash);
+	COLOR = vec4(col, tex.a);
 } """
 	var void_material := ShaderMaterial.new()
 	void_material.shader = void_shader
@@ -832,12 +770,9 @@ void fragment() {
 
 
 func _level6_accepted_hit(previous_hp: int) -> void:
-	# Only truly registered damage flashes; hits against the shield do not.
 	if hp >= previous_hp:
 		return
 	king_black_flash_timer = 0.105
-	# Mark the current swing as consumed even if Player V53 reported it first.
-	# Otherwise the fallback could count the same attack again 120 ms later.
 	if is_instance_valid(target) and target.has_method(&"is_swinging") and bool(target.call(&"is_swinging")):
 		level6_player_swing_seen = true
 		level6_fallback_hit_for_swing = true
@@ -847,12 +782,10 @@ func _level6_accepted_hit(previous_hp: int) -> void:
 	if is_instance_valid(level6_void_shader):
 		level6_void_shader.set_shader_parameter("hit_flash", 1.0)
 	_level6_hit_particles()
-	# Useful during debugging: this proves the health actually changed.
 	print("VOID KING HIT: ", previous_hp, " -> ", hp, " / ", max_hp)
 
 
 func _level6_hit_particles() -> void:
-	# Fast, lightweight one-shot sparks from the actual King sprite position.
 	var fx: CPUParticles2D = CPUParticles2D.new()
 	fx.name = "VoidKingHitSparks"
 	fx.texture = _level6_get_particle_texture()
@@ -879,8 +812,6 @@ func _level6_hit_particles() -> void:
 
 
 func _level6_sword_fallback() -> void:
-	# Works alongside Player V53's hit checks, never instead of them.
-	# Fixes missed hits when the Player's cached sword shapes are out of date.
 	if not is_instance_valid(target) or not target.has_method(&"is_swinging"):
 		level6_player_swing_seen = false
 		return
@@ -893,7 +824,6 @@ func _level6_sword_fallback() -> void:
 	if sword_sprite == null:
 		return
 	var frame: int = sword_sprite.frame
-	# A queued new attack can start without a full idle physics frame.
 	if not level6_player_swing_seen or frame < level6_player_swing_frame:
 		level6_fallback_hit_for_swing = false
 	level6_player_swing_seen = true
@@ -939,7 +869,6 @@ func _level6_get_particle_texture() -> Texture2D:
 func _level6_get_aura_texture() -> Texture2D:
 	if level6_aura_texture != null:
 		return level6_aura_texture
-	# Actual transparent radial alpha with irregular smoky edges, not a solid disc.
 	var image: Image = Image.create(128, 128, false, Image.FORMAT_RGBA8)
 	for y: int in range(128):
 		for x: int in range(128):
@@ -985,9 +914,6 @@ func _level6_create_aura() -> void:
 
 
 func _level6_keep_hud_above_darkness() -> void:
-	# A high dedicated layer is necessary because some Level 6 parallax
-	# elements may render on CanvasLayers above the world. Preserve the
-	# player's hearts and the boss HP UI above that darkness.
 	if not is_instance_valid(level6_player_hud_layer):
 		var scene: Node = get_tree().current_scene
 		if is_instance_valid(scene):
@@ -1004,15 +930,11 @@ func _level6_keep_hud_above_darkness() -> void:
 func _level6_create_screen_darkness() -> void:
 	if is_instance_valid(level6_screen_layer) and is_instance_valid(level6_screen_shadow):
 		return
-	# V69 key 4 was confirmed working: root-level CanvasLayer 100 with a
-	# BLACK ColorRect controlled by COLOR.a. Do not revert to V55 modulate.a.
 	level6_screen_layer = CanvasLayer.new()
 	level6_screen_layer.name = "VoidKingDarknessBaseV72"
 	level6_screen_layer.layer = 100
 	level6_screen_layer.follow_viewport_enabled = false
-	# V71: match V69 method 4 exactly, which the user confirmed rendered.
-	# V70 used current_scene.add_child() instead of get_tree().root.
-	get_tree().root.add_child(level6_screen_layer)
+	get_tree().root.add_child.call_deferred(level6_screen_layer)
 	level6_screen_shadow = ColorRect.new()
 	level6_screen_shadow.name = "AutomaticDarknessKey4V71"
 	level6_screen_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1030,21 +952,16 @@ func _level6_apply_world_darkness(alpha: float) -> void:
 		_level6_create_screen_darkness()
 	if not is_instance_valid(level6_screen_shadow):
 		return
-	# The opaque blackout remains reserved for the final victory. During
-	# combat, deliberate partial darkness leaves the fog and attacks visible.
 	var darkness: float = clampf(alpha, 0.0, 1.0)
 	var black_alpha: float = lerpf(darkness * 0.48, darkness, smoothstep(0.75, 1.0, darkness))
 	level6_screen_layer.visible = true
 	level6_screen_shadow.visible = true
 	if level6_dark_test_mode == 0:
-		# Automatic gameplay darkness on the same root-level system as key 4.
 		level6_screen_shadow.modulate.a = 1.0
 		level6_screen_shadow.color = Color(0.0, 0.0, 0.0, black_alpha)
-	elif level6_dark_test_mode != 3:
-		# Manual tests 4-8 must not stack with the regular background dimmer.
+	else:
 		level6_screen_shadow.modulate.a = 1.0
 		level6_screen_shadow.color = Color(0.0, 0.0, 0.0, 0.0)
-	# Method 3 owns this ColorRect, so leave its color and modulation alone.
 	_level6_update_void_atmosphere(darkness)
 
 
@@ -1054,7 +971,6 @@ func _level6_guard_hp_ratio() -> float:
 			continue
 		if guard.has_method(&"is_dead") and bool(guard.call(&"is_dead")):
 			continue
-		# Menacing variants may expose hp/max_hp OR vida/vida_maxima.
 		var fields: Dictionary = {}
 		for property_info: Dictionary in guard.get_property_list():
 			fields[String(property_info.get("name", ""))] = true
@@ -1070,7 +986,6 @@ func _level6_update_screen_darkness(delta: float) -> void:
 		_level6_create_screen_darkness()
 	if not is_instance_valid(level6_screen_shadow):
 		return
-	# V70: reliable key-4 ColorRect color alpha + atmospheric layers.
 	level6_screen_layer.visible = true
 	level6_screen_shadow.visible = true
 	var viewport_size: Vector2 = get_viewport_rect().size
@@ -1079,44 +994,35 @@ func _level6_update_screen_darkness(delta: float) -> void:
 	var target_alpha: float = 0.0
 	if level6_stage == Level6Stage.PHASE_ONE:
 		if king_shield_phase == KingShieldPhase.SOLO:
-			# Gradually darkens as 225 HP goes down toward the last 1 HP.
 			var hp_danger: float = 1.0 - float(hp) / maxf(1.0, float(max_hp))
 			target_alpha = 0.035 + 0.53 * pow(clampf(hp_danger, 0.0, 1.0), 1.15)
 		elif king_shield_phase == KingShieldPhase.SHIELDED:
-			# Keep darkening while the ONE buffed Void Skeleton loses health.
 			var guard_danger: float = 1.0 - _level6_guard_hp_ratio()
 			target_alpha = 0.56 + 0.17 * clampf(guard_danger, 0.0, 1.0)
 		else:
-			# Guard defeated; near-black climax before the one-tap finish.
 			target_alpha = 0.73
 	elif level6_stage == Level6Stage.PHASE_TWO:
 		target_alpha = 0.10 + 0.51 * (1.0 - float(hp) / maxf(1.0, float(max_hp)))
 	elif level6_stage == Level6Stage.PHASE_THREE_CLIMB:
-		# Establish the ominous atmosphere before the last 10-hit duel.
 		target_alpha = 0.28
 	elif level6_stage == Level6Stage.THIRD_REVEAL:
 		target_alpha = 0.49
 	elif level6_stage == Level6Stage.PHASE_THREE:
-		# Start clearly dark. Each of the ten hits visibly thickens the Void.
-		# Last three hits add a slow low-amplitude shadow pulse, not a strobe.
 		var final_damage_fraction: float = 1.0 - float(hp) / maxf(1.0, float(max_hp))
 		target_alpha = 0.49 + 0.36 * pow(clampf(final_damage_fraction, 0.0, 1.0), 0.73)
 		if hp <= 3:
 			target_alpha += 0.023 * sin(hover_time * TAU * 0.78)
 	elif level6_stage == Level6Stage.THIRD_DEATH:
-		target_alpha = lerpf(0.35, 0.98, clampf(level6_third_fx_timer / maxf(0.1, level6_final_animation_seconds), 0.0, 1.0))
+		target_alpha = 0.61 + 0.07 * sin(_collapse_total_elapsed * 0.7)
 	elif level6_stage == Level6Stage.COMPLETE:
-		target_alpha = 1.0
+		target_alpha = 0.0
 	elif level6_stage in [Level6Stage.DISSOLVE_ONE, Level6Stage.DISSOLVE_TWO]:
 		target_alpha = 0.73
-	# Faster response than V54's 0.48 alpha/sec so the effect is actually
-	# visible during a short, high-damage fight. Keep enough visibility to dodge.
 	var darkness_response: float = 2.5 if level6_stage in [Level6Stage.THIRD_REVEAL, Level6Stage.PHASE_THREE] else 1.05
 	level6_darkness_now = move_toward(level6_darkness_now, target_alpha, delta * darkness_response)
-	var darkness_cap: float = 0.88 if level6_stage == Level6Stage.PHASE_THREE else (1.0 if level6_stage in [Level6Stage.THIRD_DEATH, Level6Stage.COMPLETE] else 0.75)
+	var darkness_cap: float = 0.88 if level6_stage == Level6Stage.PHASE_THREE else (0.68 if level6_stage == Level6Stage.THIRD_DEATH else (1.0 if level6_stage == Level6Stage.COMPLETE else 0.75))
 	var output_alpha: float = clampf(level6_darkness_now, 0.0, darkness_cap)
 	_level6_apply_world_darkness(output_alpha)
-	# One status update every few seconds, not hundreds of warnings per frame.
 	if level6_stage in [Level6Stage.PHASE_THREE, Level6Stage.THIRD_DEATH, Level6Stage.COMPLETE]:
 		level6_blackout_log_timer += delta
 		if level6_blackout_log_timer >= 4.0:
@@ -1128,8 +1034,6 @@ func _level6_update_screen_darkness(delta: float) -> void:
 
 
 func _level6_rebind_upper_nodes() -> void:
-	# Level 6 may be instantiated in a different order than the boss.
-	# Re-find markers and the Area2D instead of trusting a single _ready scan.
 	var scene_root: Node = get_tree().current_scene
 	if scene_root == null:
 		scene_root = get_parent()
@@ -1148,7 +1052,6 @@ func _level6_rebind_upper_nodes() -> void:
 		if not level6_second_markers.is_empty():
 			print("VOID KING V46: recovered ", level6_second_markers.size(), " upper markers: ",
 				level6_second_markers[0].name)
-	# Handle deleted/replaced markers, including an editor-reloaded level.
 	for index: int in range(level6_second_markers.size() - 1, -1, -1):
 		if not is_instance_valid(level6_second_markers[index]):
 			level6_second_markers.remove_at(index)
@@ -1157,8 +1060,6 @@ func _level6_rebind_upper_nodes() -> void:
 func _level6_upper_arena_reached() -> bool:
 	if not is_instance_valid(target):
 		return false
-	# 1. Exact Area2D geometry. Works even if its physics mask is wrong,
-	# and even if the player entered while the King was still dissolving.
 	if is_instance_valid(level6_second_identifier):
 		if level6_second_identifier.overlaps_body(target):
 			return true
@@ -1170,9 +1071,6 @@ func _level6_upper_arena_reached() -> bool:
 		for point: Vector2 in body_points:
 			if _level6_point_inside_area(level6_second_identifier, point):
 				return true
-	# 2. Fail-safe using ONLY the seven upper Marker2Ds. The editor's large
-	# Area2D rectangle can be misplaced or have an invalid collision shape.
-	# This bounding region matches the upper fight, not the lower markers.
 	if level6_second_markers.is_empty():
 		return false
 	var left: float = INF
@@ -1198,8 +1096,6 @@ func _level6_upper_arena_reached() -> bool:
 
 
 func _level6_marker_position(marker: Marker2D) -> Vector2:
-	# Centralized offset: all teleport destinations, initial reveals and
-	# marker validation use the same elevated point to prevent snap-back.
 	return marker.global_position + Vector2(0.0, -level6_marker_raise_pixels)
 
 
@@ -1216,13 +1112,12 @@ func _level6_create_title_overlay() -> void:
 	level6_title_layer = CanvasLayer.new()
 	level6_title_layer.name = "VoidKingTitleScreen"
 	level6_title_layer.layer = 520
-	get_tree().root.add_child(level6_title_layer)
+	get_tree().root.add_child.call_deferred(level6_title_layer)
 	level6_title_black = ColorRect.new()
 	level6_title_black.name = "FullBlack"
 	level6_title_black.color = Color.BLACK
 	level6_title_black.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	level6_title_layer.add_child(level6_title_black)
-	# Dramatic, two-line boss title. No imported fonts or artwork needed.
 	level6_title_text = Label.new()
 	level6_title_text.name = "VoidTitleUpper"
 	level6_title_text.text = "VOID"
@@ -1241,8 +1136,6 @@ func _level6_create_title_overlay() -> void:
 	level6_title_king_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	level6_title_layer.add_child(level6_title_king_text)
 
-	# Keep the title CANVAS visible for the gameplay darkening, but keep the
-	# opaque intro card and large white words hidden until the entrance.
 	level6_title_black.visible = false
 	level6_title_text.visible = false
 	level6_title_king_text.visible = false
@@ -1274,19 +1167,15 @@ func _level6_title_resize() -> void:
 
 func _level6_begin_title(second: bool) -> void:
 	if second:
-		# Title belongs ONLY to the very first entrance.
 		_level6_end_title()
 		level6_stage = Level6Stage.SECOND_WAIT
 		level6_stage_timer = maxf(1.0, level6_phase2_shake_duration)
 		return
 	_level6_create_title_overlay()
-	# Void appears and becomes dangerous DURING the first title screen.
-	# It must remain at the editor-defined VoidSurface position until phase 2.
 	for void_node: Node in get_tree().get_nodes_in_group(&"rising_void"):
 		if void_node.has_method(&"activate_for_title"):
 			void_node.call(&"activate_for_title")
 	level6_stage = Level6Stage.INTRO_TITLE
-	# Old scene overrides cannot cut the 1.8-second title hold short.
 	level6_stage_timer = maxf(1.8, level6_title_display_seconds)
 	level6_title_layer.layer = 550
 	level6_title_layer.visible = true
@@ -1297,8 +1186,6 @@ func _level6_begin_title(second: bool) -> void:
 	sprite.visible = false
 	if is_instance_valid(king_hud):
 		king_hud.visible = false
-	# Adjust the camera NOW, behind the completely black title card.
-	# In phase two its offset is zero, but the wider boss zoom remains.
 	var camera: Camera2D = _level6_find_battle_camera()
 	if is_instance_valid(camera):
 		if not level6_camera_initialized:
@@ -1311,8 +1198,6 @@ func _level6_begin_title(second: bool) -> void:
 
 
 func _level6_end_title() -> void:
-	# After the FIRST title, reveal the Void gliding up into its editor-set
-	# resting position; it will NOT continue rising until phase two.
 	if level6_stage == Level6Stage.INTRO_TITLE:
 		for void_node: Node in get_tree().get_nodes_in_group(&"rising_void"):
 			if void_node.has_method(&"play_intro_rise"):
@@ -1335,9 +1220,6 @@ func _level6_find_battle_camera() -> Camera2D:
 	return camera
 
 
-# When climbing to the top, the player's feet may remain BELOW every
-# phase-two Marker2D even though the player is already on the boss platform.
-# This safe fallback recognises the upper section by height and its X span.
 func _level6_upper_height_reached() -> bool:
 	if not is_instance_valid(target):
 		return false
@@ -1352,15 +1234,12 @@ func _level6_upper_height_reached() -> bool:
 		upper_right = maxf(upper_right, marker.global_position.x)
 	if upper_bottom == -INF:
 		return false
-	# Allow the player's standing position to be ~340 px below the lowest
-	# teleport anchor. The upper platform can be well below flying markers.
 	var trigger_y: float = upper_bottom + 340.0
 	var lower_top: float = INF
 	for marker: Marker2D in level6_first_markers:
 		if is_instance_valid(marker):
 			lower_top = minf(lower_top, marker.global_position.y)
 	if lower_top < INF and lower_top > upper_bottom:
-		# Keep trigger within the transition corridor, not at phase one.
 		trigger_y = minf(trigger_y, upper_bottom + maxf(100.0, (lower_top - upper_bottom) * 0.45))
 	var player_at: Vector2 = target.global_position
 	return (
@@ -1370,16 +1249,15 @@ func _level6_upper_height_reached() -> bool:
 	)
 
 
-# The upper encounter runs independently of _physics_process. If an old
-# projectile/attack raises a runtime error, it cannot stall this phase timer.
 func _process(delta: float) -> void:
 	if not level6_mode:
 		return
 	_level6_dark_test_tick()
+	_level6_wander_update(delta)
 	if level6_stage not in [Level6Stage.CLIMB, Level6Stage.SECOND_TITLE, Level6Stage.SECOND_WAIT, Level6Stage.REVEAL]:
 		return
 	if level6_stage == Level6Stage.REVEAL and not level6_second_reveal:
-		return # Phase-one reveal stays in its original physics loop.
+		return
 
 	if not is_instance_valid(target):
 		target = get_tree().get_first_node_in_group(&"player") as CharacterBody2D
@@ -1429,7 +1307,6 @@ func _process(delta: float) -> void:
 				print("VOID KING V44: phase-two REVEAL started at ", upper_marker.name, " / ", global_position)
 			else:
 				push_error("VOID KING V44: no upper Marker2D found; check node names 2phasebosspawns...")
-				# Keep counting, but do not spam one error per rendered frame.
 				level6_stage_timer = 1.0
 		return
 
@@ -1466,12 +1343,10 @@ func _level6_on_second_area_entered(body: Node2D) -> void:
 			push_warning("VOID KING V46: zero upper markers found. Expected 2phasebosspawns(2...7) or 2phasebossspawns.")
 		return
 	level6_phase2_missing_markers_warned = false
-	# Player reached the upper Area2D: ONLY NOW may the damaging Void rise.
 	for void_node: Node in get_tree().get_nodes_in_group(&"rising_void"):
 		if void_node.has_method(&"begin_rising"):
 			void_node.call(&"begin_rising")
 	level6_phase2_shake_duration = maxf(1.0, level6_phase2_shake_seconds)
-	# No second title. Start the second-phase crescendo shake immediately.
 	_level6_end_title()
 	level6_stage = Level6Stage.SECOND_WAIT
 	level6_stage_timer = level6_phase2_shake_duration
@@ -1482,7 +1357,6 @@ func _level6_on_second_area_entered(body: Node2D) -> void:
 			level6_camera_initialized = true
 			level6_original_cam_offset = level6_shake_cam.offset
 			level6_camera_base_zoom = level6_shake_cam.zoom
-		# Keep the wider field of view, centered on the player.
 		level6_shake_cam.zoom = level6_camera_base_zoom * level6_camera_zoom_factor
 		level6_shake_cam.offset = Vector2.ZERO
 		level6_shake_cam.reset_smoothing()
@@ -1498,8 +1372,6 @@ func _level6_on_second_area_entered(body: Node2D) -> void:
 
 
 func _level6_point_inside_area(area: Area2D, world_point: Vector2) -> bool:
-	# Check actual shapes independently of Area2D layers/masks. Scene markers
-	# and areas are often configured for editing rather than physics overlap.
 	if not is_instance_valid(area):
 		return false
 	for node: Node in area.find_children("*", "CollisionShape2D", true, false):
@@ -1525,8 +1397,6 @@ func _level6_point_inside_area(area: Area2D, world_point: Vector2) -> bool:
 
 
 func _level6_phase2_marker_near_player() -> Marker2D:
-	# Spawn at one of the seven UPPER markers, ideally visible on the camera
-	# when the reveal begins. Never fall back to a phase-one marker.
 	var best: Marker2D = null
 	var best_score: float = INF
 	var view: Rect2 = _king_visible_world_rect()
@@ -1543,11 +1413,593 @@ func _level6_phase2_marker_near_player() -> Marker2D:
 	return best
 
 
+func _level6_artifact_bind_player() -> void:
+	if not level6_mode or not level6_artifact_mercy_enabled:
+		return
+	if not is_instance_valid(target):
+		return
+	if _level6_artifact_bound_player == target:
+		return
+	if is_instance_valid(_level6_artifact_bound_player):
+		var old_callback: Callable = Callable(self, "_level6_artifact_on_health_changed")
+		if _level6_artifact_bound_player.is_connected(&"vida_alterada", old_callback):
+			_level6_artifact_bound_player.disconnect(&"vida_alterada", old_callback)
+	_level6_artifact_bound_player = target
+	if target.has_signal(&"vida_alterada"):
+		var callback: Callable = Callable(self, "_level6_artifact_on_health_changed")
+		if not target.is_connected(&"vida_alterada", callback):
+			target.connect(&"vida_alterada", callback)
+
+
+func _level6_artifact_fight_has_begun() -> bool:
+	return level6_mode and level6_stage in [
+		Level6Stage.PHASE_ONE, Level6Stage.DISSOLVE_ONE,
+		Level6Stage.CLIMB, Level6Stage.SECOND_WAIT,
+		Level6Stage.PHASE_TWO, Level6Stage.DISSOLVE_TWO,
+		Level6Stage.PHASE_THREE_PENDING, Level6Stage.PHASE_THREE_CLIMB,
+		Level6Stage.THIRD_REVEAL, Level6Stage.PHASE_THREE
+	]
+
+
+func _level6_artifact_rescue_floor() -> Dictionary:
+	for abyss: Node in get_tree().get_nodes_in_group(&"rising_void"):
+		if abyss.has_method(&"get_artifact_rescue_checkpoint"):
+			var floor_result: Variant = abyss.call(&"get_artifact_rescue_checkpoint")
+			if floor_result is Dictionary:
+				var grounded_rescue: Dictionary = floor_result
+				if grounded_rescue.has("position"):
+					return grounded_rescue
+	return {}
+
+
+func _level6_artifact_on_health_changed(current_hp: int, _maximum_hp: int) -> void:
+	if current_hp > 0 or not level6_artifact_mercy_enabled:
+		return
+	if _collapse_step != 0 and level6_stage == Level6Stage.THIRD_DEATH:
+		return
+	if _level6_artifact_rescue_active or not _level6_artifact_fight_has_begun():
+		return
+	if not is_instance_valid(target):
+		return
+
+	var used_all_saves: bool = _level6_artifact_saves_used >= level6_artifact_mercy_max_saves
+	var checkpoint: Dictionary = {}
+	if not used_all_saves:
+		checkpoint = _level6_artifact_rescue_floor()
+		if not checkpoint.has("position"):
+			push_warning("KING MERCY: no grounded checkpoint in RisingVoid; normal Level 6 death will proceed.")
+			return
+
+	_level6_artifact_rescue_active = true
+	_level6_artifact_awaiting_restart = used_all_saves
+	if not used_all_saves:
+		_level6_artifact_saves_used += 1
+	Global.curar(999)
+	if int(Global.vida_atual) <= 0:
+		Global.reiniciar_vida()
+	target.set("vida", int(Global.vida_atual))
+	target.set("tempo_invulneravel_restante", 9999.0)
+	target.set_meta(&"king_artifact_rescue_active", true)
+	target.velocity = Vector2.ZERO
+
+	_level6_artifact_prev_tree_paused = get_tree().paused
+	_level6_artifact_create_screen()
+	get_tree().paused = true
+
+	if used_all_saves:
+		_level6_artifact_message = "...\nDesta vez, nenhuma relíquia respondeu."
+	else:
+		match _level6_artifact_saves_used:
+			1:
+				_level6_artifact_message = "...\nAs relíquias te protegeram desta vez."
+			2:
+				_level6_artifact_message = "...\nElas ainda não te deixaram partir."
+			_:
+				_level6_artifact_message = "...\nO último brilho está se apagando."
+	_level6_artifact_run_scene(checkpoint)
+	print("VOID KING ARTIFACT MERCY: save ", _level6_artifact_saves_used,
+		"/", level6_artifact_mercy_max_saves, " / restart=", used_all_saves)
+
+
+func _level6_artifact_create_screen() -> void:
+	if is_instance_valid(_level6_artifact_overlay):
+		return
+	_level6_artifact_overlay = CanvasLayer.new()
+	_level6_artifact_overlay.name = "KingArtifactMercyScreen"
+	_level6_artifact_overlay.layer = 3500
+	_level6_artifact_overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_level6_artifact_overlay)
+	_level6_artifact_screen = ColorRect.new()
+	_level6_artifact_screen.color = Color.BLACK
+	_level6_artifact_screen.mouse_filter = Control.MOUSE_FILTER_STOP
+	_level6_artifact_overlay.add_child(_level6_artifact_screen)
+	_level6_artifact_label = Label.new()
+	_level6_artifact_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_level6_artifact_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_level6_artifact_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_level6_artifact_label.add_theme_font_size_override("font_size", 30)
+	_level6_artifact_label.add_theme_color_override("font_color", Color(0.96, 0.95, 0.93))
+	_level6_artifact_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_level6_artifact_overlay.add_child(_level6_artifact_label)
+	_level6_artifact_resize_screen()
+	if not get_viewport().size_changed.is_connected(_level6_artifact_resize_screen):
+		get_viewport().size_changed.connect(_level6_artifact_resize_screen)
+
+
+func _level6_artifact_resize_screen() -> void:
+	if not is_instance_valid(_level6_artifact_screen):
+		return
+	var screen_size: Vector2 = get_viewport_rect().size
+	_level6_artifact_screen.position = Vector2.ZERO
+	_level6_artifact_screen.size = screen_size
+	_level6_artifact_label.position = Vector2(screen_size.x * 0.10, screen_size.y * 0.28)
+	_level6_artifact_label.size = Vector2(screen_size.x * 0.80, screen_size.y * 0.42)
+
+
+func _level6_artifact_run_scene(checkpoint: Dictionary) -> void:
+	_level6_artifact_label.text = _level6_artifact_message
+	_level6_artifact_label.visible_characters = 0
+	await get_tree().create_timer(level6_artifact_silent_black_seconds, true).timeout
+	if not is_instance_valid(_level6_artifact_label):
+		return
+	var amount: int = _level6_artifact_message.length()
+	for i: int in range(amount):
+		if not is_instance_valid(_level6_artifact_label):
+			return
+		_level6_artifact_label.visible_characters = i + 1
+		var c: String = _level6_artifact_message.substr(i, 1)
+		var speed: float = maxf(1.0, level6_artifact_text_speed)
+		var interval: float = 1.0 / speed
+		if c in [".", "!", "?", ":"]:
+			interval += 0.18
+		await get_tree().create_timer(interval, true).timeout
+	await get_tree().create_timer(level6_artifact_black_hold, true).timeout
+
+	if _level6_artifact_awaiting_restart:
+		get_tree().paused = false
+		Global.reiniciar_vida()
+		get_tree().reload_current_scene()
+		return
+
+	if is_instance_valid(target) and checkpoint.has("position"):
+		target.global_position = checkpoint["position"]
+		target.velocity = Vector2.ZERO
+		if target.has_method(&"_resetar_queda_profunda"):
+			target.call(&"_resetar_queda_profunda")
+		target.reset_physics_interpolation()
+		target.apply_floor_snap()
+
+	_level6_clear_attacks()
+	level6_third_warnings.clear()
+	if is_instance_valid(target):
+		target.set("vida", int(Global.vida_atual))
+		target.set("estado", 0)
+		target.set("tempo_invulneravel_restante", level6_artifact_safe_grace)
+		target.set_meta(&"king_artifact_rescue_active", false)
+		if target.has_signal(&"vida_alterada"):
+			target.emit_signal(&"vida_alterada", int(target.get("vida")), int(target.get("vida_maxima")))
+
+	await get_tree().create_timer(level6_artifact_after_rescue_black_seconds, true).timeout
+	if not is_instance_valid(_level6_artifact_screen) or not is_instance_valid(_level6_artifact_label):
+		return
+	var fade: Tween = create_tween()
+	fade.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	fade.set_parallel(true)
+	fade.tween_property(_level6_artifact_screen, "color:a", 0.0, 0.65)
+	fade.tween_property(_level6_artifact_label, "modulate:a", 0.0, 0.55)
+	await fade.finished
+
+	get_tree().paused = _level6_artifact_prev_tree_paused
+	_level6_artifact_rescue_active = false
+	if is_instance_valid(_level6_artifact_overlay):
+		_level6_artifact_overlay.queue_free()
+	_level6_artifact_overlay = null
+	_level6_artifact_screen = null
+	_level6_artifact_label = null
+
+
 func _level6_on_boss_area_entered(body: Node2D) -> void:
+	if _level6_wander_active:
+		return
 	if level6_mode and level6_stage == Level6Stage.HIDDEN and body.is_in_group(&"player"):
 		level6_stage = Level6Stage.WAITING
-		# Minimum keeps old saved Inspector value (2.8s) from cutting the new wait short.
 		level6_stage_timer = maxf(3.8, level6_entrance_delay)
+
+
+func _level6_wander_update(delta: float) -> void:
+	if not _level6_wander_active or not level6_mode:
+		return
+	_level6_wander_dialogue_tick(delta)
+	if _level6_wander_completed or level6_stage != Level6Stage.HIDDEN:
+		return
+	if not is_instance_valid(target):
+		target = get_tree().get_first_node_in_group(&"player") as CharacterBody2D
+	if not is_instance_valid(target):
+		return
+	var inside_2: bool = (_level6_wander_area2.overlaps_body(target)
+		or _level6_point_inside_area(_level6_wander_area2, target.global_position))
+	var inside_1: bool = (_level6_wander_area1.overlaps_body(target)
+		or _level6_point_inside_area(_level6_wander_area1, target.global_position))
+
+	if _level6_wander_2_first_visit and target.global_position.distance_to(
+		_level6_wander_first_contact) > 170.0:
+		_level6_wander_left_first_contact = true
+	var returned_to_start: bool = (_level6_wander_2_first_visit
+		and _level6_wander_1_visited and _level6_wander_left_first_contact
+		and target.global_position.distance_to(_level6_wander_first_contact) < 65.0)
+	if (inside_2 and not _level6_wander_2_inside_last) or returned_to_start:
+		if not _level6_wander_2_first_visit:
+			_level6_wander_2_first_visit = true
+			_level6_wander_first_contact = target.global_position
+			_level6_wander_seal_retreat()
+			_level6_wander_queue_lines([
+				"A subida termina aqui. Não há mais caminho.",
+                "As relíquias abriram este lugar. Mas para quê?"
+			])
+			print("KING ENTRANCE: wanderarea2 first visit; Void seals retreat")
+		elif _level6_wander_1_visited:
+			_level6_wander_completed = true
+			level6_stage = Level6Stage.WAITING
+			level6_stage_timer = maxf(9.0, level6_wander_awakening_delay)
+			_level6_wander_queue_lines([
+				"A passagem por onde entrei... sumiu.",
+                "Então era isso que estavam tentando manter fechado."
+			])
+			print("KING ENTRANCE: W2 -> W1 -> W2 completed; awakening countdown started")
+	_level6_wander_2_inside_last = inside_2
+
+	if (inside_1 and _level6_wander_2_first_visit and not _level6_wander_1_visited
+		and target.global_position.distance_to(_level6_wander_first_contact) > 140.0):
+		_level6_wander_1_visited = true
+		_level6_wander_queue_lines([
+			"As marcas nas paredes são as mesmas das relíquias.",
+            "Não fizeram esta sala para receber alguém."
+		])
+		print("KING ENTRANCE: wanderarea1 visited; return to wanderarea2")
+	_level6_wander_1_inside_last = inside_1
+
+
+func _level6_wander_seal_retreat() -> void:
+	if level6_wander_block_retreat:
+		_level6_wander_make_retreat_wall()
+	for abyss_node: Node in get_tree().get_nodes_in_group(&"rising_void"):
+		if abyss_node.has_method(&"seal_boss_arena_entrance"):
+			abyss_node.call(&"seal_boss_arena_entrance", target)
+		else:
+			push_warning("KING ENTRANCE: RisingVoid needs V19 for first-arena seal rise.")
+
+
+func _level6_wander_make_retreat_wall() -> void:
+	if is_instance_valid(_level6_wander_retreat_wall) or not is_instance_valid(target):
+		return
+	var arena_direction: float = 1.0
+	if is_instance_valid(_level6_wander_area1) and is_instance_valid(_level6_wander_area2):
+		var from_entry_to_far: float = (
+			_level6_wander_area1.global_position.x
+			- _level6_wander_area2.global_position.x
+		)
+		if absf(from_entry_to_far) >= 24.0:
+			arena_direction = signf(from_entry_to_far)
+		elif absf(global_position.x - _level6_wander_area2.global_position.x) >= 24.0:
+			arena_direction = signf(global_position.x - _level6_wander_area2.global_position.x)
+
+	var entry_edges: Vector2 = _level6_wander_area_x_bounds(_level6_wander_area2)
+	var far_edges: Vector2 = _level6_wander_area_x_bounds(_level6_wander_area1)
+	var retreat_outer_edge: float
+	if arena_direction > 0.0:
+		retreat_outer_edge = minf(entry_edges.x, far_edges.x)
+	else:
+		retreat_outer_edge = maxf(entry_edges.y, far_edges.y)
+
+	var collision_height: float = maxf(200000.0, level6_wander_retreat_wall_height)
+	var collision_width: float = 112.0
+	_level6_wander_retreat_wall = StaticBody2D.new()
+	_level6_wander_retreat_wall.name = "KingArenaSealedEntrance"
+	var player_mask: int = target.collision_mask
+	_level6_wander_retreat_wall.collision_layer = player_mask if player_mask != 0 else 1
+	_level6_wander_retreat_wall.collision_mask = 0
+
+	var wall_shape: CollisionShape2D = CollisionShape2D.new()
+	var wall_rect: RectangleShape2D = RectangleShape2D.new()
+	wall_rect.size = Vector2(collision_width, collision_height)
+	wall_shape.shape = wall_rect
+	_level6_wander_retreat_wall.add_child(wall_shape)
+
+	var wall_visual: Polygon2D = Polygon2D.new()
+	var visual_half_height: float = minf(collision_height * 0.5, 10000.0)
+	var visual_half_width: float = collision_width * 0.5
+	wall_visual.polygon = PackedVector2Array([
+		Vector2(-visual_half_width, -visual_half_height),
+		Vector2(visual_half_width, -visual_half_height),
+		Vector2(visual_half_width, visual_half_height),
+		Vector2(-visual_half_width, visual_half_height)
+	])
+	wall_visual.color = Color(0.005, 0.006, 0.011, 0.77)
+	wall_visual.z_index = 35
+	_level6_wander_retreat_wall.add_child(wall_visual)
+
+	var scene_root: Node = get_tree().current_scene
+	if not is_instance_valid(scene_root):
+		scene_root = get_parent()
+	scene_root.add_child(_level6_wander_retreat_wall)
+	_level6_wander_retreat_wall.add_to_group("king_arena_seal")
+	var outside_margin: float = maxf(35.0, level6_wander_retreat_wall_distance)
+	var barrier_center_x: float = (
+		retreat_outer_edge - arena_direction * (
+			collision_width * 0.5 + outside_margin
+		)
+	)
+	var minimum_player_clearance: float = collision_width * 0.5 + 80.0
+	if arena_direction > 0.0:
+		barrier_center_x = minf(
+			barrier_center_x, target.global_position.x - minimum_player_clearance
+		)
+	else:
+		barrier_center_x = maxf(
+			barrier_center_x, target.global_position.x + minimum_player_clearance
+		)
+	_level6_wander_retreat_wall.global_position = Vector2(
+		barrier_center_x, target.global_position.y - 60.0
+	)
+	print(
+		"KING ENTRANCE: solid seal OUTSIDE arena at x=", barrier_center_x,
+		" | entrance side=", "left" if arena_direction > 0.0 else "right"
+	)
+
+	_level6_wander_create_opposite_wall(
+		arena_direction, entry_edges, far_edges,
+		collision_width, collision_height, outside_margin,
+		minimum_player_clearance, scene_root, player_mask
+	)
+
+
+func _level6_wander_create_opposite_wall(
+	original_arena_direction: float,
+	entry_edges: Vector2,
+	far_edges: Vector2,
+	collision_width: float,
+	collision_height: float,
+	outside_margin: float,
+	minimum_player_clearance: float,
+	scene_root: Node,
+	player_mask: int
+) -> void:
+	if is_instance_valid(_level6_wander_opposite_wall):
+		return
+	if not is_instance_valid(target) or not is_instance_valid(scene_root):
+		return
+
+	var opposite_direction: float = -original_arena_direction
+	var outer_edge: float = (
+		minf(entry_edges.x, far_edges.x)
+		if opposite_direction > 0.0
+		else maxf(entry_edges.y, far_edges.y)
+	)
+	var opposite_x: float = (
+		outer_edge - opposite_direction * (collision_width * 0.5 + outside_margin)
+	)
+	if opposite_direction > 0.0:
+		opposite_x = minf(
+			opposite_x, target.global_position.x - minimum_player_clearance
+		)
+	else:
+		opposite_x = maxf(
+			opposite_x, target.global_position.x + minimum_player_clearance
+		)
+
+	var wall: StaticBody2D = StaticBody2D.new()
+	wall.name = (
+        "KingArenaSealedLeft"
+		if opposite_direction > 0.0
+		else "KingArenaSealedRight"
+	)
+	wall.collision_layer = player_mask if player_mask != 0 else 1
+	wall.collision_mask = 0
+
+	var solid_shape: CollisionShape2D = CollisionShape2D.new()
+	var rectangle: RectangleShape2D = RectangleShape2D.new()
+	rectangle.size = Vector2(collision_width, collision_height)
+	solid_shape.shape = rectangle
+	wall.add_child(solid_shape)
+
+	var visual: Polygon2D = Polygon2D.new()
+	var half_height: float = minf(collision_height * 0.5, 10000.0)
+	var half_width: float = collision_width * 0.5
+	visual.polygon = PackedVector2Array([
+		Vector2(-half_width, -half_height),
+		Vector2(half_width, -half_height),
+		Vector2(half_width, half_height),
+		Vector2(-half_width, half_height)
+	])
+	visual.color = Color(0.005, 0.006, 0.011, 0.77)
+	visual.z_index = 35
+	wall.add_child(visual)
+
+	scene_root.add_child(wall)
+	wall.add_to_group("king_arena_seal")
+	wall.global_position = Vector2(
+		opposite_x, target.global_position.y - 60.0
+	)
+	_level6_wander_opposite_wall = wall
+	print(
+		"KING ENTRANCE V86: restored ",
+		"LEFT" if opposite_direction > 0.0 else "RIGHT",
+		" barrier at x=", opposite_x,
+        " | both arena boundaries now sealed"
+	)
+
+
+func _level6_wander_area_x_bounds(arena_area: Area2D) -> Vector2:
+	if not is_instance_valid(arena_area):
+		return Vector2(target.global_position.x, target.global_position.x)
+
+	var left_edge: float = INF
+	var right_edge: float = -INF
+	for child_node: Node in arena_area.find_children(
+		"*", "CollisionShape2D", true, false
+	):
+		var collision_node: CollisionShape2D = child_node as CollisionShape2D
+		if collision_node == null or collision_node.disabled or collision_node.shape == null:
+			continue
+		if collision_node.shape is RectangleShape2D:
+			var rectangle: RectangleShape2D = collision_node.shape as RectangleShape2D
+			var half_size: Vector2 = rectangle.size * 0.5
+			for horizontal_sign: float in [-1.0, 1.0]:
+				for vertical_sign: float in [-1.0, 1.0]:
+					var corner: Vector2 = collision_node.to_global(Vector2(
+						horizontal_sign * half_size.x,
+						vertical_sign * half_size.y
+					))
+					left_edge = minf(left_edge, corner.x)
+					right_edge = maxf(right_edge, corner.x)
+		elif collision_node.shape is CircleShape2D:
+			var circle: CircleShape2D = collision_node.shape as CircleShape2D
+			var half_width: float = circle.radius * maxf(
+				absf(collision_node.global_transform.x.x),
+				absf(collision_node.global_transform.y.x)
+			)
+			left_edge = minf(left_edge, collision_node.global_position.x - half_width)
+			right_edge = maxf(right_edge, collision_node.global_position.x + half_width)
+		else:
+			left_edge = minf(left_edge, collision_node.global_position.x)
+			right_edge = maxf(right_edge, collision_node.global_position.x)
+
+	if left_edge == INF or right_edge == -INF:
+		return Vector2(arena_area.global_position.x, arena_area.global_position.x)
+	return Vector2(left_edge, right_edge)
+
+func _level6_wander_queue_lines(lines: Array) -> void:
+	for line_text: Variant in lines:
+		_level6_wander_dialogue_queue.append(String(line_text))
+	_level6_wander_create_dialogue()
+
+
+func _level6_wander_create_dialogue() -> void:
+	if is_instance_valid(_level6_wander_dialogue_layer):
+		return
+	_level6_wander_dialogue_layer = CanvasLayer.new()
+	_level6_wander_dialogue_layer.name = "KingEntranceDialogue"
+	_level6_wander_dialogue_layer.layer = 800
+	add_child(_level6_wander_dialogue_layer)
+
+	_level6_wander_dialogue_panel = Control.new()
+	_level6_wander_dialogue_panel.name = "ArrivalStyleTextFade"
+	_level6_wander_dialogue_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_level6_wander_dialogue_layer.add_child(_level6_wander_dialogue_panel)
+
+	_level6_wander_dialogue_text = Label.new()
+	_level6_wander_dialogue_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_level6_wander_dialogue_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_level6_wander_dialogue_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_level6_wander_dialogue_text.add_theme_font_size_override("font_size", 27)
+	_level6_wander_dialogue_text.add_theme_color_override(
+		"font_color", Color(0.84, 0.84, 0.88)
+	)
+	_level6_wander_dialogue_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_level6_wander_dialogue_panel.add_child(_level6_wander_dialogue_text)
+
+	_level6_wander_dialogue_glyph_left = Label.new()
+	_level6_wander_dialogue_glyph_left.text = "─◆"
+	_level6_wander_dialogue_glyph_left.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_level6_wander_dialogue_glyph_left.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_level6_wander_dialogue_glyph_left.add_theme_font_size_override("font_size", 19)
+	_level6_wander_dialogue_glyph_left.add_theme_color_override(
+		"font_color", Color(0.36, 0.45, 0.62, 0.78)
+	)
+	_level6_wander_dialogue_glyph_left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_level6_wander_dialogue_panel.add_child(_level6_wander_dialogue_glyph_left)
+
+	_level6_wander_dialogue_glyph_right = Label.new()
+	_level6_wander_dialogue_glyph_right.text = "◆─"
+	_level6_wander_dialogue_glyph_right.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_level6_wander_dialogue_glyph_right.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_level6_wander_dialogue_glyph_right.add_theme_font_size_override("font_size", 19)
+	_level6_wander_dialogue_glyph_right.add_theme_color_override(
+		"font_color", Color(0.36, 0.45, 0.62, 0.78)
+	)
+	_level6_wander_dialogue_glyph_right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_level6_wander_dialogue_panel.add_child(_level6_wander_dialogue_glyph_right)
+
+	_level6_wander_layout_dialogue()
+	if not get_viewport().size_changed.is_connected(_level6_wander_layout_dialogue):
+		get_viewport().size_changed.connect(_level6_wander_layout_dialogue)
+	_level6_wander_dialogue_panel.visible = false
+	_level6_wander_dialogue_panel.modulate.a = 0.0
+
+
+func _level6_wander_layout_dialogue() -> void:
+	if not is_instance_valid(_level6_wander_dialogue_panel):
+		return
+	var view_size: Vector2 = get_viewport_rect().size
+	_level6_wander_dialogue_panel.position = Vector2.ZERO
+	_level6_wander_dialogue_panel.size = view_size
+
+	_level6_wander_dialogue_text.position = Vector2(
+		view_size.x * 0.10, view_size.y * 0.70
+	)
+	_level6_wander_dialogue_text.size = Vector2(
+		view_size.x * 0.80, view_size.y * 0.19
+	)
+	var glyph_y: float = view_size.y * 0.755
+	if is_instance_valid(_level6_wander_dialogue_glyph_left):
+		_level6_wander_dialogue_glyph_left.position = Vector2(
+			view_size.x * 0.065, glyph_y
+		)
+		_level6_wander_dialogue_glyph_left.size = Vector2(view_size.x * 0.095, 48.0)
+	if is_instance_valid(_level6_wander_dialogue_glyph_right):
+		_level6_wander_dialogue_glyph_right.position = Vector2(
+			view_size.x * 0.84, glyph_y
+		)
+		_level6_wander_dialogue_glyph_right.size = Vector2(view_size.x * 0.095, 48.0)
+
+func _level6_wander_dialogue_tick(delta: float) -> void:
+	if not _level6_wander_dialogue_showing:
+		if _level6_wander_dialogue_queue.is_empty():
+			_level6_wander_hide_dialogue()
+			return
+		_level6_wander_dialogue_line = _level6_wander_dialogue_queue.pop_front()
+		_level6_wander_dialogue_elapsed = 0.0
+		_level6_wander_dialogue_showing = true
+		_level6_wander_create_dialogue()
+		_level6_wander_dialogue_text.text = _level6_wander_dialogue_line
+		_level6_wander_dialogue_text.visible_characters = 0
+		_level6_wander_dialogue_panel.visible = true
+		_level6_wander_dialogue_panel.modulate.a = 0.0
+		return
+	_level6_wander_dialogue_elapsed += delta
+	var total_chars: int = _level6_wander_dialogue_line.length()
+	var printed_chars: int = mini(total_chars,
+		int(_level6_wander_dialogue_elapsed * level6_wander_letters_per_second))
+	_level6_wander_dialogue_text.visible_characters = printed_chars
+	var display_duration: float = float(total_chars) / maxf(1.0, level6_wander_letters_per_second)
+	var total_duration: float = display_duration + level6_wander_dialogue_hold
+	var fade_in: float = clampf(_level6_wander_dialogue_elapsed / 0.42, 0.0, 1.0)
+	var fade_out: float = clampf((total_duration - _level6_wander_dialogue_elapsed) / 0.48, 0.0, 1.0)
+	_level6_wander_dialogue_panel.modulate.a = minf(fade_in, fade_out)
+	if _level6_wander_dialogue_elapsed >= total_duration:
+		_level6_wander_dialogue_showing = false
+		if _level6_wander_dialogue_queue.is_empty():
+			_level6_wander_hide_dialogue()
+
+
+func _level6_wander_hide_dialogue() -> void:
+	if is_instance_valid(_level6_wander_dialogue_panel):
+		_level6_wander_dialogue_panel.visible = false
+
+
+func _level6_wander_early_earthquake() -> void:
+	if not _level6_wander_active or not _level6_wander_completed:
+		return
+	var lead: float = maxf(0.1, level6_wander_pre_shake_seconds)
+	if level6_stage_timer > lead:
+		return
+	var camera: Camera2D = _level6_find_battle_camera()
+	if not is_instance_valid(camera):
+		return
+	var progress: float = clampf(1.0 - maxf(0.0, level6_stage_timer) / lead, 0.0, 1.0)
+	var power: float = level6_wander_pre_shake_strength * pow(progress, 1.7)
+	camera.offset = level6_original_cam_offset + Vector2(
+		randf_range(-power, power), randf_range(-power, power))
 
 
 func _level6_camera_tick(delta: float) -> void:
@@ -1566,6 +2018,9 @@ func _level6_camera_tick(delta: float) -> void:
 	]
 	var phase2_centered: bool = _level6_phase_two_framing() or level6_stage in [
 		Level6Stage.THIRD_REVEAL, Level6Stage.PHASE_THREE, Level6Stage.THIRD_DEATH]
+	if level6_stage == Level6Stage.THIRD_DEATH and _collapse_step >= 2:
+		boss_framing = false
+		phase2_centered = false
 	var desired_offset: Vector2 = (Vector2.ZERO if phase2_centered else
 		(level6_original_cam_offset + Vector2(0.0, -level6_camera_upward_pixels) if boss_framing else level6_original_cam_offset))
 	var desired_zoom: Vector2 = level6_camera_base_zoom * (level6_camera_zoom_factor if boss_framing else 1.0)
@@ -1576,9 +2031,12 @@ func _level6_camera_tick(delta: float) -> void:
 
 func _level6_begin_shake() -> void:
 	level6_stage = Level6Stage.SHAKING
-	level6_stage_timer = maxf(0.5, level6_entrance_shake_v37_seconds)
+	level6_stage_timer = (
+		maxf(level6_entrance_shake_v37_seconds, level6_wander_final_shake_seconds)
+		if _level6_wander_active and _level6_wander_completed
+		else maxf(0.5, level6_entrance_shake_v37_seconds)
+	)
 	level6_shake_cam = get_viewport().get_camera_2d()
-	# _level6_camera_tick() captured the original player camera values.
 	if is_instance_valid(level6_shake_cam) and not level6_camera_initialized:
 		level6_camera_initialized = true
 		level6_original_cam_offset = level6_shake_cam.offset
@@ -1608,7 +2066,11 @@ func _level6_center_phase_one_marker() -> Marker2D:
 func _level6_reveal_phase_one() -> void:
 	_level6_stop_shake()
 	level6_stage = Level6Stage.REVEAL
-	level6_stage_timer = maxf(0.30, king_teleport_reappear_seconds)
+	level6_stage_timer = (
+		maxf(king_teleport_reappear_seconds, level6_wander_reveal_seconds)
+		if _level6_wander_active and _level6_wander_completed
+		else maxf(0.30, king_teleport_reappear_seconds)
+	)
 	var center_marker: Marker2D = _level6_center_phase_one_marker()
 	if is_instance_valid(center_marker):
 		global_position = _level6_marker_position(center_marker)
@@ -1662,9 +2124,6 @@ func _level6_begin_guard() -> void:
 	king_shield_countdown = -1.0
 	king_post_attack_timer = 2.0
 	_level6_clear_attacks()
-	# The V40 spawnenemies2 pose contains a huge white ball. Do not display
-	# it in Level 6, even for the unique Void Skeleton summon. The regular
-	# 1.1-second shield + aura wind-up remains fully intact.
 	_play(&"idle", true)
 	_update_king_hp_label()
 	queue_redraw()
@@ -1700,7 +2159,6 @@ func _level6_clear_attacks() -> void:
 
 func _level6_start_dissolving(first: bool) -> void:
 	level6_stage = Level6Stage.DISSOLVE_ONE if first else Level6Stage.DISSOLVE_TWO
-	# Three-stage departure: scatter, hang in the void, then accelerate upward.
 	level6_stage_timer = maxf(2.50 if first else 2.25, level6_dissolve_seconds)
 	_level6_clear_attacks()
 	king_tp_phase = 0
@@ -1719,8 +2177,6 @@ func _level6_start_dissolving(first: bool) -> void:
 
 
 func _level6_emit_burst() -> void:
-	# 56 independent motes. First explode in ALL directions and decelerate,
-	# pause for 0.42 seconds, then race UP toward the next spawn location.
 	var parent2: Node = get_parent()
 	if parent2 == null:
 		parent2 = get_tree().current_scene
@@ -1780,8 +2236,6 @@ func _level6_enable_climb() -> void:
 		king_hud.visible = false
 	if level6_climb_layer != null:
 		level6_climb_layer.enabled = true
-	# Reveal the climb TileMapLayer only; RisingVoid is already visible.
-	# start_boss_climb() must NOT start rising (that waits for 2phaseidentifier).
 	for void_node: Node in get_tree().get_nodes_in_group(&"rising_void"):
 		if void_node.has_method(&"start_boss_climb"):
 			void_node.call(&"start_boss_climb")
@@ -1791,13 +2245,10 @@ func _level6_enable_climb() -> void:
 		global_position = _level6_marker_position(level6_second_markers[0])
 		level6_current_marker = level6_second_markers[0]
 		reset_physics_interpolation()
-	# Void enemies can still stalk the climb. The arena closes to them at phase 2.
 	queue_redraw()
 
 
 func _level6_start_second_phase() -> void:
-	# Safety net: rising starts only upon upper-arena arrival. Normally
-	# _level6_on_second_area_entered() already called begin_rising().
 	for void_node: Node in get_tree().get_nodes_in_group(&"rising_void"):
 		if void_node.has_method(&"begin_rising"):
 			void_node.call(&"begin_rising")
@@ -1818,7 +2269,7 @@ func _level6_start_second_phase() -> void:
 	king_revival_started = false
 	king_revival_completed = true
 	king_revival_cast_fx = 0.0
-	king_last_stand_started = true # Only to enable tougher attacks, NOT old resurrections.
+	king_last_stand_started = true
 	king_last_stand_intro_timer = 0.0
 	king_final_pattern_round = 0
 	king_gravefall_cooldown_timer = 1.2
@@ -1829,9 +2280,6 @@ func _level6_start_second_phase() -> void:
 	king_post_attack_timer = 1.3
 	king_skull_volley_timer = 15.0
 	king_tp_phase = 0
-	# Never inherit the previous phase's markers or unfinished teleport.
-	# Hard reset the old phase-one movement/destination. The reveal must
-	# happen on a REAL phase-two Marker2D, close enough to be seen.
 	var arrival_marker: Marker2D = _level6_phase2_marker_near_player()
 	if is_instance_valid(arrival_marker):
 		level6_current_marker = arrival_marker
@@ -1841,7 +2289,7 @@ func _level6_start_second_phase() -> void:
 	else:
 		push_error("VOID KING V43: phase-two Marker2D list is empty!")
 	king_tp_destination = global_position
-	king_tp_hold_remaining = 4.0 # ONLY the seven explicit phase-2 markers.
+	king_tp_hold_remaining = 4.0
 	state = State.GUARDED
 	sprite.visible = true
 	if is_instance_valid(level6_aura_particles):
@@ -1850,31 +2298,26 @@ func _level6_start_second_phase() -> void:
 	if is_instance_valid(level6_aura_sprite):
 		level6_aura_sprite.visible = true
 	if is_instance_valid(king_crown_root):
-		king_crown_root.visible = false # No giant purple crown in the Void.
+		king_crown_root.visible = false
 	if is_instance_valid(king_hud):
 		king_hud.visible = true
 	_king_set_teleport_death_frame(1.0)
 	sprite.visible = true
 	level6_stage = Level6Stage.REVEAL
 	level6_stage_timer = maxf(0.30, king_teleport_reappear_seconds)
-	# REVEAL goes to PHASE_TWO if this flag is set.
 	level6_second_reveal = true
 	_update_king_hp_label()
 	health_changed.emit(hp, max_hp)
 
 
 var level6_second_reveal: bool = false
-# V43 - The boss may become invisible during CLIMB, but must still poll the
-# upper arena every frame. A missed Area2D body_entered must never softlock it.
 var level6_climb_elapsed: float = 0.0
 var level6_upper_check_log_timer: float = 0.0
 var level6_phase2_start_logged: bool = false
 var level6_phase2_missing_markers_warned: bool = false
-# One controlled 2-second crescendo when entering the upper arena.
 @export_range(1.0, 4.0, 0.1) var level6_phase2_shake_seconds: float = 2.0
 @export_range(0.0, 25.0, 0.5) var level6_phase2_shake_max_pixels: float = 12.0
 var level6_phase2_shake_duration: float = 2.0
-
 
 
 func _level6_secure_second_marker() -> void:
@@ -1886,8 +2329,6 @@ func _level6_secure_second_marker() -> void:
 			valid_points.append(marker)
 	if valid_points.is_empty():
 		return
-	# Validate current marker and destination BEFORE the old teleport animation
-	# can move the King to an obsolete first-phase coordinate.
 	if not is_instance_valid(level6_current_marker) or not valid_points.has(level6_current_marker):
 		level6_current_marker = _level6_phase2_marker_near_player()
 	if not is_instance_valid(level6_current_marker):
@@ -1912,7 +2353,6 @@ func _level6_secure_second_marker() -> void:
 
 
 func _level6_choose_marker() -> void:
-	# Strict phase gate: intermediate stages must NEVER choose phase-one points.
 	if level6_stage not in [Level6Stage.PHASE_ONE, Level6Stage.PHASE_TWO, Level6Stage.PHASE_THREE]:
 		return
 	var choices: Array[Marker2D] = []
@@ -1942,7 +2382,6 @@ func _level6_choose_marker() -> void:
 	king_tp_elapsed = 0.0
 	level6_perch_timer = clampf(level6_marker_hold_seconds, 2.5, 4.0)
 	_king_set_teleport_death_frame(0.0)
-	# No extra crown/other old teleport markers in this mode.
 
 
 func _level6_perch_tick(delta: float) -> void:
@@ -1960,8 +2399,6 @@ func _level6_debug_warp_player_to_upper_arena() -> void:
 	_level6_rebind_upper_nodes()
 	if level6_second_markers.is_empty():
 		return
-	# A quick TEST ONLY teleport so pressing 1 actually lets you fight the
-	# second phase rather than leaving your player in the lower arena.
 	var center: Vector2 = Vector2.ZERO
 	for marker: Marker2D in level6_second_markers:
 		center += marker.global_position
@@ -2006,7 +2443,6 @@ func _level6_debug_skip_to_phase_two() -> void:
 	if level6_second_markers.is_empty():
 		push_warning("VOID KING V53: debug skip needs phase-two Marker2D positions.")
 		return
-	# Do not leave the summoned guard or phase-one projectiles behind.
 	_level6_clear_attacks()
 	for guard: CharacterBody2D in king_elite_guards:
 		if is_instance_valid(guard) and not guard.is_queued_for_deletion():
@@ -2014,11 +2450,9 @@ func _level6_debug_skip_to_phase_two() -> void:
 	king_elite_guards.clear()
 	king_tp_phase = 0
 	level6_stage = Level6Stage.DISSOLVE_ONE
-	_level6_emit_burst() # Short scatter VFX, but do not wait for it to finish.
+	_level6_emit_burst()
 	_level6_enable_climb()
 	_level6_debug_warp_player_to_upper_arena()
-	# Show the actual phase-two boss immediately, with 150+75 HP and markers.
-	# Normal play still uses the upper Area2D and its usual 2s rumble.
 	_level6_start_second_phase()
 	print("VOID KING V53: DEBUG 1 -> PHASE TWO (no climb/shake wait)")
 
@@ -2026,8 +2460,6 @@ func _level6_debug_skip_to_phase_two() -> void:
 func _level6_debug_skip_to_phase_three() -> void:
 	if level6_stage != Level6Stage.PHASE_TWO:
 		return
-	# Explicit test shortcut: skip the 5-second natural transition without
-	# changing the real defeat path. Start at the BOTTOM of the final ascent.
 	hp = 0
 	health_changed.emit(hp, max_hp)
 	_level6_start_dissolving(false)
@@ -2038,8 +2470,6 @@ func _level6_debug_skip_to_phase_three() -> void:
 
 
 func _level6_update(delta: float) -> void:
-	# Other teleport routines can restore collision layers; force the King
-	# non-solid on every Level 6 tick while preserving the active hurtbox.
 	if collision_layer != 0:
 		collision_layer = 0
 	if collision_mask != 0:
@@ -2047,6 +2477,7 @@ func _level6_update(delta: float) -> void:
 	_level6_camera_tick(delta)
 	if not is_instance_valid(target):
 		target = get_tree().get_first_node_in_group(&"player") as CharacterBody2D
+	_level6_artifact_bind_player()
 	var one_down: bool = Input.is_physical_key_pressed(KEY_1)
 	if level6_debug_skip_phase_one_with_1 and one_down and not level6_debug_one_was_down:
 		_level6_debug_skip_to_phase_two()
@@ -2059,14 +2490,16 @@ func _level6_update(delta: float) -> void:
 	if level6_stage in [Level6Stage.PHASE_THREE_CLIMB, Level6Stage.PHASE_THREE]:
 		_level6_update_falling_lasers(delta)
 	if level6_stage == Level6Stage.HIDDEN:
-		# Area2D body_entered alone can fail with an incompatible collision mask.
 		if is_instance_valid(level6_arena) and is_instance_valid(target):
 			if level6_arena.overlaps_body(target) or _level6_point_inside_area(level6_arena, target.global_position):
 				_level6_on_boss_area_entered(target)
 		return
 	if level6_stage == Level6Stage.WAITING:
 		level6_stage_timer -= delta
-		if level6_stage_timer <= 0.0:
+		_level6_wander_early_earthquake()
+		if level6_stage_timer <= 0.0 and (not _level6_wander_active
+			or (not _level6_wander_dialogue_showing and _level6_wander_dialogue_queue.is_empty())):
+			_level6_wander_hide_dialogue()
 			_level6_begin_title(false)
 		return
 	if level6_stage == Level6Stage.INTRO_TITLE:
@@ -2079,8 +2512,12 @@ func _level6_update(delta: float) -> void:
 	if level6_stage == Level6Stage.SHAKING:
 		level6_stage_timer -= delta
 		if is_instance_valid(level6_shake_cam):
-			# Starts nearly imperceptible, peaks just before the reveal.
-			var progress: float = 1.0 - clampf(level6_stage_timer / maxf(0.1, level6_entrance_shake_v37_seconds), 0.0, 1.0)
+			var full_shake_seconds: float = (
+				maxf(level6_entrance_shake_v37_seconds, level6_wander_final_shake_seconds)
+				if _level6_wander_active and _level6_wander_completed
+				else maxf(0.1, level6_entrance_shake_v37_seconds)
+			)
+			var progress: float = 1.0 - clampf(level6_stage_timer / full_shake_seconds, 0.0, 1.0)
 			var strength: float = level6_entrance_shake_v37_strength * pow(progress, 2.0)
 			level6_shake_cam.offset = level6_original_cam_offset + Vector2(0.0, -level6_camera_upward_pixels) + Vector2(
 				randf_range(-strength, strength), randf_range(-strength, strength))
@@ -2089,9 +2526,14 @@ func _level6_update(delta: float) -> void:
 		return
 	if level6_stage == Level6Stage.REVEAL:
 		if level6_second_reveal:
-			return # Second reveal is completed by _process().
+			return
 		level6_stage_timer -= delta
-		var fraction: float = 1.0 - clampf(level6_stage_timer / maxf(0.3, king_teleport_reappear_seconds), 0.0, 1.0)
+		var reveal_seconds: float = (
+			maxf(king_teleport_reappear_seconds, level6_wander_reveal_seconds)
+			if _level6_wander_active and _level6_wander_completed
+			else maxf(0.3, king_teleport_reappear_seconds)
+		)
+		var fraction: float = 1.0 - clampf(level6_stage_timer / reveal_seconds, 0.0, 1.0)
 		_king_set_teleport_death_frame(1.0 - fraction)
 		if level6_stage_timer <= 0.0:
 			if level6_second_reveal:
@@ -2115,8 +2557,6 @@ func _level6_update(delta: float) -> void:
 				_level6_enable_climb()
 			else:
 				level6_stage = Level6Stage.PHASE_THREE_PENDING
-				# Total time since phase 2 death should be 5 seconds,
-				# including the existing 2.25-second dissolution animation.
 				level6_stage_timer = maxf(0.25, level6_phase3_laser_start_delay - maxf(2.25, level6_dissolve_seconds))
 				sprite.visible = false
 				if is_instance_valid(king_hud):
@@ -2125,8 +2565,6 @@ func _level6_update(delta: float) -> void:
 		queue_redraw()
 		return
 	if level6_stage in [Level6Stage.CLIMB, Level6Stage.SECOND_WAIT, Level6Stage.SECOND_TITLE]:
-		# Updated by the dedicated _process() supervisor. Avoid double
-		# decrementing timers or overwriting the camera shake.
 		return
 	if level6_stage == Level6Stage.PHASE_THREE_PENDING:
 		level6_stage_timer -= delta
@@ -2151,7 +2589,6 @@ func _level6_update(delta: float) -> void:
 		return
 	if not is_instance_valid(target):
 		return
-	# Strictly enforce phase 2 placement: never reuse a previous phase's destination.
 	if level6_stage == Level6Stage.PHASE_TWO and king_tp_phase == 0 and not level6_second_markers.is_empty():
 		var marker_ok: bool = false
 		for point: Marker2D in level6_second_markers:
@@ -2171,7 +2608,7 @@ func _level6_update(delta: float) -> void:
 	var dx: float = target.global_position.x - global_position.x
 	if absf(dx) > 3.0:
 		sprite.flip_h = (dx > 0.0) != sprite_faces_right_by_default
-	velocity = Vector2.ZERO  # NEVER pursue the player, even during guard mode.
+	velocity = Vector2.ZERO
 	hover_time += delta
 	king_shield_animation_time += delta
 	king_black_flash_timer = maxf(0.0, king_black_flash_timer - delta)
@@ -2182,7 +2619,6 @@ func _level6_update(delta: float) -> void:
 	king_post_attack_timer = maxf(0.0, king_post_attack_timer - delta)
 	king_attack_cast_remaining = maxf(0.0, king_attack_cast_remaining - delta)
 	king_exposure_timer = maxf(0.0, king_exposure_timer - delta)
-	# Clamp before the legacy teleport animation can commit its destination.
 	_level6_secure_second_marker()
 	_level6_perch_tick(delta)
 	_level6_secure_second_marker()
@@ -2205,8 +2641,6 @@ func _level6_update(delta: float) -> void:
 				if level6_guard_retry <= 0.0:
 					_level6_try_guard_spawn()
 		else:
-			# Keep the one-guard shield from softlocking if the guard falls
-			# past the lower safety region. No new summons are created.
 			for guard: CharacterBody2D in king_elite_guards:
 				if not is_instance_valid(guard) or guard.is_queued_for_deletion():
 					continue
@@ -2223,7 +2657,7 @@ func _level6_update(delta: float) -> void:
 		king_shield_break_fx = maxf(0.0, king_shield_break_fx - delta)
 		if king_shield_break_fx <= 0.0:
 			king_shield_phase = KingShieldPhase.EXPOSED
-			level6_attack_timer = 20.0  # The player gets their one-hit finish window.
+			level6_attack_timer = 20.0
 			king_post_attack_timer = 1.5
 			_update_king_hp_label()
 	_level6_update_attack_patterns(delta)
@@ -2234,10 +2668,6 @@ func _level6_update(delta: float) -> void:
 	_update_king_hp_label()
 	queue_redraw()
 
-
-# ============================================================
-# LEVEL 6: THIRD-PHASE PLATFORM ACTIVATION (V57)
-# ============================================================
 
 func _level6_find_third_climb_layer() -> TileMapLayer:
 	if not level6_third_platforms_path.is_empty():
@@ -2258,15 +2688,9 @@ func _level6_enable_third_climb() -> void:
 	if not is_instance_valid(level6_third_climb_layer):
 		push_warning("VOID KING V57: Could not enable boss3phase. Expected a TileMapLayer called boss3phase.")
 		return
-	# Enabling the TileMapLayer also enables the TileSet collision polygons.
-	# Deferred to avoid changing collision objects in the middle of a physics step.
 	level6_third_climb_layer.set_deferred("enabled", true)
 	print("VOID KING V57: boss3phase platforms and collisions ACTIVATED")
 
-
-# ============================================================
-# LEVEL 6: PHASE THREE, THE FINAL ASCENT (V56)
-# ============================================================
 
 func _level6_refresh_third_nodes() -> void:
 	var scene: Node = get_tree().current_scene
@@ -2300,7 +2724,6 @@ func _level6_choose_third_marker() -> Marker2D:
 
 
 func _level6_begin_final_climb() -> void:
-	# The phase-three platforms must exist before the player starts climbing.
 	_level6_enable_third_climb()
 	level6_stage = Level6Stage.PHASE_THREE_CLIMB
 	level6_third_laser_timer = 0.85
@@ -2310,8 +2733,6 @@ func _level6_begin_final_climb() -> void:
 	king_attack_cast_remaining = 0.0
 	king_attack_cast_total = 0.0
 	king_tp_phase = 0
-	# Show him waiting between the summit markers as the player approaches.
-	# He does NOT move or attack until phase3startdetection is entered.
 	_level6_refresh_third_nodes()
 	global_position = _level6_phase_three_center_position()
 	reset_physics_interpolation()
@@ -2320,9 +2741,6 @@ func _level6_begin_final_climb() -> void:
 	_play(&"idle", true)
 	if is_instance_valid(king_hud):
 		king_hud.visible = false
-	# IMPORTANT: DO NOT start rising here. The Void must stay at its
-	# phase-two height throughout the entire last climb. It rises only
-	# after the player actually touches phase3startdetection.
 	_level6_refresh_third_nodes()
 	print("VOID KING V56: phase-three ascent started; phase3 markers=", level6_third_markers.size())
 
@@ -2332,10 +2750,7 @@ func _level6_third_summit_reached() -> bool:
 		return false
 	_level6_refresh_third_nodes()
 	if is_instance_valid(level6_third_identifier):
-		# We read the CollisionShape2D rectangle directly, independently of
-		# Area2D masks, but never use marker proximity to bypass this area.
 		return _level6_point_inside_area(level6_third_identifier, target.global_position)
-	# Fallback only when the Area2D is MISSING from the scene.
 	for marker: Marker2D in level6_third_markers:
 		if is_instance_valid(marker) and target.global_position.distance_to(marker.global_position) < 190.0:
 			return true
@@ -2343,13 +2758,9 @@ func _level6_third_summit_reached() -> bool:
 
 
 func _level6_spawn_falling_laser(warning_override: float = -1.0) -> void:
-	# V59: ONE slash at a time. No paired attacks, no queued overlap.
-	# Only during the third climb; the three-hit final duel is untouched.
 	if not is_instance_valid(target) or not king_royal_slashes.is_empty():
 		return
 	var view: Rect2 = _king_visible_world_rect()
-	# The standard +0.22s slash-telegraph setting is applied inside _queue.
-	# Cap this climb-specific pre-warning for a slightly quicker attack.
 	var requested_warning: float = level6_climb_laser_warning if warning_override < 0.0 else warning_override
 	var warning: float = minf(0.68, requested_warning)
 	var full_height: float = maxf(view.size.y * 1.35, 700.0)
@@ -2372,7 +2783,7 @@ func _level6_spawn_falling_laser(warning_override: float = -1.0) -> void:
 			Vector2(x - 105.0, bottom_y), warning)
 	if not king_royal_slashes.is_empty():
 		var climb_slash: RoyalSlash = king_royal_slashes[king_royal_slashes.size() - 1]
-		climb_slash.width_override = 19.0  # visible AND collision width
+		climb_slash.width_override = 19.0
 	queue_redraw()
 
 func _level6_update_falling_lasers(delta: float) -> void:
@@ -2414,22 +2825,16 @@ func _level6_update_final_climb(delta: float) -> void:
 	if _level6_third_summit_reached():
 		_level6_start_third_reveal()
 		return
-	# The King is hidden during the climb, so his usual fight updater does not
-	# advance the slashes. Tick the telegraphed attacks explicitly here.
 	_update_king_royal_slashes(delta)
 	level6_third_laser_timer -= delta
 	if level6_third_laser_timer <= 0.0:
 		if king_royal_slashes.is_empty():
 			_level6_spawn_falling_laser()
-		# Slightly quicker rhythm, but never schedule a new slash until the
-		# previous warning, damage frame and fade have all finished.
 		level6_third_laser_timer = maxf(0.90, minf(level6_climb_laser_gap, 1.30) + randf_range(-0.09, 0.12))
 	queue_redraw()
 
 
 func _level6_phase_three_center_position() -> Vector2:
-	# Between the two markers is ONLY the pre-trigger waiting position.
-	# Once phase3startdetection is entered, he teleports between the markers.
 	_level6_refresh_third_nodes()
 	var left_mark: Marker2D = null
 	var right_mark: Marker2D = null
@@ -2451,9 +2856,6 @@ func _level6_phase_three_center_position() -> Vector2:
 func _level6_phase_three_aimed_slash(warning_seconds: float = 0.90) -> void:
 	if not is_instance_valid(target) or king_tp_phase != 0:
 		return
-	# Two remaining phase-three attacks: this arena-wide slash and Light Spears.
-	# The slash ALWAYS emerges from the King's current teleport marker and
-	# extends beyond the visible camera, rather than ending mid-screen.
 	var origin: Vector2 = global_position + Vector2(0.0, -17.0)
 	var predicted: Vector2 = target.global_position + target.velocity * 0.10
 	var to_player: Vector2 = predicted - origin
@@ -2469,8 +2871,6 @@ func _level6_phase_three_aimed_slash(warning_seconds: float = 0.90) -> void:
 
 
 func _level6_start_third_reveal() -> void:
-	# The player touched phase3startdetection: advance the Void now and
-	# immediately begin teleporting away from the center into THIRD markers.
 	for void_node: Node in get_tree().get_nodes_in_group(&"rising_void"):
 		if void_node.has_method(&"begin_phase_three_rising"):
 			void_node.call(&"begin_phase_three_rising")
@@ -2478,7 +2878,6 @@ func _level6_start_third_reveal() -> void:
 	_level6_clear_attacks()
 	level6_stage = Level6Stage.PHASE_THREE
 	level6_second_reveal = false
-	# Do not clear the fog between the final climb and the ten-hit duel.
 	level6_void_auto_fog_power_v79 = maxf(level6_void_auto_fog_power_v79,
 		level6_phase3_fog_floor_v80)
 	_level6_create_screen_darkness()
@@ -2487,7 +2886,6 @@ func _level6_start_third_reveal() -> void:
 	print("VOID KING V71: final duel started; atmospheric darkness alpha=",
 		level6_screen_shadow.color.a if is_instance_valid(level6_screen_shadow) else -1.0,
 		" / current HP=", hp, "/", max_hp)
-	# Ten real sword hits: override obsolete 3-hit Inspector settings.
 	hp = 10
 	max_hp = 10
 	king_shield_phase = KingShieldPhase.EXPOSED
@@ -2504,8 +2902,6 @@ func _level6_start_third_reveal() -> void:
 		king_hud.visible = true
 	health_changed.emit(hp, max_hp)
 	_update_king_hp_label()
-	# Do not wait for a 2.15s reveal. The first marker teleport starts NOW,
-	# with the same vanish/reappear animation used by phases 1 and 2.
 	_level6_refresh_third_nodes()
 	level6_current_marker = null
 	level6_perch_timer = 0.0
@@ -2540,8 +2936,6 @@ func _level6_update_third_fight(delta: float) -> void:
 	level6_hit_lock = maxf(0.0, level6_hit_lock - delta)
 	if is_instance_valid(level6_void_shader):
 		level6_void_shader.set_shader_parameter("hit_flash", 1.0 if king_black_flash_timer > 0.0 else 0.0)
-	# Every 3.7 seconds, teleport to one of the third-phase Marker2D nodes.
-	# While a vanish/reappear animation runs, no new attack can begin.
 	_level6_perch_tick(delta)
 	_level6_sword_fallback()
 	_level6_update_void_swords(delta)
@@ -2554,8 +2948,6 @@ func _level6_update_third_fight(delta: float) -> void:
 	if king_tp_phase == 0 and level6_third_attack_timer <= 0.0 and level6_void_swords.is_empty() and king_royal_slashes.is_empty() and king_attack_cast_remaining <= 0.0:
 		level6_third_attack_round += 1
 		_begin_king_attack_cast()
-		# ONLY Light Spears and full-screen Void slashes. No walls, circular
-		# cutouts, diagonal fan spam, moving laser sweeps, or other patterns.
 		if level6_third_attack_round % 2 == 0:
 			_level6_phase_three_aimed_slash(0.93 if hp > 4 else 0.82)
 		else:
@@ -2569,7 +2961,13 @@ func _level6_begin_final_death() -> void:
 	if level6_stage == Level6Stage.THIRD_DEATH:
 		return
 	level6_stage = Level6Stage.THIRD_DEATH
+	_collapse_level7_transition_started = false
+	if is_instance_valid(target):
+		target.set("tempo_invulneravel_restante", 99999.0)
 	level6_third_fx_timer = 0.0
+	_collapse_step = 0
+	_collapse_elapsed = 0.0
+	_collapse_total_elapsed = 0.0
 	level6_third_fx_original_scale = sprite.scale
 	_level6_clear_attacks()
 	level6_third_warnings.clear()
@@ -2586,7 +2984,6 @@ func _level6_begin_final_death() -> void:
 	if parent == null:
 		parent = get_parent()
 	var tex: Texture2D = _level6_get_particle_texture()
-	# Physical-looking scatter: spread, brake, gather, implode.
 	for i: int in range(72):
 		var p: Sprite2D = Sprite2D.new()
 		p.texture = tex
@@ -2603,29 +3000,48 @@ func _level6_begin_final_death() -> void:
 		tween.tween_property(p, "global_position", global_position, 1.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 		tween.parallel().tween_property(p, "modulate:a", 0.0, 0.55).set_delay(0.90)
 		tween.tween_callback(p.queue_free)
-	print("VOID KING V56: final implosion begins")
+	_collapse_prepare_white_fog()
+	_collapse_spawn_emitter(true, global_position, Vector2.UP, 0.13)
+	print("VOID KING V87: original death animation + accelerating white fog")
 
 
 func _level6_update_final_death(delta: float) -> void:
-	level6_third_fx_timer += delta
-	var progress: float = clampf(level6_third_fx_timer / maxf(0.2, level6_final_animation_seconds), 0.0, 1.0)
-	# Continuous rising tremor then a dramatic contraction and release.
-	if is_instance_valid(level6_final_shake_camera):
-		var amount: float = (4.0 + 17.0 * progress * progress) * (1.0 if progress < 0.78 else (1.0 - progress) / 0.22)
-		level6_final_shake_camera.offset = level6_final_camera_offset + Vector2(randf_range(-amount, amount), randf_range(-amount, amount))
-	if progress >= 0.45:
-		var shrink: float = clampf((progress - 0.45) / 0.20, 0.0, 1.0)
-		sprite.scale = level6_third_fx_original_scale * maxf(0.025, 1.0 - shrink)
-	if progress >= 0.66:
-		sprite.visible = false
-		if is_instance_valid(level6_aura_sprite):
-			level6_aura_sprite.visible = false
-		if is_instance_valid(level6_aura_particles):
-			level6_aura_particles.emitting = false
-	if level6_third_fx_timer >= level6_final_animation_seconds:
-		_level6_complete_victory()
+	_collapse_total_elapsed += delta
+	_collapse_fog_clock += delta
+	_collapse_update_white_fog()
+	if _collapse_step == 0:
+		level6_third_fx_timer += delta
+		var progress: float = clampf(level6_third_fx_timer / maxf(0.2, level6_final_animation_seconds), 0.0, 1.0)
+		if is_instance_valid(level6_final_shake_camera):
+			var amount: float = 4.0 + 17.0 * progress * progress
+			_collapse_camera_shake(amount)
+		if progress >= 0.45:
+			var shrink: float = clampf((progress - 0.45) / 0.20, 0.0, 1.0)
+			sprite.scale = level6_third_fx_original_scale * maxf(0.025, 1.0 - shrink)
+		if progress >= 0.66:
+			sprite.visible = false
+			if is_instance_valid(level6_aura_sprite):
+				level6_aura_sprite.visible = false
+			if is_instance_valid(level6_aura_particles):
+				level6_aura_particles.emitting = false
+		if level6_third_fx_timer >= level6_final_animation_seconds:
+			_collapse_begin_rumble()
+	elif _collapse_step == 1:
+		_collapse_elapsed += delta
+		var fraction: float = clampf(_collapse_elapsed / maxf(0.1, level6_collapse_rumble_seconds), 0.0, 1.0)
+		_collapse_camera_shake(lerpf(9.0, level6_collapse_max_shake, pow(fraction, 1.65)))
+		_collapse_spawn_rocks(delta)
+		_collapse_burst_timer -= delta
+		if _collapse_burst_timer <= 0.0:
+			_collapse_burst_timer = lerpf(1.50, 0.28, fraction * fraction)
+			_collapse_spawn_wave()
+		if _collapse_elapsed >= level6_collapse_rumble_seconds:
+			_collapse_begin_fall()
+	elif _collapse_step == 2:
+		_collapse_update_fall(delta)
+	elif _collapse_step == 3:
+		pass
 	queue_redraw()
-
 
 func _level6_draw_final_implosion() -> void:
 	if level6_stage != Level6Stage.THIRD_DEATH:
@@ -2642,208 +3058,570 @@ func _level6_draw_final_implosion() -> void:
 
 
 func _level6_complete_victory() -> void:
+	if level6_stage == Level6Stage.COMPLETE:
+		return
 	level6_stage = Level6Stage.COMPLETE
-	level6_darkness_now = 1.0
-	_level6_apply_world_darkness(1.0)
-	sprite.visible = false
 	if is_instance_valid(level6_final_shake_camera):
 		level6_final_shake_camera.offset = level6_final_camera_offset
-	# Signal to a future endings scene/level controller. Do NOT change scene
-	# or overwrite the five collected artifacts. The story ending is still open.
 	level6_final_victory.emit()
-	print("VOID KING V56: FINAL VICTORY signal emitted; ready for desert ending cutscene")
-	# On-screen placeholder that confirms the cinematic reached completion.
-	if not is_instance_valid(level6_third_completion_label):
-		var layer: CanvasLayer = CanvasLayer.new()
-		layer.layer = 945
-		var layer_parent: Node = get_tree().current_scene
-		if not is_instance_valid(layer_parent):
-			layer_parent = get_tree().root
-		layer_parent.add_child(layer)
-		var label: Label = Label.new()
-		label.name = "FinalVictoryMessage"
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 30)
-		label.add_theme_color_override("font_color", Color(0.92, 0.93, 0.96, 1.0))
-		label.text = "THE ABYSS RELEASES ITS HOLD"
-		layer.add_child(label)
-		label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		level6_third_completion_label = label
-	# A self-contained optional conclusion; no separate scene or sprite needed.
-	if level6_artifact_epilogue_enabled_v80 and not level6_artifact_epilogue_started_v80:
-		level6_artifact_epilogue_started_v80 = true
-		_level6_play_artifact_epilogue_v80()
+	print("VOID KING V87: five relics stopped the fall; Level 6 victory complete")
 
 
-func _level6_artifact_epilogue_label_v80(parent: Control, message: String,
-		y: float, size: int, tint: Color, width: float) -> Label:
-	var output: Label = Label.new()
-	output.text = message
-	output.name = "EpilogueText"
-	output.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	output.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	output.position = Vector2(0.0, y)
-	output.size = Vector2(width, float(size) + 36.0)
-	output.add_theme_font_size_override("font_size", size)
-	output.add_theme_color_override("font_color", tint)
-	output.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(output)
-	return output
-
-
-func _level6_play_artifact_epilogue_v80() -> void:
-	# This sequence is deliberately self-contained for a project due today.
-	# It uses the five collected relic names, procedural dunes, and labels.
-	# The old victory signal still fires so a separate ending scene can be
-	# installed later without changing anything else.
+func _collapse_prepare_white_fog() -> void:
+	if is_instance_valid(_collapse_ui):
+		return
 	var scene_root: Node = get_tree().current_scene
 	if not is_instance_valid(scene_root):
 		scene_root = get_tree().root
-	var canvas: CanvasLayer = CanvasLayer.new()
-	canvas.name = "VoidKingFiveRelicsEpilogueV80"
-	canvas.layer = 955
-	scene_root.add_child(canvas)
-	var bounds: Vector2 = get_viewport_rect().size
-	var ui: Control = Control.new()
-	ui.name = "ArtifactEpilogueScreen"
-	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ui.size = bounds
-	canvas.add_child(ui)
+	_collapse_ui = CanvasLayer.new()
+	_collapse_ui.name = "KingFinalWhiteFogAndCollapse"
+	_collapse_ui.layer = 1320
+	scene_root.add_child(_collapse_ui)
+	_collapse_fog_root = Control.new()
+	_collapse_fog_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_collapse_ui.add_child(_collapse_fog_root)
+	_collapse_fog_texture = _collapse_make_soft_fog_texture()
+	for i: int in range(34):
+		var bank: TextureRect = TextureRect.new()
+		bank.texture = _collapse_fog_texture
+		bank.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		bank.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bank.stretch_mode = TextureRect.STRETCH_SCALE
+		bank.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bank.modulate.a = 0.0
+		_collapse_fog_root.add_child(bank)
+		_collapse_white_fog.append(bank)
+	_collapse_white_shroud = ColorRect.new()
+	_collapse_white_shroud.color = Color(0.89, 0.93, 1.0, 0.0)
+	_collapse_white_shroud.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_collapse_fog_root.add_child(_collapse_white_shroud)
+	_collapse_update_white_fog()
 
-	var black: ColorRect = ColorRect.new()
-	black.color = Color(0.005, 0.005, 0.013, 1.0)
-	black.size = bounds
-	black.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ui.add_child(black)
-	black.modulate.a = 0.0
-	var fade: Tween = create_tween()
-	fade.tween_property(black, "modulate:a", 1.0, 1.9)
-	await fade.finished
-	if not is_instance_valid(ui):
+
+func _collapse_make_soft_fog_texture() -> Texture2D:
+	var canvas: Image = Image.create(112, 112, false, Image.FORMAT_RGBA8)
+	var noise: FastNoiseLite = FastNoiseLite.new()
+	noise.seed = 91746
+	noise.frequency = 0.072
+	for py: int in range(112):
+		for px: int in range(112):
+			var coordinate: Vector2 = (Vector2(float(px), float(py)) - Vector2(55.5, 55.5)) / 55.5
+			var radius: float = coordinate.length()
+			var n: float = noise.get_noise_2d(float(px), float(py))
+			var alpha: float = pow(clampf(1.0 - radius, 0.0, 1.0), 1.35)
+			alpha *= clampf(0.70 + n * 0.52, 0.10, 1.0)
+			canvas.set_pixel(px, py, Color(1.0, 1.0, 1.0, alpha))
+	return ImageTexture.create_from_image(canvas)
+
+
+func _collapse_update_white_fog() -> void:
+	if not is_instance_valid(_collapse_fog_root):
 		return
-	if is_instance_valid(level6_third_completion_label):
-		level6_third_completion_label.visible = false
-	if is_instance_valid(level6_dark_test_ui_layer):
-		level6_dark_test_ui_layer.visible = false
+	var screen: Vector2 = get_viewport_rect().size
+	_collapse_fog_root.size = screen
+	_collapse_white_shroud.size = screen
+	var buildup_total: float = maxf(0.1, level6_final_animation_seconds + level6_collapse_rumble_seconds)
+	var progress: float = clampf(_collapse_total_elapsed / buildup_total, 0.0, 1.0)
+	var strength: float = minf(0.85, 0.05 + 0.72 * pow(progress, 1.9))
+	if _collapse_step == 2:
+		strength *= 0.64
+	if _collapse_step >= 3:
+		strength = 0.0
+	_collapse_white_shroud.color.a = strength * 0.15
+	var fog_speed: float = 1.0 + progress * progress * 5.2
+	for i: int in range(_collapse_white_fog.size()):
+		var item: TextureRect = _collapse_white_fog[i]
+		var seed: float = float(i) * 1.618
+		var width: float = screen.x * (0.19 + 0.11 * absf(sin(seed * 1.6)))
+		var height: float = screen.y * (0.20 + 0.15 * absf(cos(seed)))
+		item.size = Vector2(width, height)
+		var fx: float = fposmod(float(i * 73) + _collapse_fog_clock * fog_speed * (23.0 + float(i % 7) * 4.0), screen.x + width * 1.6) - width
+		var fy: float = fposmod(float(i * 59) + sin(_collapse_fog_clock * 0.43 + seed) * 53.0, screen.y + height * 1.7) - height * 0.5
+		item.position = Vector2(fx, fy)
+		item.modulate = Color(0.95, 0.97, 1.0, strength * (0.23 + 0.27 * absf(cos(seed))))
+		item.visible = (float(i) / float(maxi(1, _collapse_white_fog.size())) < clampf(progress * 1.15 + 0.12, 0.0, 1.0))
 
-	var intro: Label = _level6_artifact_epilogue_label_v80(ui,
-		"THE VOID KING HAS FALLEN", bounds.y * 0.21, 29,
-		Color(0.88, 0.88, 0.94), bounds.x)
-	await get_tree().create_timer(1.7).timeout
-	intro.text = "THE FIVE RELICS BEGIN TO ANSWER"
-	var names: Array[String] = ["SCARAB", "CHALICE", "ANKH", "MASK", "LAPIS LAZULI"]
-	var card_width: float = minf(164.0, maxf(90.0, (bounds.x - 72.0) / 5.0 - 10.0))
-	var card_gap: float = 10.0
-	var start_x: float = (bounds.x - (card_width * 5.0 + card_gap * 4.0)) * 0.5
-	var cards: Array[Panel] = []
+
+func _collapse_camera_shake(strength: float) -> void:
+	if not is_instance_valid(level6_final_shake_camera):
+		level6_final_shake_camera = _level6_find_battle_camera()
+		if is_instance_valid(level6_final_shake_camera):
+			level6_final_camera_offset = level6_final_shake_camera.offset
+	if is_instance_valid(level6_final_shake_camera):
+		level6_final_shake_camera.offset = level6_final_camera_offset + Vector2(
+			randf_range(-strength, strength), randf_range(-strength, strength))
+
+
+func _collapse_scene_root() -> Node:
+	var scene_root: Node = get_tree().current_scene
+	return scene_root if is_instance_valid(scene_root) else get_tree().root
+
+
+func _collapse_spawn_emitter(white_smoke: bool, at: Vector2, direction: Vector2, opacity: float) -> CPUParticles2D:
+	var emitter: CPUParticles2D = CPUParticles2D.new()
+	emitter.name = "KingFinalWhiteFog" if white_smoke else "KingFinalGateLikeBlackSmoke"
+	emitter.one_shot = false
+	emitter.amount = 42 if white_smoke else 70
+	emitter.lifetime = 3.5 if white_smoke else 3.0
+	emitter.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	emitter.emission_rect_extents = Vector2(170.0, 100.0)
+	emitter.direction = direction
+	emitter.spread = 63.0
+	emitter.gravity = Vector2(0.0, -30.0)
+	emitter.initial_velocity_min = 90.0
+	emitter.initial_velocity_max = 280.0
+	emitter.scale_amount_min = 1.15
+	emitter.scale_amount_max = 2.65
+	emitter.color = Color(0.94, 0.96, 1.0, opacity) if white_smoke else Color(0.016, 0.017, 0.028, opacity)
+	emitter.texture = _collapse_fog_texture if is_instance_valid(_collapse_fog_texture) else _collapse_make_soft_fog_texture()
+	emitter.z_index = 1750
+	_collapse_scene_root().add_child(emitter)
+	emitter.global_position = at
+	emitter.emitting = true
+	_collapse_emitters.append(emitter)
+	return emitter
+
+
+func _collapse_make_gate_wind_texture() -> Texture2D:
+	if is_instance_valid(_collapse_wind_texture):
+		return _collapse_wind_texture
+	var wind_image: Image = Image.create(110, 10, false, Image.FORMAT_RGBA8)
+	for py: int in range(10):
+		for px: int in range(110):
+			var horizontal: float = absf(float(px) - 54.5) / 54.5
+			var vertical: float = absf(float(py) - 4.5) / 4.5
+			var alpha: float = pow(1.0 - horizontal, 0.68) * pow(1.0 - vertical, 1.8) * 0.75
+			wind_image.set_pixel(px, py, Color(1.0, 1.0, 1.0, alpha))
+	_collapse_wind_texture = ImageTexture.create_from_image(wind_image)
+	return _collapse_wind_texture
+
+
+func _collapse_spawn_wind(at: Vector2, heading: Vector2) -> void:
+	var wind: CPUParticles2D = CPUParticles2D.new()
+	wind.name = "KingFinalGateWind"
+	wind.amount = 45
+	wind.lifetime = 0.67
+	wind.one_shot = true
+	wind.explosiveness = 0.20
+	wind.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	wind.emission_rect_extents = Vector2(14.0, 135.0)
+	wind.direction = heading
+	wind.spread = 14.0
+	wind.gravity = Vector2.ZERO
+	wind.initial_velocity_min = 650.0
+	wind.initial_velocity_max = 1100.0
+	wind.scale_amount_min = 0.65
+	wind.scale_amount_max = 1.35
+	wind.color = Color(0.76, 0.81, 0.92, 0.34)
+	wind.texture = _collapse_make_gate_wind_texture()
+	wind.z_index = 1751
+	_collapse_scene_root().add_child(wind)
+	wind.global_position = at
+	wind.emitting = true
+	var fading: Tween = create_tween()
+	fading.tween_interval(1.6)
+	fading.tween_callback(wind.queue_free)
+
+
+func _collapse_spawn_wave() -> void:
+	var center: Vector2 = target.global_position if is_instance_valid(target) else global_position
+	_collapse_spawn_wind(center + Vector2(60.0, -110.0), Vector2.LEFT)
+	_collapse_spawn_wind(center + Vector2(-60.0, -110.0), Vector2.RIGHT)
+	if _collapse_emitters.size() < 12:
+		_collapse_spawn_emitter(false, center + Vector2(0.0, -65.0), Vector2.LEFT, 0.22)
+		_collapse_spawn_emitter(false, center + Vector2(0.0, -65.0), Vector2.RIGHT, 0.22)
+	for p: CPUParticles2D in _collapse_emitters:
+		if is_instance_valid(p) and p.name == "KingFinalWhiteFog":
+			p.amount = maxi(p.amount, mini(280, 42 + int(_collapse_total_elapsed * 18.0)))
+
+
+func _collapse_spawn_rocks(delta: float) -> void:
+	_collapse_debris_timer -= delta
+	if _collapse_debris_timer > 0.0 or not is_instance_valid(target):
+		return
+	_collapse_debris_timer = randf_range(0.12, 0.36)
+	var stone: Polygon2D = Polygon2D.new()
+	stone.name = "FallingTempleFragment"
+	var w: float = randf_range(9.0, 38.0)
+	var h: float = randf_range(8.0, 29.0)
+	stone.polygon = PackedVector2Array([
+		Vector2(-w, -h), Vector2(w, -h * 0.65), Vector2(w * 0.82, h), Vector2(-w * 0.7, h * 0.85)])
+	stone.color = Color(0.13, 0.13, 0.16, randf_range(0.7, 0.95))
+	stone.z_index = 650
+	_collapse_scene_root().add_child(stone)
+	stone.global_position = target.global_position + Vector2(randf_range(-650.0, 650.0), randf_range(-650.0, -350.0))
+	var tumble: Tween = create_tween()
+	tumble.set_parallel(true)
+	tumble.tween_property(stone, "global_position", stone.global_position + Vector2(0.0, randf_range(700.0, 1500.0)), randf_range(1.0, 2.4))
+	tumble.tween_property(stone, "rotation", randf_range(-5.0, 5.0), 1.7)
+	tumble.tween_property(stone, "modulate:a", 0.0, 2.0)
+	tumble.chain().tween_callback(stone.queue_free)
+
+
+func _collapse_begin_rumble() -> void:
+	_collapse_step = 1
+	_collapse_elapsed = 0.0
+	_collapse_burst_timer = 0.0
+	_collapse_debris_timer = 0.0
+	_collapse_spawn_emitter(true, global_position, Vector2.UP, 0.22)
+	if is_instance_valid(_level6_wander_retreat_wall):
+		_level6_wander_retreat_wall.queue_free()
+	if is_instance_valid(_level6_wander_opposite_wall):
+		_level6_wander_opposite_wall.queue_free()
+	print("VOID KING V87: king dead; expanding fog, violent wind, falling stones, stronger quakes")
+
+
+func _collapse_find_tilemap_ground_y() -> float:
+	var lowest: float = -INF
+	for node: Node in _collapse_scene_root().find_children("*", "TileMapLayer", true, false):
+		var layer: TileMapLayer = node as TileMapLayer
+		if not is_instance_valid(layer):
+			continue
+		var used: Rect2i = layer.get_used_rect()
+		if used.size.x <= 0 or used.size.y <= 0:
+			continue
+		var corner: Vector2 = layer.to_global(layer.map_to_local(Vector2i(used.position.x, used.end.y - 1)))
+		lowest = maxf(lowest, corner.y)
+	if level6_collapse_optional_ground_marker != NodePath(""):
+		var marker: Marker2D = get_node_or_null(level6_collapse_optional_ground_marker) as Marker2D
+		if is_instance_valid(marker):
+			return marker.global_position.y
+	if lowest == -INF:
+		lowest = target.global_position.y + level6_collapse_fallback_fall_distance
+	return lowest
+
+
+func _collapse_store_and_disable_tilemaps() -> void:
+	_collapse_tiles.clear()
+	for node: Node in _collapse_scene_root().find_children("*", "TileMapLayer", true, false):
+		var layer: TileMapLayer = node as TileMapLayer
+		if is_instance_valid(layer):
+			_collapse_tiles.append({"layer": layer, "enabled": layer.enabled})
+			layer.enabled = false
+	_collapse_tiles_restored = false
+	print("VOID KING V87: ALL ", _collapse_tiles.size(), " TileMapLayers hidden / collision disabled")
+
+
+func _collapse_restore_tilemaps() -> void:
+	if _collapse_tiles_restored:
+		return
+	for info: Dictionary in _collapse_tiles:
+		var layer: TileMapLayer = info.get("layer") as TileMapLayer
+		if is_instance_valid(layer):
+			layer.enabled = bool(info.get("enabled", true))
+	_collapse_tiles_restored = true
+	print("VOID KING V87: all TileMaps restored to their ORIGINAL enabled states after 5 s")
+
+
+func _collapse_begin_fall() -> void:
+	if not is_instance_valid(target):
+		push_error("VOID KING V87: missing Player for collapse cinematic")
+		return
+	_collapse_step = 2
+	_collapse_elapsed = 0.0
+	_collapse_expected_ground_y = _collapse_find_tilemap_ground_y()
+	_collapse_player_start_y = target.global_position.y
+	_collapse_player_start_x = target.global_position.x
+	_collapse_player_goal_y = maxf(_collapse_player_start_y + 1500.0,
+		_collapse_expected_ground_y - 85.0)
+	_collapse_player_physics = target.is_physics_processing()
+	_collapse_player_process = target.is_processing()
+	_collapse_player_mask = target.collision_mask
+	target.set_meta(&"king_final_cinematic_active", true)
+	for abyss: Node in get_tree().get_nodes_in_group(&"rising_void"):
+		if abyss.has_method(&"set_king_final_fall_active"):
+			abyss.call(&"set_king_final_fall_active", true)
+	target.set("tempo_invulneravel_restante", 99999.0)
+	target.velocity = Vector2.ZERO
+	target.set_physics_process(false)
+	target.set_process(false)
+	var player_sprite: AnimatedSprite2D = target.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	if is_instance_valid(player_sprite) and player_sprite.sprite_frames != null:
+		if player_sprite.sprite_frames.has_animation(&"fall"):
+			player_sprite.play(&"fall")
+		elif player_sprite.sprite_frames.has_animation(&"jump"):
+			player_sprite.play(&"jump")
+	target.collision_mask = 0
+	if target.has_method(&"_resetar_queda_profunda"):
+		target.call(&"_resetar_queda_profunda")
+	_collapse_store_and_disable_tilemaps()
+	_collapse_spawn_wave()
+	print("VOID KING V87: all terrain removed for 5 s; 10-second fall from ", _collapse_player_start_y,
+		" toward terrain Y=", _collapse_player_goal_y)
+
+
+func _collapse_update_fall(delta: float) -> void:
+	if not is_instance_valid(target):
+		return
+	_collapse_elapsed += delta
+	var duration: float = maxf(0.5, level6_collapse_fall_seconds)
+	var ratio: float = clampf(_collapse_elapsed / duration, 0.0, 1.0)
+	var eased: float = pow(ratio, 1.28)
+	target.global_position = Vector2(_collapse_player_start_x,
+		lerpf(_collapse_player_start_y, _collapse_player_goal_y, eased))
+	target.velocity = Vector2(0.0, (_collapse_player_goal_y - _collapse_player_start_y) * 1.28 * pow(maxf(0.005, ratio), 0.28) / duration)
+	_collapse_camera_shake(lerpf(12.0, 3.0, ratio))
+	_collapse_spawn_rocks(delta)
+	if _collapse_elapsed >= level6_collapse_hide_tiles_seconds:
+		_collapse_restore_tilemaps()
+	if ratio >= 0.81 and _collapse_relics.is_empty():
+		_collapse_create_artifacts()
+	if not _collapse_relics.is_empty():
+		_collapse_update_artifacts(ratio, delta)
+	if _collapse_elapsed >= duration:
+		_collapse_begin_artifact_save()
+
+
+func _collapse_create_artifacts() -> void:
+	if not is_instance_valid(target):
+		return
+	var frames: SpriteFrames = GerenciadorArtefatos.sprite_frames_artefatos
+	if frames == null:
+		push_warning("VOID KING V87: missing registered artifact sprites; magical orbs used as fallback")
+	var artifacts: Array[String] = ["escaravelho", "calice", "ankh", "mascara", "lapislazulidofarao"]
 	for i: int in range(5):
-		var plaque: Panel = Panel.new()
-		plaque.name = "Relic_" + names[i].replace(" ", "_")
-		plaque.position = Vector2(start_x + float(i) * (card_width + card_gap), bounds.y * 0.45)
-		plaque.size = Vector2(card_width, 74.0)
-		plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var style: StyleBoxFlat = StyleBoxFlat.new()
-		style.bg_color = Color(0.055, 0.052, 0.071, 0.95)
-		style.border_color = Color(0.71, 0.56, 0.27, 0.92)
-		style.set_border_width_all(2)
-		style.set_corner_radius_all(7)
-		plaque.add_theme_stylebox_override("panel", style)
-		ui.add_child(plaque)
-		var name_label: Label = Label.new()
-		name_label.text = names[i]
-		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		name_label.size = plaque.size
-		name_label.add_theme_font_size_override("font_size", 15 if i == 4 else 17)
-		name_label.add_theme_color_override("font_color", Color(1.0, 0.83, 0.43))
-		plaque.add_child(name_label)
-		plaque.modulate.a = 0.0
-		cards.append(plaque)
-	for plaque: Panel in cards:
-		var rise: Tween = create_tween()
-		rise.tween_property(plaque, "modulate:a", 1.0, 0.42)
-		await rise.finished
-	await get_tree().create_timer(1.2).timeout
-	intro.text = "NOT TROPHIES. THE KEYS TO THE SURFACE."
-	await get_tree().create_timer(2.2).timeout
-	intro.text = "THE ABYSS FINALLY OPENS ITS GATE."
+		var relic: AnimatedSprite2D = AnimatedSprite2D.new()
+		relic.name = "FinalSavingArtifact_" + artifacts[i]
+		relic.z_index = 1800
+		if frames != null and frames.has_animation(artifacts[i]):
+			relic.sprite_frames = frames
+			relic.animation = StringName(artifacts[i])
+			relic.frame = 0
+			relic.stop()
+			relic.centered = GerenciadorArtefatos.visual_centered
+			relic.offset = GerenciadorArtefatos.offset_visual_artefato
+			relic.scale = GerenciadorArtefatos.escala_visual_artefato * 0.7
+		else:
+			var texture: Image = Image.create(48, 48, false, Image.FORMAT_RGBA8)
+			for gy: int in range(48):
+				for gx: int in range(48):
+					var distance: float = Vector2(float(gx) - 23.5, float(gy) - 23.5).length() / 24.0
+					var glow: float = pow(1.0 - smoothstep(0.12, 1.0, distance), 1.6)
+					texture.set_pixel(gx, gy, Color(1.0, 0.84, 0.41, glow * 0.94))
+			var alternative: SpriteFrames = SpriteFrames.new()
+			alternative.add_animation(&"glow")
+			alternative.add_frame(&"glow", ImageTexture.create_from_image(texture))
+			relic.sprite_frames = alternative
+			relic.animation = &"glow"
+			relic.scale = Vector2.ONE
+		_collapse_scene_root().add_child(relic)
+		relic.global_position = target.global_position
+		_collapse_relics.append(relic)
+	print("VOID KING V87: FIVE artifacts emerge to intercept the fall")
 
-	# An ancient golden flare dissolves the abyss into a desert sunrise.
-	var flare: ColorRect = ColorRect.new()
-	flare.name = "AncientSealLight"
-	flare.color = Color(1.0, 0.87, 0.61)
-	flare.size = bounds
-	flare.modulate.a = 0.0
-	flare.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ui.add_child(flare)
+
+func _collapse_update_artifacts(ratio: float, delta: float) -> void:
+	if not is_instance_valid(target):
+		return
+	var progress: float = clampf((ratio - 0.81) / 0.19, 0.0, 1.0)
+	for i: int in range(_collapse_relics.size()):
+		var artifact: AnimatedSprite2D = _collapse_relics[i]
+		if not is_instance_valid(artifact):
+			continue
+		var theta: float = TAU * float(i) / 5.0 + _collapse_elapsed * (4.5 + progress * 16.0)
+		var around: Vector2 = Vector2(cos(theta), sin(theta)) * (70.0 - progress * 22.0)
+		var beneath: Vector2 = Vector2((float(i) - 2.0) * 30.0, 62.0 + absf(float(i) - 2.0) * 8.0)
+		var position: Vector2 = around.lerp(beneath, smoothstep(0.60, 0.97, progress))
+		artifact.global_position = target.global_position + position
+		artifact.rotation = 0.0
+		artifact.modulate = Color(1.0, 0.90 + 0.10 * sin(_collapse_elapsed * 13.0), 0.60, 1.0)
+
+
+func _collapse_begin_artifact_save() -> void:
+	if _collapse_step != 2:
+		return
+	_collapse_step = 3
+	_collapse_elapsed = 0.0
+	_collapse_restore_tilemaps()
+	if is_instance_valid(target):
+		target.velocity = Vector2.ZERO
+	_collapse_make_white_screen()
+	_collapse_run_white_rescue()
+
+
+func _collapse_make_white_screen() -> void:
+	if is_instance_valid(_collapse_flash):
+		return
+	_collapse_flash = CanvasLayer.new()
+	_collapse_flash.name = "KingFiveArtifactsWhiteRescue"
+	_collapse_flash.layer = 5000
+	_collapse_scene_root().add_child(_collapse_flash)
+	_collapse_flash_bg = ColorRect.new()
+	_collapse_flash_bg.color = Color(1.0, 1.0, 1.0, 1.0)
+	_collapse_flash_bg.modulate.a = 0.0
+	_collapse_flash_bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	_collapse_flash.add_child(_collapse_flash_bg)
+	_collapse_flash_label = Label.new()
+	_collapse_flash_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_collapse_flash_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_collapse_flash_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_collapse_flash_label.add_theme_color_override("font_color", Color(0.15, 0.14, 0.19, 1.0))
+	_collapse_flash_label.add_theme_font_size_override("font_size", 28)
+	_collapse_flash_label.modulate.a = 0.0
+	_collapse_flash.add_child(_collapse_flash_label)
+	_collapse_update_flash_layout()
+	if not get_viewport().size_changed.is_connected(_collapse_update_flash_layout):
+		get_viewport().size_changed.connect(_collapse_update_flash_layout)
 	var flash: Tween = create_tween()
-	flash.tween_property(flare, "modulate:a", 1.0, 1.3)
-	await flash.finished
-	if not is_instance_valid(ui):
-		return
-	intro.visible = false
-	for plaque: Panel in cards:
-		plaque.visible = false
+	flash.tween_property(_collapse_flash_bg, "modulate:a", 1.0, 0.40).set_trans(Tween.TRANS_CUBIC)
 
-	var sky: GradientTexture2D = GradientTexture2D.new()
-	var sunrise: Gradient = Gradient.new()
-	sunrise.set_color(0, Color(0.20, 0.19, 0.34))
-	sunrise.set_color(1, Color(0.95, 0.56, 0.29))
-	sky.gradient = sunrise
-	sky.fill_from = Vector2(0.5, 0.0)
-	sky.fill_to = Vector2(0.5, 1.0)
-	var backdrop: TextureRect = TextureRect.new()
-	backdrop.texture = sky
-	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	backdrop.stretch_mode = TextureRect.STRETCH_SCALE
-	backdrop.size = bounds
-	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ui.add_child(backdrop)
-	ui.move_child(backdrop, 0)
-	black.visible = false
-	var sun: Polygon2D = Polygon2D.new()
-	sun.name = "NewSun"
-	var sun_points: PackedVector2Array = PackedVector2Array()
-	var sun_center: Vector2 = Vector2(bounds.x * 0.74, bounds.y * 0.38)
-	for point_index: int in range(41):
-		var angle: float = TAU * float(point_index) / 40.0
-		sun_points.append(sun_center + Vector2(cos(angle), sin(angle)) * bounds.y * 0.087)
-	sun.polygon = sun_points
-	sun.color = Color(1.0, 0.85, 0.52, 0.95)
-	ui.add_child(sun)
-	var dunes_back: Polygon2D = Polygon2D.new()
-	dunes_back.name = "DistantDunes"
-	dunes_back.color = Color(0.48, 0.30, 0.29, 1.0)
-	dunes_back.polygon = PackedVector2Array([
-		Vector2(0.0, bounds.y * 0.79), Vector2(bounds.x * 0.24, bounds.y * 0.66),
-		Vector2(bounds.x * 0.51, bounds.y * 0.83), Vector2(bounds.x * 0.81, bounds.y * 0.68),
-		Vector2(bounds.x, bounds.y * 0.80), Vector2(bounds.x, bounds.y),
-		Vector2(0.0, bounds.y)])
-	ui.add_child(dunes_back)
-	var dunes_front: Polygon2D = Polygon2D.new()
-	dunes_front.name = "NearDunes"
-	dunes_front.color = Color(0.23, 0.17, 0.25, 1.0)
-	dunes_front.polygon = PackedVector2Array([
-		Vector2(0.0, bounds.y * 0.91), Vector2(bounds.x * 0.36, bounds.y * 0.78),
-		Vector2(bounds.x * 0.66, bounds.y * 0.92), Vector2(bounds.x, bounds.y * 0.80),
-		Vector2(bounds.x, bounds.y), Vector2(0.0, bounds.y)])
-	ui.add_child(dunes_front)
-	ui.move_child(flare, ui.get_child_count() - 1)
-	var clear_light: Tween = create_tween()
-	clear_light.tween_property(flare, "modulate:a", 0.0, 2.0)
-	await clear_light.finished
-	if not is_instance_valid(ui):
-		return
-	_level6_artifact_epilogue_label_v80(ui, "THE DESERT CHALLENGE",
-		bounds.y * 0.22, 43, Color(1.0, 0.96, 0.83), bounds.x)
-	_level6_artifact_epilogue_label_v80(ui, "THE END",
-		bounds.y * 0.39, 29, Color(1.0, 0.89, 0.63), bounds.x)
-	_level6_artifact_epilogue_label_v80(ui,
-		"The five relics have opened the way home.", bounds.y * 0.56,
-		18, Color(0.99, 0.92, 0.81), bounds.x)
-	print("VOID KING V80: five-artifact ending complete")
 
+func _collapse_update_flash_layout() -> void:
+	if not is_instance_valid(_collapse_flash_bg):
+		return
+	var screen: Vector2 = get_viewport_rect().size
+	_collapse_flash_bg.size = screen
+	_collapse_flash_label.position = Vector2(screen.x * 0.09, screen.y * 0.32)
+	_collapse_flash_label.size = Vector2(screen.x * 0.82, screen.y * 0.38)
+
+
+func _collapse_rescue_text(message: String, hold: float) -> void:
+	if not is_instance_valid(_collapse_flash_label):
+		return
+	_collapse_flash_label.text = message
+	_collapse_flash_label.visible_characters = 0
+	_collapse_flash_label.modulate.a = 1.0
+	for i: int in range(message.length()):
+		if not is_instance_valid(_collapse_flash_label):
+			return
+		_collapse_flash_label.visible_characters = i + 1
+		await get_tree().create_timer(0.035).timeout
+	await get_tree().create_timer(hold).timeout
+	var fade: Tween = create_tween()
+	fade.tween_property(_collapse_flash_label, "modulate:a", 0.0, 0.45)
+	await fade.finished
+
+
+func _collapse_place_player_on_ground() -> void:
+	if not is_instance_valid(target):
+		return
+	var landing: Vector2 = Vector2(_collapse_player_start_x, _collapse_player_goal_y)
+	if level6_collapse_optional_ground_marker != NodePath(""):
+		var ground_marker: Marker2D = get_node_or_null(level6_collapse_optional_ground_marker) as Marker2D
+		if is_instance_valid(ground_marker):
+			landing = ground_marker.global_position
+	else:
+		var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+		var nearest_score: float = INF
+		for side: float in [0.0, -90.0, 90.0, -190.0, 190.0]:
+			var probe_x: float = landing.x + side
+			var start: Vector2 = Vector2(probe_x, landing.y - 1300.0)
+			var finish: Vector2 = Vector2(probe_x, landing.y + 2000.0)
+			var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start, finish, terrain_mask)
+			query.collide_with_areas = false
+			query.exclude = [target.get_rid(), get_rid()]
+			var hit: Dictionary = space.intersect_ray(query)
+			if hit.is_empty() or hit.get("normal", Vector2.ZERO).y > -0.5:
+				continue
+			var floor_pos: Vector2 = hit.get("position", landing)
+			var score: float = absf(floor_pos.y - _collapse_expected_ground_y) + absf(side) * 0.4
+			if score < nearest_score:
+				nearest_score = score
+				landing = floor_pos + Vector2(0.0, -36.0)
+
+	target.global_position = landing
+	target.velocity = Vector2.ZERO
+	target.reset_physics_interpolation()
+	if target.has_method(&"_resetar_queda_profunda"):
+		target.call(&"_resetar_queda_profunda")
+	target.collision_mask = _collapse_player_mask
+	target.set_physics_process(_collapse_player_physics)
+	target.set_process(_collapse_player_process)
+	target.set("tempo_invulneravel_restante", 4.5)
+	target.remove_meta(&"king_final_cinematic_active")
+
+
+func _collapse_run_white_rescue() -> void:
+	await get_tree().create_timer(2.75).timeout
+	if not is_inside_tree():
+		return
+	await _collapse_rescue_text("Eu vi o chão chegando.", 1.45)
+	await _collapse_rescue_text("As cinco relíquias apareceram de repente.", 1.35)
+	await _collapse_rescue_text("E a queda parou.", 1.70)
+	await get_tree().create_timer(2.25).timeout
+	if not is_inside_tree():
+		return
+
+	for artifact: AnimatedSprite2D in _collapse_relics:
+		if is_instance_valid(artifact):
+			artifact.queue_free()
+	_collapse_relics.clear()
+	for fog: CPUParticles2D in _collapse_emitters:
+		if is_instance_valid(fog):
+			fog.emitting = false
+	if is_instance_valid(_collapse_ui):
+		_collapse_ui.queue_free()
+	if is_instance_valid(level6_final_shake_camera):
+		level6_final_shake_camera.offset = level6_final_camera_offset
+	_collapse_step = 4
+	_level6_complete_victory()
+	if not is_inside_tree():
+		return
+
+	if _collapse_transfer_white_to_level7():
+		return
+
+	_collapse_place_player_on_ground()
+	_collapse_flash.process_mode = Node.PROCESS_MODE_ALWAYS
+	var fallback_fade: Tween = _collapse_flash.create_tween()
+	fallback_fade.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	fallback_fade.tween_property(_collapse_flash_bg, "modulate:a", 0.0, 2.8)
+	fallback_fade.tween_callback(_collapse_flash.queue_free)
+	_collapse_flash = null
+
+
+func _collapse_transfer_white_to_level7() -> bool:
+	if not ResourceLoader.exists(level6_collapse_level7_scene):
+		push_warning("Level 7 não encontrado: " + level6_collapse_level7_scene)
+		return false
+	if not is_instance_valid(_collapse_flash) or not is_instance_valid(_collapse_flash_bg):
+		return false
+
+	_collapse_flash_bg.modulate.a = 1.0
+	_collapse_flash_label.modulate.a = 0.0
+	_collapse_flash.process_mode = Node.PROCESS_MODE_ALWAYS
+	_collapse_flash.reparent(get_tree().root)
+	_collapse_level7_transition_started = true
+
+	var camada_branca: CanvasLayer = _collapse_flash
+	var tela_branca: ColorRect = _collapse_flash_bg
+	var fade: Tween = camada_branca.create_tween()
+	fade.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	fade.set_process_mode(Tween.TWEEN_PROCESS_IDLE)
+	fade.set_trans(Tween.TRANS_SINE)
+	fade.tween_interval(1.25)
+	fade.tween_property(tela_branca, "modulate:a", 0.0, 2.5)
+	fade.tween_callback(camada_branca.queue_free)
+	fade.pause()
+
+	var comecar_fade: Timer = Timer.new()
+	comecar_fade.name = "IniciarFadeAposTroca"
+	comecar_fade.one_shot = true
+	comecar_fade.wait_time = 1.5
+	comecar_fade.process_mode = Node.PROCESS_MODE_ALWAYS
+	camada_branca.add_child(comecar_fade)
+	comecar_fade.timeout.connect(Callable(fade, "play"))
+
+	var seguranca: Timer = Timer.new()
+	seguranca.name = "LimiteTelaBranca"
+	seguranca.one_shot = true
+	seguranca.wait_time = 5.0
+	seguranca.process_mode = Node.PROCESS_MODE_ALWAYS
+	camada_branca.add_child(seguranca)
+	seguranca.timeout.connect(Callable(fade, "play"))
+	seguranca.start()
+
+	var resultado: Error = get_tree().change_scene_to_file(level6_collapse_level7_scene)
+	if resultado != OK:
+		push_error("Não foi possível carregar Level 7: " + str(resultado))
+		_collapse_level7_transition_started = false
+		_collapse_place_player_on_ground()
+		fade.play()
+		return true
+
+	comecar_fade.start()
+	print("Level 7: transição iniciada; tela branca será removida")
+	return true
 
 func _level6_update_attack_patterns(delta: float) -> void:
 	if level6_stage not in [Level6Stage.PHASE_ONE, Level6Stage.PHASE_TWO]:
@@ -2868,7 +3646,6 @@ func _level6_update_attack_patterns(delta: float) -> void:
 	level6_attack_round += 1
 	var danger: float = clampf(1.0 - float(hp) / maxf(1.0, float(max_hp)), 0.0, 1.0)
 	if level6_stage == Level6Stage.PHASE_ONE and king_shield_phase == KingShieldPhase.SHIELDED:
-		# One protected 1-HP King and exactly ONE Void Menacing. Rare spells.
 		if level6_attack_round % 3 == 0:
 			_level6_start_void_swords(5)
 		elif level6_attack_round % 2 == 0:
@@ -2879,7 +3656,6 @@ func _level6_update_attack_patterns(delta: float) -> void:
 		return
 	_begin_king_attack_cast()
 	if level6_stage == Level6Stage.PHASE_ONE:
-		# ALL void attacks become available, not merely four low-pressure lasers.
 		match level6_attack_round % 8:
 			0: _level6_start_interleaved_pillars()
 			1: _level6_start_void_dash_combo(2 if danger < 0.42 else 4)
@@ -2891,7 +3667,6 @@ func _level6_update_attack_patterns(delta: float) -> void:
 			_: _level6_start_void_dash_combo(3 if danger < 0.50 else 5)
 		level6_attack_timer = lerpf(2.55, 1.1, danger)
 	else:
-		# Marker-based second phase: no summons, much faster vertical-platform patterns.
 		match level6_attack_round % 10:
 			0: _level6_start_marker_cuts(3 if danger < 0.5 else 5)
 			1: _level6_start_void_swords(5 if danger < 0.40 else 7)
@@ -2908,14 +3683,9 @@ func _level6_update_attack_patterns(delta: float) -> void:
 
 
 func _level6_start_void_wall() -> void:
-	# A single sweeping full-height cut. It is physically dodged by DASHING
-	# through it (Player V53 dash_remaining > 0), and clearly telegraphed.
 	var view: Rect2 = _king_visible_world_rect()
 	var wall: VoidWall = VoidWall.new()
 	var side: bool = target.global_position.x > view.get_center().x
-	# The threat starts nearly half a screen OFFSCREEN and crosses the
-	# entire visible region plus an equal run-out after the opposite edge.
-	# 250-290 px/s keeps this an intentional dash-through obstacle.
 	var extra: float = maxf(220.0, view.size.x * 0.48)
 	wall.start_x = (view.position.x - extra) if side else (view.end.x + extra)
 	wall.end_x = (view.end.x + extra) if side else (view.position.x - extra)
@@ -2945,10 +3715,6 @@ func _level6_update_void_walls(delta: float) -> void:
 		if not is_instance_valid(target):
 			continue
 		var distance_from_wall: float = absf(target.global_position.x - x)
-		# Check the dash timer, but ALSO the actual dash animation / horizontal
-		# velocity. On the final dash physics frame, Player decrements the
-		# timer to zero AFTER moving at dash speed. The old check therefore
-		# counted a real dash as a normal hit on that frame.
 		var is_dashing: bool = false
 		if distance_from_wall <= wall.width * 0.5 + 120.0:
 			for entry: Dictionary in target.get_property_list():
@@ -2959,15 +3725,10 @@ func _level6_update_void_walls(delta: float) -> void:
 				var player_sprite: AnimatedSprite2D = target.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
 				if player_sprite != null and player_sprite.animation == &"dash":
 					is_dashing = true
-		# Honor an actual nearby dash for the rest of THIS wall's passage.
-		# Otherwise the wall could hit the player immediately as their short
-		# 0.16s dash expires while the 58px-wide beam is still alongside them.
 		if is_dashing and distance_from_wall <= wall.width * 0.5 + 100.0:
 			wall.dashed_through = true
 		if wall.dashed_through:
 			continue
-		# Forgiving damaging core: narrower than the bright visual edges, so
-		# the player's short dash can physically cross the threat zone.
 		if distance_from_wall < wall.width * 0.34 + 8.0:
 			if wall.last_damage_time < 0.0:
 				wall.last_damage_time = wall.elapsed
@@ -2977,8 +3738,6 @@ func _level6_update_void_walls(delta: float) -> void:
 
 
 func _level6_start_predictive_slash_spam(amount: int) -> void:
-	# No short or clipped lines: each slash spans well beyond the view.
-	# Some predict the direction the player is already moving.
 	king_special_kind = 36
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -2996,7 +3755,6 @@ func _level6_start_predictive_slash_spam(amount: int) -> void:
 
 
 func _level6_start_void_rails(waves: int) -> void:
-	# Vertical slashes with clear corridors, made for standing on narrow ledges.
 	king_special_kind = 12
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -3013,8 +3771,6 @@ func _level6_start_void_rails(waves: int) -> void:
 
 
 func _level6_start_void_twin_cut(cuts: int) -> void:
-	# Avoid always crossing the player's exact center. The offset creates a
-	# dodgable pair of diagonal blades with visible warnings.
 	king_special_kind = 13
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -3030,8 +3786,6 @@ func _level6_start_void_twin_cut(cuts: int) -> void:
 
 
 func _level6_start_void_crown_fan(rays: int) -> void:
-	# A fan of aimed slashes originates at King's current MARKER, making
-	# each perch meaningful while the player has room to climb and evade.
 	king_special_kind = 14
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -3050,7 +3804,6 @@ func _level6_start_void_crown_fan(rays: int) -> void:
 
 
 func _level6_start_void_staircase(waves: int) -> void:
-	# Alternates short bands of vertical cuts and diagonal cuts on new ledges.
 	king_special_kind = 15
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -3068,7 +3821,6 @@ func _level6_start_void_staircase(waves: int) -> void:
 			_queue_king_slash(anchor - direction * reach,
 				anchor + direction * reach, 0.94, float(wave) * 0.86)
 	king_gravefall_warning_timer = 1.0 + float(total - 1) * 0.86 + 0.43
-
 
 
 func _level6_update_guard_visuals(delta: float) -> void:
@@ -3129,8 +3881,6 @@ func _level6_remove_guard_aura(guard: CharacterBody2D) -> void:
 
 
 func _level6_start_interleaved_pillars() -> void:
-	# Three staggered waves. Each extends WELL BEYOND both camera edges,
-	# so walking sideways does not escape the formation entirely.
 	king_special_kind = 31
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -3168,8 +3918,6 @@ func _level6_start_horizontal_lanes(rows: int) -> void:
 
 
 func _level6_start_marker_cuts(amount: int) -> void:
-	# Only phase-two teleport markers provide cut anchors. Each has a
-	# horizontal OR vertical sweeping warning, staggered to remain readable.
 	if level6_stage != Level6Stage.PHASE_TWO or level6_second_markers.is_empty():
 		return
 	king_special_kind = 38
@@ -3187,8 +3935,6 @@ func _level6_start_marker_cuts(amount: int) -> void:
 	var count: int = mini(clampi(amount, 2, 6), valid.size())
 	for i: int in range(count):
 		var anchor: Vector2 = _level6_marker_position(valid[i])
-		# A vertical beam at the marker's X, then a horizontal beam at
-		# another marker's Y. This never uses a phase-one marker.
 		if (i + level6_attack_round) % 2 == 0:
 			_queue_king_slash(
 				Vector2(anchor.x, view.position.y - reach),
@@ -3203,8 +3949,6 @@ func _level6_start_marker_cuts(amount: int) -> void:
 
 
 func _level6_spear_spawn_is_clear(world_pos: Vector2) -> bool:
-	# Check the full spear's immediate clearance, not only its center.
-	# Avoids materializing with its long white blade embedded in a TileMap.
 	var test_shape: CircleShape2D = CircleShape2D.new()
 	test_shape.radius = 27.0
 	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
@@ -3221,8 +3965,6 @@ func _level6_spear_spawn_is_clear(world_pos: Vector2) -> bool:
 
 
 func _level6_spear_terrain_contact(from_world: Vector2, to_world: Vector2) -> bool:
-	# A real per-frame physics ray, rather than the old unrestricted no-clip
-	# position update. Every ground/wall/platform in terrain_mask stops it.
 	var excluded: Array[RID] = [get_rid()]
 	if is_instance_valid(target):
 		excluded.append(target.get_rid())
@@ -3234,8 +3976,6 @@ func _level6_spear_terrain_contact(from_world: Vector2, to_world: Vector2) -> bo
 
 
 func _level6_start_void_swords(amount: int) -> void:
-	# Spawn all spears ABOVE the player, never at feet/ground level.
-	# Try higher rows when a TileMap ceiling intersects a candidate slot.
 	if not is_instance_valid(target):
 		return
 	if not level6_void_swords.is_empty():
@@ -3250,7 +3990,6 @@ func _level6_start_void_swords(amount: int) -> void:
 	if count >= 5 and randf() < 0.32:
 		pair_slot = randi_range(1, count - 1)
 	for i: int in range(count):
-		# Fixed spacing prevents all seven spear sprites overlapping.
 		var x: float = anchor_x + (float(i) - float(count - 1) * 0.5) * 48.0
 		var spawn_point: Vector2 = Vector2(x, anchor_y)
 		var clear: bool = false
@@ -3260,7 +3999,7 @@ func _level6_start_void_swords(amount: int) -> void:
 				clear = true
 				break
 		if not clear:
-			continue  # Do not force-spawn inside solid terrain.
+			continue
 		var blade: VoidSword = VoidSword.new()
 		blade.position = spawn_point
 		blade.aim = target.global_position
@@ -3297,13 +4036,10 @@ func _level6_update_void_swords(delta: float) -> void:
 				spear.trail.pop_back()
 			var old_pos: Vector2 = spear.position
 			var next_pos: Vector2 = old_pos + spear.direction * 340.0 * delta
-			# Disappear on ANY solid wall/platform hit. No noclip period.
-			# Probe ahead to the SPEAR TIP, not only its center.
 			if _level6_spear_terrain_contact(old_pos, next_pos + spear.direction * 30.0):
 				level6_void_swords.remove_at(index)
 				continue
 			spear.position = next_pos
-			# Swept hit check avoids tunneling on lower framerates.
 			var closest: Vector2 = Geometry2D.get_closest_point_to_segment(
 				target.global_position, old_pos, next_pos)
 			if not spear.hit and closest.distance_squared_to(target.global_position) < 18.0 * 18.0:
@@ -3316,8 +4052,6 @@ func _level6_update_void_swords(delta: float) -> void:
 
 
 func _level6_start_void_dash_combo(amount: int) -> void:
-	# V42: eliminate the thick horizontal rectangle with its circular ball tip.
-	# Instead, clean sequential long diagonal cuts, with NO travelling orb/head.
 	level6_dash_echoes.clear()
 	king_special_kind = 35
 	king_gravefall_active = true
@@ -3368,9 +4102,6 @@ func _level6_draw_extra_attacks() -> void:
 			var x: float = wall.start_x
 			if active:
 				x = lerpf(wall.start_x, wall.end_x, clampf((wall.elapsed - wall.warning) / wall.travel, 0.0, 1.0))
-				# Long, readable afterimage train: charcoal silhouettes with
-				# faint pearl edges. Draw every third position for separation.
-				# 50 remembered physics frames leave ~250px of real history.
 				for trail_i: int in range(3, wall.sweep_history.size(), 3):
 					var tx: float = wall.sweep_history[trail_i]
 					var age: float = float(trail_i) / 50.0
@@ -3383,14 +4114,11 @@ func _level6_draw_extra_attacks() -> void:
 					draw_line(trail_start, trail_end,
 						Color(0.74, 0.77, 0.85, 0.28 * fade), 2.3, true)
 			var alpha: float = 0.16 + 0.72 * progress if not active else 0.96
-			# Place the pre-fire warning at the nearest visible SCREEN EDGE,
-			# because the wall itself begins far outside the camera.
 			var draw_x: float = x
 			if not active:
 				draw_x = clampf(x, view.position.x + 12.0, view.end.x - 12.0)
 			var a: Vector2 = to_local(Vector2(draw_x, top))
 			var b: Vector2 = to_local(Vector2(draw_x, bottom))
-			# Warning: pale outline of the stationary wall, NOT a giant orb.
 			draw_line(a, b, Color(0.85, 0.87, 0.94, 0.17 * alpha), wall.width + 9.0, true)
 			draw_line(a, b, Color(0.004, 0.005, 0.010, alpha), wall.width, true)
 			draw_line(a, b, Color(0.96, 0.96, 1.0, 0.58 * alpha), 3.0, true)
@@ -3401,8 +4129,6 @@ func _level6_draw_extra_attacks() -> void:
 		var forward: Vector2 = blade.direction.normalized()
 		var side: Vector2 = Vector2(-forward.y, forward.x)
 		var opacity: float = clampf((blade.elapsed - blade.delay) / blade.fade_time, 0.0, 1.0)
-		# Minimal 2D luminous spear: tapered white head, charcoal central
-		# groove, tiny shaft and point. NO crossguard (or flag-like cross).
 		var spear_outline: PackedVector2Array = PackedVector2Array([
 			local + forward * 31.0,
 			local + forward * 4.0 + side * 5.0,
@@ -3421,14 +4147,11 @@ func _level6_draw_extra_attacks() -> void:
 		draw_colored_polygon(spear_groove, Color(0.08, 0.09, 0.12, 0.60 * opacity))
 		draw_line(local - forward * 23.0, local - forward * 11.0,
 			Color(0.86, 0.90, 0.99, 0.66 * opacity), 2.1, true)
-		# A readable pale streak that fades rapidly behind the spear.
 		for i: int in range(blade.trail.size()):
 			var after_point: Vector2 = to_local(blade.trail[i])
 			var fade: float = pow(1.0 - float(i) / 12.0, 1.6) * 0.29
 			draw_line(after_point - forward * 19.0, after_point + forward * 23.0,
 				Color(0.82, 0.88, 1.0, fade), 2.8, true)
-	# V42: the obsolete circular-headed VoidDashEcho effect was removed.
-	# All dash-combo attacks now reuse crisp RoyalSlash geometry, without orbs.
 
 
 func _activate_king_mode() -> void:
@@ -3483,28 +4206,21 @@ func _activate_king_mode() -> void:
 	add_to_group(&"king_necromancer")
 	king_skull_volley_timer = 1.2
 	king_skull_spawns_remaining = 0
-	# Guarantee this dedicated boss scene starts with proper boss HP.
 	max_hp = maxi(max_hp, maxi(340, king_max_hp))
 	hp = max_hp
 	activation_range = maxf(activation_range, 600.0)
 	hover_speed *= king_hover_speed_multiplier
 	arena_roam_distance = maxf(arena_roam_distance, 280.0)
-	# NEVER spawn skeletonenemy.tscn from the King. All of his guards
-	# are the actual Menacing Skeleton scene, managed separately below.
-	skeleton_count = 1 # compatibility only; King doesn't run normal slot summons.
+	skeleton_count = 1
 	slots.clear()
 	king_base_sprite_scale = sprite.scale
-	# Scale the ART independently from physics so the giant can hover above
-	# narrow Radiance-like platforms without an enormous invisible collider.
-	# Respect a smaller boss size even if level_5.tscn retained its old
-	# Inspector value (5.2) from V9.3. This version caps the effective scale.
 	sprite.scale = king_base_sprite_scale * clampf(king_visual_scale, 3.5, 4.6)
 	body_shape.scale *= 1.12
 	sprite_tint = Color(0.92, 0.61, 1.0, 1.0)
 	sprite.self_modulate = sprite_tint
 	_build_king_crown()
 	king_gravefall_cooldown_timer = 0.30
-	king_elite_timer = 0.0 # Not summoned during the solo phase.
+	king_elite_timer = 0.0
 	king_elite_waves_spawned = 0
 	king_elite_revival_pending = false
 	_create_king_boss_hud()
@@ -3538,16 +4254,12 @@ func _king_visual_half_width() -> float:
 
 
 func _king_visible_bottom_offset() -> float:
-	# Difference between the King's root and the BOTTOM of the actual art.
-	# The old guard anchor ignored the huge sprite's bottom half and placed
-	# the art down in the same floor lane as the purple Menacing Skeleton.
 	return sprite.global_position.y - global_position.y + _king_visual_half_height()
 
 
 func _build_king_crown() -> void:
 	if level6_mode or _level6_detect_scene():
 		return
-	# A real foreground crown, not a _draw() polygon hidden BEHIND the sprite.
 	if is_instance_valid(king_crown_root):
 		return
 	king_crown_root = Node2D.new()
@@ -3603,12 +4315,10 @@ func _create_king_boss_hud() -> void:
 	king_hud = CanvasLayer.new()
 	king_hud.name = "VoidKingBossHUD" if level6_mode else "GraveMonarchBossHUD"
 	king_hud.layer = 930 if level6_mode else 110
-	# Keep HUD under the current scene, not the SceneTree root. This avoids
-	# stale canvases surviving a reload and only appearing after dying once.
 	var hud_parent: Node = get_tree().current_scene
 	if hud_parent == null:
 		hud_parent = get_tree().root
-	hud_parent.add_child(king_hud)
+	hud_parent.add_child.call_deferred(king_hud)
 	var frame := VBoxContainer.new()
 	frame.name = "BossHeader"
 	frame.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -3629,8 +4339,6 @@ func _create_king_boss_hud() -> void:
 	title.add_theme_constant_override("outline_size", 2 if level6_mode else 4)
 	frame.add_child(title)
 	if level6_mode:
-		# A bespoke shader-driven HP readout: no percent text, no border,
-		# no sharp line dividing filled and empty regions.
 		level6_hud_gradient_bar = ColorRect.new()
 		level6_hud_gradient_bar.name = "VoidHealthFade"
 		level6_hud_gradient_bar.custom_minimum_size = Vector2(480.0, 19.0)
@@ -3640,16 +4348,16 @@ func _create_king_boss_hud() -> void:
 		health_shader.code = """shader_type canvas_item;
 uniform float health_ratio : hint_range(0.0, 1.0) = 1.0;
 void fragment() {
-    float edge_left = smoothstep(0.0, 0.035, UV.x);
-    float edge_right = 1.0 - smoothstep(0.96, 1.0, UV.x);
-    float edge_top = smoothstep(0.0, 0.20, UV.y);
-    float edge_bottom = 1.0 - smoothstep(0.76, 1.0, UV.y);
-    float soft_end = 1.0 - smoothstep(health_ratio - 0.025, health_ratio + 0.014, UV.x);
-    vec3 abyss = vec3(0.012, 0.013, 0.018);
-    vec3 remaining = mix(vec3(0.12, 0.13, 0.15), vec3(0.31, 0.32, 0.35), 1.0 - UV.y);
-    vec3 ink = mix(abyss, remaining, soft_end);
-    float alpha = 0.93 * edge_left * edge_right * edge_top * edge_bottom;
-    COLOR = vec4(ink, alpha);
+	float edge_left = smoothstep(0.0, 0.035, UV.x);
+	float edge_right = 1.0 - smoothstep(0.96, 1.0, UV.x);
+	float edge_top = smoothstep(0.0, 0.20, UV.y);
+	float edge_bottom = 1.0 - smoothstep(0.76, 1.0, UV.y);
+	float soft_end = 1.0 - smoothstep(health_ratio - 0.025, health_ratio + 0.014, UV.x);
+	vec3 abyss = vec3(0.012, 0.013, 0.018);
+	vec3 remaining = mix(vec3(0.12, 0.13, 0.15), vec3(0.31, 0.32, 0.35), 1.0 - UV.y);
+	vec3 ink = mix(abyss, remaining, soft_end);
+	float alpha = 0.93 * edge_left * edge_right * edge_top * edge_bottom;
+	COLOR = vec4(ink, alpha);
 } """
 		level6_hud_gradient_material = ShaderMaterial.new()
 		level6_hud_gradient_material.shader = health_shader
@@ -3796,12 +4504,8 @@ func _queue_king_slash(
 	var slash: RoyalSlash = RoyalSlash.new()
 	slash.from_world = from_world
 	slash.to_world = to_world
-	# V35: every laser keeps its warning visible a little longer BEFORE
-	# the actual damaging slash. This applies to each staggered wave too.
 	var original_warning: float = maxf(0.52, warning_time * minf(0.78, king_last_stand_warning_factor)) if king_last_stand_started else maxf(0.34, warning_time)
 	slash.warning = original_warning + king_extra_laser_warning_seconds
-	# The King's authored summoning/casting animation must finish BEFORE the
-	# warning starts. Each staggered laser still receives its own full warning.
 	slash.delay = maxf(0.0, delay_time)
 	if king_attack_cast_remaining > 0.0:
 		slash.delay += king_attack_cast_total
@@ -3809,8 +4513,6 @@ func _queue_king_slash(
 
 
 func _begin_king_attack_cast() -> void:
-	# One clear, non-looping authored cast before an entire laser sequence.
-	# Do not alter the separate, longer resurrection animation.
 	if king_tp_phase != 0 or king_revival_cast_fx > 0.0:
 		return
 	king_attack_cast_total = maxf(0.45, king_attack_cast_seconds)
@@ -3829,7 +4531,6 @@ func _update_king_attack_cast_pose(delta: float) -> void:
 		return
 	if not is_instance_valid(sprite) or sprite.sprite_frames == null:
 		return
-	# Restore authored attacks without the unwanted spawnenemies2 white orb.
 	if level6_mode and level6_stage in [Level6Stage.PHASE_ONE, Level6Stage.PHASE_TWO, Level6Stage.PHASE_THREE]:
 		var safe_cast: StringName = &"buffenemies" if sprite.sprite_frames.has_animation(&"buffenemies") else &"spawnenemies"
 		if not sprite.sprite_frames.has_animation(safe_cast):
@@ -3851,7 +4552,6 @@ func _update_king_attack_cast_pose(delta: float) -> void:
 		return
 	var progress: float = 1.0 - king_attack_cast_remaining / maxf(0.01, king_attack_cast_total)
 	var frame: int = clampi(int(floor(progress * float(frames))), 0, frames - 1)
-	# Explicitly stop SpriteFrames' own loop: show each casting sprite once.
 	sprite.animation = cast_animation
 	sprite.stop()
 	sprite.set_frame_and_progress(frame, 0.0)
@@ -3867,7 +4567,6 @@ func _king_royal_slash_hits_player(slash: RoyalSlash) -> bool:
 	var effective_width: float = slash.width_override if slash.width_override > 0.0 else king_slash_hitbox_width
 	beam.size = Vector2(v.length(), maxf(3.0, effective_width))
 	var beam_pose: Transform2D = Transform2D(v.angle(), (slash.from_world + slash.to_world) * 0.5)
-	# Compare the true, rotated beam against the player's active body shape.
 	for node: Node in target.get_children():
 		if not node is CollisionShape2D:
 			continue
@@ -3902,13 +4601,10 @@ func _update_king_royal_slashes(delta: float) -> void:
 		var attack_at: float = slash.delay + slash.warning
 		if not slash.fired and slash.elapsed >= attack_at:
 			slash.fired = true
-			# One precisely timed hit; the remaining glow is only an afterimage.
 			_king_royal_slash_deal_damage(slash)
 		var stop_at: float = attack_at + king_slash_expand_seconds + king_slash_fade_seconds
 		if slash.elapsed > stop_at:
 			king_royal_slashes.remove_at(index)
-	# All warning, impact, expansion and fade-out frames must be over before
-	# any other attack can start its own warning.
 	if was_slashing and king_royal_slashes.is_empty():
 		king_post_attack_timer = maxf(king_post_attack_timer,
 			king_post_attack_pause * (0.65 if king_last_stand_started else 1.0))
@@ -3927,17 +4623,11 @@ func _draw_king_royal_slashes() -> void:
 		var active_time: float = slash.elapsed - slash.delay
 		var slash_width: float = slash.width_override if slash.width_override > 0.0 else king_slash_hitbox_width
 		if level6_mode:
-			# V38: black is the dominant laser color. The thin pale border is
-			# transparent so warnings remain legible against the Abyss background.
 			if not slash.fired:
 				var t6: float = clampf(active_time / maxf(0.01, slash.warning), 0.0, 1.0)
 				var a6: float = clampf(t6 / 0.2, 0.0, 1.0) * (0.55 + 0.40 * t6)
 				var w6: float = slash_width
 				if slash.phase3_pulsing_warning:
-					# A dim, full-length warning always shows the eventual
-					# collision path. A brighter segment pulses in length
-					# from the King's position, then becomes full length
-					# shortly before firing. No untelegraphed extension.
 					var breathe6: float = 0.5 + 0.5 * sin(active_time * TAU * 4.5)
 					var pulse_length: float = 1.0 if t6 > 0.84 else (0.74 + 0.22 * breathe6)
 					var visible_tip: Vector2 = a.lerp(b, pulse_length)
@@ -3964,32 +4654,24 @@ func _draw_king_royal_slashes() -> void:
 			draw_line(a, b, Color(0.94, 0.95, 1.0, remaining6 * 0.69), maxf(0.8, width6 * 0.17), true)
 			continue
 		if not slash.fired:
-			# Fade in while the warning builds. First faint, then bright and
-			# pulsating. No damage whatsoever during the telegraph.
 			var t: float = clampf(active_time / maxf(0.01, slash.warning), 0.0, 1.0)
 			var fade_in: float = clampf(t / 0.30, 0.0, 1.0)
 			var breathe: float = 0.86 + 0.14 * sin(t * TAU * 5.0)
 			var alpha: float = fade_in * breathe * (0.45 + 0.40 * t)
-			# The warning's visible danger band is the SAME width as the actual
-			# collision rectangle. The extra halo is faint and only 15% wider.
 			draw_line(a, b, Color(0.48, 0.05, 0.90, alpha * 0.22), slash_width * 1.15, true)
 			draw_line(a, b, Color(0.85, 0.31, 1.0, alpha * 0.78), slash_width, true)
 			draw_line(a, b, Color(1.0, 0.84, 1.0, alpha * 0.75), maxf(1.5, slash_width * 0.18), true)
 			if slash.ricochet:
-				# Visual caps overlap at each junction; no flat cropped line endings.
 				for end_point: Vector2 in [a, b]:
 					draw_circle(end_point, slash_width * 0.51,
 						Color(0.80, 0.30, 1.0, alpha * 0.62))
 					draw_circle(end_point, slash_width * 0.16,
 						Color(1.0, 0.91, 1.0, alpha * 0.8))
 			if slash.ricochet:
-				# The rebound point glows during the entire new path warning.
 				draw_arc(a, 15.0 + 3.0 * sin(t * TAU * 2.0), 0.0, TAU, 24,
 					Color(0.98, 0.64, 1.0, alpha), 3.0, true)
 				draw_circle(a, 5.0, Color(1.0, 0.87, 1.0, alpha * 0.8))
 			continue
-		# On the damage frame the slash EXPANDS in ~60ms, then quickly
-		# shrinks and fades, instead of vanishing abruptly.
 		var after_hit: float = maxf(0.0, active_time - slash.warning)
 		var expand_time: float = maxf(0.01, king_slash_expand_seconds)
 		var fade_time: float = maxf(0.01, king_slash_fade_seconds)
@@ -4011,7 +4693,6 @@ func _draw_king_royal_slashes() -> void:
 					Color(0.88, 0.37, 1.0, alpha * 0.85))
 				draw_circle(end_point, maxf(0.6, width * 0.17),
 					Color(1.0, 0.96, 1.0, alpha))
-		# Small shimmering cross sparks along the blade: zero extra nodes.
 		for spark_i: int in range(1, 6):
 			var p: Vector2 = a.lerp(b, float(spark_i) / 6.0)
 			var spark_size: float = maxf(0.0, width * 0.65)
@@ -4020,7 +4701,6 @@ func _draw_king_royal_slashes() -> void:
 
 
 func _king_visible_world_rect() -> Rect2:
-	# Use real camera viewport in world space, not fixed pixel guesses.
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var inverse: Transform2D = get_viewport().get_canvas_transform().affine_inverse()
 	var top_left: Vector2 = inverse * Vector2.ZERO
@@ -4029,8 +4709,6 @@ func _king_visible_world_rect() -> Rect2:
 
 
 func _king_laser_reach(view: Rect2) -> float:
-	# Every straight royal beam extends multiple FULL viewport diagonals
-	# beyond the arena so its ends never look abruptly cropped on camera.
 	return maxf(view.size.length() * maxf(2.0, king_laser_screen_reach_multiplier),
 		view.size.length() + 1800.0)
 
@@ -4041,7 +4719,6 @@ func _start_king_gravefall() -> void:
 	king_gravefall_warning_timer = maxf(0.65, king_gravefall_warning_time)
 	king_gravefall_columns.clear()
 	var view: Rect2 = _king_visible_world_rect()
-	# Full-screen rows of purple blades, with navigable corridors in between.
 	var center_x: float = clampf(target.global_position.x, view.position.x + 120.0, view.end.x - 120.0)
 	var wave: int = 0
 	for offset: float in [-330.0, -165.0, 0.0, 165.0, 330.0]:
@@ -4065,7 +4742,6 @@ func _start_king_sweep() -> void:
 	king_sweep_y.clear()
 	var view: Rect2 = _king_visible_world_rect()
 	var player_y: float = clampf(target.global_position.y, view.position.y + 110.0, view.end.y - 110.0)
-	# Full-width blades. The separation remains large enough to dodge.
 	var wave: int = 0
 	for offset: float in [-220.0, -110.0, 0.0, 110.0, 220.0]:
 		var y: float = player_y + offset
@@ -4104,15 +4780,10 @@ func _start_king_heavens_lances() -> void:
 
 
 func _start_king_eclipse_judgment() -> void:
-	# The original crossing-X pattern now uses the same genuinely reflected
-	# geometry and secondary warnings, rather than silently staying unmodified.
 	_start_king_ricochet_x()
 
 
 func _start_king_royal_crossweave() -> void:
-	# Four staggered diagonal blades. Each has a true hit lane matching the
-	# warning and at least 0.82 seconds before its own damage frame.
-	# Unlike the old Crown pulse this is a real attack, not decorative FX.
 	king_special_kind = 8
 	king_gravefall_active = true
 	king_gravefall_warning_timer = 2.55
@@ -4136,8 +4807,6 @@ func _start_king_royal_crossweave() -> void:
 
 
 func _king_ray_to_arena_edge(origin: Vector2, direction: Vector2, arena: Rect2) -> Dictionary:
-	# Analytic ray/arena intersection. Both warning and damage use these exact
-	# segment endpoints; bouncing does not retarget onto the player later.
 	var d: Vector2 = direction.normalized()
 	var tx: float = INF
 	var ty: float = INF
@@ -4160,11 +4829,6 @@ func _king_ray_to_arena_edge(origin: Vector2, direction: Vector2, arena: Rect2) 
 
 
 func _start_king_ricochet_x() -> void:
-	# V31: genuine five-reflection laser labyrinth. The old pattern drew one
-	# overextended first beam but stopped the following beams AT the viewport
-	# walls; their flat endpoints were visible and the rebounds looked tiny.
-	# Each segment now crosses a sizeable portion of the camera and the line
-	# continues beyond the camera at the beginning/end of the whole sequence.
 	king_special_kind = 9
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -4185,8 +4849,6 @@ func _start_king_ricochet_x() -> void:
 	var bounce_step: float = 0.80
 	var first_bounce_delay: float = warn + 0.14
 	var overshoot: float = _king_laser_reach(view)
-	# Steeper than old 35/145 degree pair, so the ray traverses longer
-	# stretches of this narrow platform arena instead of bouncing in corners.
 	var deviation: float = randf_range(-3.0, 3.0)
 	for arm: int in range(2):
 		var theta: float = deg_to_rad((28.0 if arm == 0 else 152.0) + deviation)
@@ -4194,7 +4856,6 @@ func _start_king_ricochet_x() -> void:
 		var behind: Dictionary = _king_ray_to_arena_edge(center, -direction, arena)
 		var ahead: Dictionary = _king_ray_to_arena_edge(center, direction, arena)
 		var first_wall: Vector2 = ahead["end"]
-		# Draw from outside the entire screen right through the first wall.
 		_queue_king_slash((behind["end"] as Vector2) - direction * overshoot,
 			first_wall + direction * 26.0, warn, float(arm) * 0.11)
 		king_royal_slashes[king_royal_slashes.size() - 1].ricochet = true
@@ -4204,8 +4865,6 @@ func _start_king_ricochet_x() -> void:
 			var reflected: Dictionary = _king_ray_to_arena_edge(
 				bounce_origin + bounce_direction * 1.2, bounce_direction, arena)
 			var next_wall: Vector2 = reflected["end"]
-			# On the occasional grazing corner a microscopic reflection would
-			# look like a cropped stub. Re-aim slightly toward the arena center.
 			if bounce_origin.distance_to(next_wall) < minf(arena.size.x, arena.size.y) * 0.30:
 				bounce_direction = (arena.get_center() - bounce_origin).normalized()
 				reflected = _king_ray_to_arena_edge(
@@ -4227,9 +4886,6 @@ func _start_king_ricochet_x() -> void:
 
 
 func _start_king_cascade_combo() -> void:
-	# Two-stage Radiance combo: a pair of vertical lances, then two staggered
-	# diagonal cuts. Stage two telegraphs before it deals damage. They never
-	# spawn instantly, and the overall spell still has a recovery afterward.
 	king_special_kind = 10
 	king_gravefall_active = true
 	king_gravefall_warning_timer = 2.75
@@ -4251,8 +4907,6 @@ func _start_king_cascade_combo() -> void:
 
 
 func _start_king_grave_shears() -> void:
-	# LAST STAND: three staggered diagonal cuts, not simultaneous crosses.
-	# Each warning belongs to the exact collision blade, with time to move.
 	king_special_kind = 6
 	king_gravefall_active = true
 	king_gravefall_warning_timer = 1.90
@@ -4269,8 +4923,6 @@ func _start_king_grave_shears() -> void:
 
 
 func _start_king_royal_spearfall() -> void:
-	# LAST STAND: three staggered vertical waves. Gaps are wide enough for
-	# normal-speed movement; each wave has its own independent warning.
 	king_special_kind = 7
 	king_gravefall_active = true
 	king_gravefall_warning_timer = 1.95
@@ -4289,7 +4941,6 @@ func _start_king_royal_spearfall() -> void:
 
 
 func _start_king_grave_guillotine() -> void:
-	# Final phase only: crossing diagonals with generous independent warnings.
 	king_special_kind = 11
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -4306,38 +4957,27 @@ func _start_king_grave_guillotine() -> void:
 
 
 func _start_king_bone_cathedral() -> void:
-	# Three full-screen interleaved waves: LASER / SAFE SPACE / LASER / SAFE SPACE.
-	# There are no clustered walls with just two safe columns anymore.
-	# Every laser is separated by a movement-sized, completely safe corridor.
-	# The lanes shift BETWEEN waves, giving a readable new dodge each time.
 	king_special_kind = 12
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
 	var reach: float = _king_laser_reach(view)
-	# A ~125px pitch leaves >=90px clear even with the default 34px hitbox.
-	# Adapt to zoom so narrow cameras don't create impossible tiny gaps.
 	var columns: int = clampi(int(floor(view.size.x / 125.0)), 5, 12)
 	var spacing: float = view.size.x / float(columns)
-	# A fractional shift makes different safe corridors available each wave.
-	# +/-45% of one pitch means the nearest opening remains reachable.
 	var direction: float = -1.0 if randf() < 0.5 else 1.0
 	var shifts: Array[float] = [0.0, 0.43 * direction, -0.43 * direction]
 	for wave: int in range(3):
 		var offset: float = shifts[wave] * spacing
-		# Include an offscreen guard column so the edges aren't a cheesy safe spot.
 		for column: int in range(-1, columns + 2):
 			var x: float = view.position.x + (float(column) + 0.5) * spacing + offset
 			if x < view.position.x - king_slash_hitbox_width or x > view.end.x + king_slash_hitbox_width:
 				continue
 			_queue_king_slash(Vector2(x, view.position.y - reach),
 				Vector2(x, view.end.y + reach), 0.85, float(wave) * 1.14)
-	# Keep this attack active until the third wave fades out.
 	king_gravefall_warning_timer = 3.85
 	queue_redraw()
 
 
 func _start_king_royal_crossfire() -> void:
-	# A third aimed line after two fixed cross lanes; never changes aim later.
 	king_special_kind = 13
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -4354,8 +4994,6 @@ func _start_king_royal_crossfire() -> void:
 
 
 func _start_king_phantom_execution() -> void:
-	# The King's existing 4-second teleport clock still controls movement;
-	# these cuts originate from his CURRENT perch and stay fixed in world-space.
 	king_special_kind = 14
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -4375,8 +5013,6 @@ func _start_king_phantom_execution() -> void:
 
 
 func _start_king_mourning_bells() -> void:
-	# Horizontal staggered rows followed by ONE delayed vertical cut.
-	# This forces vertical repositioning before the follow-up, not another X.
 	king_special_kind = 15
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -4394,8 +5030,6 @@ func _start_king_mourning_bells() -> void:
 
 
 func _start_king_shattered_throne() -> void:
-	# Four vertical lances with a center escape lane, then opposing horizontal
-	# lines on their own timers. Different movement problem than an X pattern.
 	king_special_kind = 16
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -4415,8 +5049,6 @@ func _start_king_shattered_throne() -> void:
 
 
 func _start_king_thorn_procession() -> void:
-	# Alternating narrow floor-to-ceiling sweeps, then one diagonal finisher.
-	# Each danger lane is precommitted and shows its warning first.
 	king_special_kind = 17
 	king_gravefall_active = true
 	var view: Rect2 = _king_visible_world_rect()
@@ -4434,8 +5066,6 @@ func _start_king_thorn_procession() -> void:
 
 
 func _fire_king_gravefall() -> void:
-	# V6: actual animated purple slashes own the damage now. Do not also
-	# spawn overlapping invisible skull hits in the same warned lanes.
 	_finish_king_spell()
 
 
@@ -4444,15 +5074,12 @@ func _fire_king_sweep() -> void:
 
 
 func _fire_king_crown() -> void:
-	# Skull volleys have an independent 15-second cooldown; never bypass it.
 	king_crown_burst_remaining = 0.34
 	_finish_king_spell()
 
 
 func _finish_king_spell() -> void:
 	king_exposure_timer = maxf(king_exposure_timer, king_exposed_after_attack)
-	# This spell finishes its warning/damage phase here. If its animated
-	# slashes remain, the shared pause starts when their final fade ends.
 	if king_royal_slashes.is_empty():
 		king_post_attack_timer = maxf(king_post_attack_timer, king_post_attack_pause)
 	_clear_king_gravefall()
@@ -4464,8 +5091,6 @@ func _update_king_specials(delta: float) -> void:
 		return
 	if not is_king or not is_instance_valid(target):
 		return
-	# Let a Menacing fight on its own. Only very occasional fully warned
-	# gravefall when the initial two normal guards are present.
 	if king_shield_phase == KingShieldPhase.SHIELDED and not king_gravefall_active:
 		if not king_shield_elite_spawned or not _king_elite_is_alive():
 			return
@@ -4496,15 +5121,10 @@ func _update_king_specials(delta: float) -> void:
 					_clear_king_gravefall()
 		_update_king_hp_label()
 		return
-	# An entire skull volley is a single attack. Never overlap its projectiles
-	# with slash warnings, and preserve the minimum 1s global between patterns.
 	if king_skull_spawns_remaining > 0 or not king_royal_slashes.is_empty():
 		return
 	if king_post_attack_timer > 0.0 or king_tp_phase != 0 or king_attack_cast_remaining > 0.0:
 		return
-	# Let a scheduled teleport get its turn before another long attack chain.
-	# _update_hover() runs earlier in this frame and starts the teleport when
-	# safe. If no perch exists, it sets a retry timer rather than freezing AI.
 	if king_tp_hold_remaining <= 0.0 and king_tp_failed_attempts < 3:
 		return
 	king_gravefall_cooldown_timer -= delta
@@ -4517,8 +5137,6 @@ func _update_king_specials(delta: float) -> void:
 		if king_total_resurrections == 0:
 			king_exposed_spells_since_break += 1
 	if king_shield_phase == KingShieldPhase.EXPOSED and king_total_resurrections == 0:
-		# The King demonstrates his spells before resurrecting the first purple
-		# guard: five DIFFERENT patterns with combo and ricochet mixed in.
 		match king_exposed_spells_since_break % 7:
 			1:
 				_start_king_grave_shears()
@@ -4535,8 +5153,6 @@ func _update_king_specials(delta: float) -> void:
 			_:
 				_start_king_eclipse_judgment()
 	elif king_last_stand_started:
-		# Rotating 18-beat repertoire: pillars, sweeps, ricochets and mixed combos.
-		# No repeated X-spam. Every attack is a distinct movement challenge.
 		king_final_pattern_round += 1
 		match king_final_pattern_round % 18:
 			1:
@@ -4576,8 +5192,6 @@ func _update_king_specials(delta: float) -> void:
 			_:
 				_start_king_royal_crossweave()
 	else:
-		# Phase-one solo also cycles real attacks instead of returning to the
-		# same basic sweep every few seconds. Every pattern is warned.
 		match king_special_round % 9:
 			1:
 				_start_king_gravefall()
@@ -4597,15 +5211,11 @@ func _update_king_specials(delta: float) -> void:
 				_start_king_eclipse_judgment()
 			_:
 				_start_king_royal_spearfall()
-	# The existing one-second recovery already controls pacing: do not add a
-	# second full idle second on top of it. Last Stand is faster but readable.
 	king_gravefall_cooldown_timer = 0.07 if king_last_stand_started else (0.12 if king_shield_phase == KingShieldPhase.EXPOSED else 0.22)
 	_update_king_hp_label()
 
 
 func _start_king_skull_walls(from_side: bool) -> void:
-	# Four successive formations. Every wall has ONE full-sized real gap;
-	# its location is locked at telegraph time, never tracks the player.
 	king_wall_from_side = from_side
 	king_wall_spawn_remaining = 4
 	king_wall_spawn_timer = 0.0
@@ -4627,8 +5237,6 @@ func _spawn_king_skull_wall() -> void:
 		low = (low + high) * 0.5
 		high = low
 	var player_axis: float = target.global_position.y if wall.from_side else target.global_position.x
-	# Alternates a centered safe gap with a predictable shift, not an
-	# impossible reposition across the entire screen between successive walls.
 	var shift: float = float((king_wall_spawn_remaining % 3) - 1) * 56.0
 	wall.safe_center = clampf(player_axis + shift, low, high)
 	king_skull_walls.append(wall)
@@ -4683,7 +5291,6 @@ func _draw_king_skull_walls() -> void:
 			axis = v.position.y - 40.0 + advance
 		var min_axis: float = v.position.y if wall.from_side else v.position.x
 		var max_axis: float = v.end.y if wall.from_side else v.end.x
-		# Skulls overlap slightly to make the wall visually continuous.
 		var coord: float = min_axis
 		while coord <= max_axis:
 			if absf(coord - wall.safe_center) > king_wall_safe_gap * 0.5 + 14.0:
@@ -4693,7 +5300,6 @@ func _draw_king_skull_walls() -> void:
 				var size: Vector2 = Vector2.ONE * king_wall_skull_size * scale_val
 				draw_texture_rect(tex, Rect2(center - size * 0.5, size), false, Color(0.96, 0.56, 1.0, alpha))
 			coord += king_wall_skull_size * 0.86
-		# Bright paired edges distinguish the intentionally safe corridor.
 		for edge: float in [-1.0, 1.0]:
 			var bound: float = wall.safe_center + edge * king_wall_safe_gap * 0.5
 			var edge_world: Vector2 = Vector2(axis, bound) if wall.from_side else Vector2(bound, axis)
@@ -4702,11 +5308,9 @@ func _draw_king_skull_walls() -> void:
 func _resolve_king_menacing_scene() -> PackedScene:
 	if king_menacing_skeleton_scene != null:
 		return king_menacing_skeleton_scene
-	# Don't rescan the whole project every two seconds if no scene exists.
 	if king_elite_scene_lookup_exhausted:
 		return null
 	king_elite_scene_lookup_exhausted = true
-	# Try the most likely filenames. Unknown projects should use the export field.
 	for candidate: String in [
 		"res://menacingskeleton.tscn",
 		"res://menacing_skeleton.tscn",
@@ -4720,7 +5324,6 @@ func _resolve_king_menacing_scene() -> PackedScene:
 			if loaded is PackedScene:
 				king_menacing_skeleton_scene = loaded as PackedScene
 				return loaded as PackedScene
-	# Find scenes in an unfamiliar project layout (once, not every frame).
 	var discovered: PackedScene = _find_menacing_scene_in_folder("res://", 0)
 	if discovered != null:
 		king_menacing_skeleton_scene = discovered
@@ -4787,7 +5390,6 @@ func _try_spawn_king_elite() -> bool:
 		return false
 	var spawn_floor: Dictionary = {}
 	var player_pos: Vector2 = target.global_position
-	# Keep the two guards on opposite sides when the arena permits.
 	var preferred_side: float = -1.0 if king_elite_waves_spawned == 0 else 1.0
 	var best_score: float = INF
 	for offset: float in [-125.0, 125.0, -75.0, 75.0, -35.0, 35.0, 0.0]:
@@ -4804,9 +5406,6 @@ func _try_spawn_king_elite() -> bool:
 		if score < best_score:
 			best_score = score
 			spawn_floor = ground
-	# If a narrow moving platform defeats the ray sampler, materialize just
-	# above the player's position. The elite's existing gravity lands it on the
-	# actual platform beneath the player. NEVER silently skip the summon forever.
 	var summoned: Node = scene.instantiate()
 	if not summoned is CharacterBody2D:
 		push_warning("King Necromancer: Menacing Skeleton scene root must be CharacterBody2D.")
@@ -4818,13 +5417,9 @@ func _try_spawn_king_elite() -> bool:
 		push_warning("King Necromancer: Menacing Skeleton scene needs a rectangular CollisionShape2D.")
 		elite.free()
 		return false
-	# Set BEFORE add_child so the minion's _ready() sees its new stats and tag.
 	elite.set_meta(&"king_necromancer_summon", true)
 	elite.set_meta(&"necromancer_summon_owner", get_instance_id())
-	# Stable combat personalities: first pursues, second flanks/backpedals.
 	elite.set_meta(&"king_guard_index", king_elite_waves_spawned)
-	# V10: first summons are NORMAL 25-HP Menacing Skeletons, untinted.
-	# Keep only the enlarged activation radius and independent patrol roles.
 	var is_l6_guard: bool = level6_mode and level6_stage == Level6Stage.PHASE_ONE
 	elite.set("max_hp", maxi(1, level6_buffed_guard_health if is_l6_guard else king_normal_guard_hp))
 	elite.set("activation_radius", 900.0)
@@ -4853,8 +5448,6 @@ func _try_spawn_king_elite() -> bool:
 		elite.position = spawn_world
 	parent.add_child(elite)
 	if is_l6_guard:
-		# Every red detail on the guard becomes clean white; all other pixels
-		# become black/charcoal. The guard's own animations remain unchanged.
 		for guard_visual: Node in elite.find_children("*", "AnimatedSprite2D", true, false):
 			var guard_art: AnimatedSprite2D = guard_visual as AnimatedSprite2D
 			if guard_art != null:
@@ -4887,9 +5480,6 @@ func _try_spawn_king_elite() -> bool:
 		elite.add_child(guard_smoke)
 		level6_guard_previous_hp[elite.get_instance_id()] = int(elite.get("hp"))
 		level6_guard_flash_timers[elite.get_instance_id()] = 0.0
-	# The Menacing queues itself for deletion after its death animation.
-	# Capture the actual death position while the node still exists, so the
-	# King can perform a real-looking resurrection at the fallen guard's spot.
 	if elite.has_signal(&"died"):
 		elite.connect(&"died", Callable(self, &"_on_king_guard_died").bind(elite))
 	add_collision_exception_with(elite)
@@ -4904,7 +5494,6 @@ func _try_spawn_king_elite() -> bool:
 
 
 func _update_king_elite_reinforcements(delta: float) -> void:
-	# The shield does not shatter until both individual guards have died.
 	if not is_king or king_shield_phase != KingShieldPhase.SHIELDED:
 		return
 	if king_elite_waves_spawned >= king_elite_total_waves:
@@ -4914,7 +5503,6 @@ func _update_king_elite_reinforcements(delta: float) -> void:
 		return
 	king_shield_spawn_retry = maxf(0.0, king_shield_spawn_retry - delta)
 	if king_shield_spawn_retry <= 0.0:
-		# Summon exactly TWO guards, without an 11-second resummon delay.
 		while king_elite_waves_spawned < king_elite_total_waves:
 			if not _try_spawn_king_elite():
 				king_shield_spawn_retry = 1.8
@@ -4934,8 +5522,6 @@ func _on_king_guard_died(guard: CharacterBody2D) -> void:
 			)
 	if not is_instance_valid(guard):
 		return
-	# All royal minions stay at their actual death position. A revived
-	# purple guard can become a corpse and be resurrected again later.
 	king_dead_guard_position = guard.global_position
 	king_dead_guard_position_known = true
 	print("GRAVE MONARCH: royal guard fell at ", king_dead_guard_position)
@@ -4953,11 +5539,8 @@ func _king_active_purple_count() -> int:
 	return count
 
 func _begin_king_elite_revive() -> bool:
-	# Remote resurrection: the King NEVER lands or interrupts his spells.
 	if king_shield_phase != KingShieldPhase.EXPOSED or king_total_resurrections >= king_max_total_resurrections:
 		return false
-	# Hard gameplay cap: only ONE revived purple Menacing can be active,
-	# regardless of an older kingnecro.tscn Inspector override.
 	if _king_active_purple_count() > 0:
 		return false
 	var best_guard: CharacterBody2D = null
@@ -4967,7 +5550,6 @@ func _begin_king_elite_revive() -> bool:
 			continue
 		if not guard.has_method(&"can_be_royally_revived") or not bool(guard.call(&"can_be_royally_revived")):
 			continue
-		# Alternate corpses where possible to keep two different fighters.
 		var used_count: int = int(guard.get_meta(&"king_royal_revive_count", 0))
 		var repeated_penalty: float = 250.0 if guard.get_instance_id() == king_last_revived_id else 0.0
 		var score: float = float(used_count) * 800.0 + repeated_penalty
@@ -4978,9 +5560,6 @@ func _begin_king_elite_revive() -> bool:
 			best_guard = guard
 	if best_guard == null:
 		return false
-	# Finish any ongoing spell/projectile BEFORE the resurrection begins.
-	# This prevents a queued volley or a fading slash from hitting the player
-	# during the solo purple-guard encounter.
 	_clear_skulls()
 	king_skull_spawns_remaining = 0
 	king_royal_slashes.clear()
@@ -4996,8 +5575,6 @@ func _begin_king_elite_revive() -> bool:
 	king_reborn_guard = best_guard
 	if not king_reborn_guards.has(best_guard):
 		king_reborn_guards.append(best_guard)
-	# Keep the King's authored resurrection/summoning animation alive for
-	# the entire ghost + hold + reverse-death sequence of THIS guard.
 	king_revival_cast_total = (
 		float(best_guard.get("royal_revive_ghost_seconds"))
 		+ float(best_guard.get("royal_revive_hold_seconds"))
@@ -5007,8 +5584,6 @@ func _begin_king_elite_revive() -> bool:
 	king_attack_cast_remaining = 0.0
 	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(REVIVE_ANIMATION):
 		_play(REVIVE_ANIMATION, true)
-	# The cooldown is measured AFTER the revived guard is defeated, not
-	# simultaneously with the time that guard is alive.
 	king_revival_timer = maxf(6.0, king_repeat_revival_delay)
 	king_guard_attack_timer = maxf(3.0, king_reborn_boss_spell_interval)
 	print("GRAVE MONARCH V11: REMOTE RESURRECTION ", king_total_resurrections,
@@ -5019,12 +5594,9 @@ func _begin_king_elite_revive() -> bool:
 
 func _set_flight_collision(landing: bool) -> void:
 	if level6_mode:
-		# No contact blocking in Level 6, but keep shape active for sword
-		# geometry checks performed by Player and _level6_sword_fallback().
 		collision_layer = 0
 		collision_mask = 0
 		return
-	# Other levels retain their original collision behavior.
 	if not phase_through_walls_while_flying:
 		return
 	if state == State.DEAD:
@@ -5046,12 +5618,10 @@ func _ready() -> void:
 	add_to_group(&"necromancer")
 	_play(&"idle")
 	health_changed.emit(hp, max_hp)
-	# Detect the level before _activate_king_mode creates the boss HUD.
-	# Otherwise the purple Grave Monarch bar is created on the first run.
 	level6_mode = _level6_detect_scene()
-	# Dedicated King scene: activate now, no level-name or group selection needed.
 	_activate_king_mode()
 	_level6_initialize()
+	_level6_artifact_bind_player()
 
 
 func _begin_king_shield_phase() -> void:
@@ -5067,7 +5637,6 @@ func _begin_king_shield_phase() -> void:
 	king_elite_guards.clear()
 	king_guard_attack_timer = maxf(7.0, king_guard_attack_interval)
 	king_black_flash_timer = 0.0
-	# Remove old projectiles, giving the player time to see the shield arrive.
 	_clear_skulls()
 	king_skull_spawns_remaining = 0
 	king_royal_slashes.clear()
@@ -5088,8 +5657,6 @@ func _begin_king_shield_break() -> void:
 	king_attack_cast_remaining = 0.0
 	king_shield_break_fx = maxf(0.2, king_shield_break_duration)
 	king_shield_hit_fx = 0.0
-	# Freeze spells ONLY while the shield shatters. Afterwards the King
-	# resumes all his normal Radiance patterns and CAN be hit continuously.
 	_clear_skulls()
 	king_skull_spawns_remaining = 0
 	king_royal_slashes.clear()
@@ -5101,8 +5668,6 @@ func _begin_king_shield_break() -> void:
 	king_revival_timer = maxf(3.0, king_revival_after_shield_seconds)
 	king_exposed_spells_since_break = 0
 	king_gravefall_cooldown_timer = 0.10
-	# Skull volleys are too long and turn the post-shield duel into dead air.
-	# The exposed phase will use real slash patterns until the first revival.
 	king_skull_volley_timer = maxf(24.0, king_skull_volley_timer)
 	king_solo_hover_anchor_set = false
 	king_solo_reposition_timer = 0.0
@@ -5115,9 +5680,6 @@ func _begin_king_shield_break() -> void:
 
 
 func _update_king_revival_cast_pose() -> void:
-	# The King must visibly CAST while the skeleton is being resurrected.
-	# Loop the authored spawnenemies2 channel frames 4-7. The animation
-	# is driven by elapsed cast time, not by a SpriteFrames looping flag.
 	if not is_instance_valid(sprite) or sprite.sprite_frames == null:
 		return
 	if not sprite.sprite_frames.has_animation(REVIVE_ANIMATION):
@@ -5140,8 +5702,6 @@ func _update_king_revival_cast_pose() -> void:
 
 
 func _begin_king_last_stand() -> void:
-	# One-time phase after defeating the FIRST revived purple Menacing.
-	# Prevents a 1-HP king from dying immediately when the guard falls.
 	if king_last_stand_started or king_shield_phase != KingShieldPhase.EXPOSED:
 		return
 	king_last_stand_started = true
@@ -5151,14 +5711,13 @@ func _begin_king_last_stand() -> void:
 	king_revival_cast_total = 0.0
 	hp = mini(max_hp, maxi(hp + 100, int(ceil(float(max_hp) * king_last_stand_heal_ratio))))
 	sprite_tint = Color(1.0, 0.47, 0.98, 1.0)
-	# Clear all leftover projectiles; the player can read the phase change.
 	_clear_skulls()
 	king_skull_spawns_remaining = 0
 	king_royal_slashes.clear()
 	_clear_king_gravefall()
 	king_post_attack_timer = maxf(king_post_attack_timer, king_last_stand_intro_seconds)
 	king_gravefall_cooldown_timer = maxf(king_gravefall_cooldown_timer, 1.4)
-	king_skull_volley_timer = maxf(king_skull_volley_timer, 19.0) # Slashes first, skulls much later.
+	king_skull_volley_timer = maxf(king_skull_volley_timer, 19.0)
 	_play(&"idle", true)
 	health_changed.emit(hp, max_hp)
 	_update_king_hp_label()
@@ -5183,7 +5742,6 @@ func _update_king_phase_visuals(delta: float) -> void:
 			king_post_attack_timer = maxf(king_post_attack_timer, king_post_attack_pause)
 			king_guard_attack_timer = maxf(5.0, king_reborn_boss_spell_interval)
 			_update_king_hp_label()
-	# Revival animation is as long as the skeleton's actual resurrection.
 	var was_revival_casting: bool = king_revival_cast_fx > 0.0
 	king_revival_cast_fx = maxf(0.0, king_revival_cast_fx - delta)
 	if king_revival_cast_fx > 0.0:
@@ -5191,14 +5749,12 @@ func _update_king_phase_visuals(delta: float) -> void:
 	elif was_revival_casting:
 		_play(&"idle", true)
 	king_last_stand_intro_timer = maxf(0.0, king_last_stand_intro_timer - delta)
-	# V12 revival rhythm: cooldown stops through the purple guard's fight.
 	if king_shield_phase == KingShieldPhase.EXPOSED:
 		var purple_present: bool = _king_active_purple_count() > 0
 		if purple_present:
 			king_was_purple_guard_active = true
 		elif king_was_purple_guard_active:
 			king_was_purple_guard_active = false
-			# First purple victory triggers a separate King final combat phase.
 			_begin_king_last_stand()
 			king_revival_timer = minf(12.0, king_repeat_revival_delay)
 			king_solo_attacks_since_guard = 0
@@ -5210,14 +5766,11 @@ func _update_king_phase_visuals(delta: float) -> void:
 			king_revival_timer -= delta
 			king_revival_attempt_cooldown = maxf(0.0, king_revival_attempt_cooldown - delta)
 			var needed_solo_attacks: int = 5 if king_total_resurrections == 0 else 3
-			# No mid-warning cancellation: revive only between complete patterns.
 			if (king_solo_attacks_since_guard >= needed_solo_attacks
 				and king_revival_timer <= 0.0 and king_revival_attempt_cooldown <= 0.0
 				and king_royal_slashes.is_empty() and not king_gravefall_active
 				and king_skull_spawns_remaining == 0 and king_post_attack_timer <= 0.0
 				and king_tp_phase == 0):
-				# Later purple resurrections are slightly less certain. Roll only
-				# at a completed-pattern checkpoint, never once per physics frame.
 				if king_total_resurrections > 0 and randf() > king_repeat_revival_chance:
 					king_revival_attempt_cooldown = 7.0
 					king_revival_timer = 5.0
@@ -5235,7 +5788,6 @@ func _physics_process(delta: float) -> void:
 		return
 	if state == State.DEAD:
 		return
-	# The HUD is never gated by the player's existence or a previous death.
 	if is_king:
 		if not is_instance_valid(king_hud):
 			_create_king_boss_hud()
@@ -5254,7 +5806,6 @@ func _physics_process(delta: float) -> void:
 	king_post_attack_timer = maxf(0.0, king_post_attack_timer - delta)
 	_update_king_phase_visuals(delta)
 	if king_shield_phase == KingShieldPhase.BREAKING:
-		# Pause only for the animated shield shatter.
 		velocity = Vector2.ZERO
 		_play(&"idle")
 		_update_king_crown(delta)
@@ -5287,7 +5838,6 @@ func _physics_process(delta: float) -> void:
 			_create_king_boss_hud()
 		_update_king_hp_label()
 	if state != State.DORMANT:
-		# The King's ONLY phase-1 hit animation is a fast black flash.
 		var hit_black: bool = king_black_flash_timer > 0.0
 		sprite.self_modulate = Color.BLACK if hit_black else sprite_tint
 		sprite.modulate = Color.BLACK if hit_black else Color.WHITE
@@ -5296,25 +5846,19 @@ func _physics_process(delta: float) -> void:
 
 func _begin_encounter() -> void:
 	if is_king:
-		# True boss mode: enter immediately instead of spending 5+ seconds
-		# summoning NORMAL skeletons before its first actual royal attack.
 		state = State.GUARDED
 		opening_complete = true
 		slots.clear()
 		barrage_timer = 0.7
 		king_gravefall_cooldown_timer = 0.30
-		king_elite_timer = 0.0 # No guard during phase one.
+		king_elite_timer = 0.0
 		king_shield_countdown = clampf(king_shield_appear_delay, 5.0, 15.0)
-		# Establish the first teleport perch soon after entering the arena.
-		# Each subsequent location is held for about four full seconds.
 		king_tp_hold_remaining = 0.75
 		_create_king_boss_hud()
 		_update_king_hp_label()
 		_play(&"idle")
 		print("GRAVE MONARCH: START BOSS PATTERN / MENACING ONLY")
 		return
-	# Narrow, separated platforms often have no ground at exactly +/-72px.
-	# Sample the nearby ledges before abandoning the summon encounter.
 	var desired_count: int = clampi(skeleton_count, 1, 2)
 	var offsets: Array[float] = [-72.0, 72.0, -40.0, 40.0, 0.0, -120.0, 120.0]
 	for offset: float in offsets:
@@ -5335,8 +5879,6 @@ func _begin_encounter() -> void:
 		slot.floor_position = new_floor
 		slots.append(slot)
 	if slots.is_empty() and is_instance_valid(target):
-		# A boss hovering above a gap can still start its encounter by finding
-		# the platform the player is actually standing on (common in Radiance arenas).
 		for offset: float in [0.0, -55.0, 55.0]:
 			var floor_hit: Dictionary = _ground_at(
 				target.global_position.x + offset,
@@ -5431,9 +5973,6 @@ func _finish_summoning() -> void:
 	_play(&"idle")
 
 func _ground_at(x: float, ray_start_y: float = -INF) -> Dictionary:
-	# Raycasting explicitly against the terrain remains functional even when
-	# the flying Necromancer has collision_mask = 0. It also finds platforms
-	# substantially above/below the original home position when used near a corpse.
 	var start_y: float = home.y - 60.0
 	if ray_start_y != -INF:
 		start_y = ray_start_y
@@ -5458,8 +5997,6 @@ func _excluded_bodies() -> Array[RID]:
 	for slot in slots:
 		if is_instance_valid(slot.skeleton):
 			excluded.append(slot.skeleton.get_rid())
-	# In a three-Necromancer arena, other bosses/skeletons should NEVER be
-	# mistaken for platforms by a terrain ray (even if their layer overlaps).
 	for enemy_node: Node in get_tree().get_nodes_in_group(&"enemy"):
 		if enemy_node is CollisionObject2D and enemy_node != self:
 			var enemy_rid: RID = (enemy_node as CollisionObject2D).get_rid()
@@ -5478,7 +6015,6 @@ func _living_buffed_count() -> int:
 
 func _spawn_skeleton(slot: SummonSlot, request_buff: bool) -> void:
 	if is_king:
-		# Never instantiate skeletonenemy.tscn from the King, including revival.
 		push_warning("GRAVE MONARCH V5: blocked legacy normal-skeleton spawn")
 		return
 	var buffed := request_buff and _living_buffed_count() < MAX_BUFFED_SKELETONS
@@ -5557,7 +6093,6 @@ func _update_guarded(delta: float) -> void:
 			shots_left = 0
 		barrage_timer = maxf(barrage_timer, 1.1)
 		return
-	# V4: King's pressure NEVER shuts off just because guards are alive.
 	_update_barrage(delta)
 
 
@@ -5565,7 +6100,6 @@ func _update_hover(delta: float) -> void:
 	if not is_king:
 		_fly_toward(home, hover_speed, delta)
 		return
-	# Radiance-style stationary perches: no flying between destinations.
 	velocity = Vector2.ZERO
 	hover_time += delta
 	if king_tp_phase != 0:
@@ -5578,15 +6112,11 @@ func _update_hover(delta: float) -> void:
 		king_tp_guard_perch_locked = false
 		king_tp_last_perch = -1
 		king_guard_perch_clock = 0.0
-		# Guard phase uses farther perches and periodic relocation.
 		king_tp_hold_remaining = 0.0 if guard_active else 0.6
 	var view: Rect2 = _king_visible_world_rect()
 	if view.size.x < 120.0 or view.size.y < 120.0:
 		return
 	if guard_active:
-		# King remains distant but is no longer an immobile background decoration.
-		# Every few seconds he chooses another safe, distant perch via his
-		# existing vanish/reappear animation, without interrupting revival.
 		if king_revival_cast_fx > 0.0 or king_attack_cast_remaining > 0.0:
 			return
 		king_guard_perch_clock -= delta
@@ -5599,10 +6129,6 @@ func _update_hover(delta: float) -> void:
 				king_tp_failed_attempts += 1
 				king_guard_perch_clock = 0.75
 		return
-	# V30: This is an INDEPENDENT clock. Long staggered laser waves and
-	# ricochet slashes are world-space attacks and must NOT lock the King in
-	# one spot forever. Teleport after 4s even if an existing warned beam
-	# is still finishing, but never interrupt the casting or revival pose.
 	king_tp_hold_remaining -= delta
 	if (king_attack_cast_remaining > 0.0
 		or king_revival_cast_fx > 0.0 or king_last_stand_intro_timer > 0.0):
@@ -5618,8 +6144,6 @@ func _update_hover(delta: float) -> void:
 
 
 func _king_collect_no_spawn_shapes() -> void:
-	# Accept your existing node name bosscolider. Optional future zones may be
-	# called BossNoSpawnZone or added to the boss_no_spawn group.
 	king_no_spawn_shapes.clear()
 	king_no_spawn_scanned = true
 	var level: Node = get_tree().current_scene
@@ -5652,8 +6176,6 @@ func _king_spawn_overlaps_zone(spawn_world: Vector2, use_king_body: bool) -> boo
 		proposed_transform = body_shape.global_transform
 		proposed_transform.origin += spawn_world - global_position
 	else:
-		# Check the spawn body rather than just its center: skulls shouldn't
-		# appear halfway across the protected rectangle's boundary.
 		var skull_probe: CircleShape2D = CircleShape2D.new()
 		skull_probe.radius = maxf(12.0, king_spectral_skull_size * 0.42)
 		proposed_shape = skull_probe
@@ -5667,10 +6189,6 @@ func _king_spawn_overlaps_zone(spawn_world: Vector2, use_king_body: bool) -> boo
 
 
 func _king_teleport_ground_safe(candidate: Vector2, view: Rect2) -> Dictionary:
-	# V30: Check the King's actual COLLISION against terrain, not whether
-	# there is an overhead platform/ceiling in the upper part of the camera.
-	# In Level 5, the latter can wrongly mark every visible perch as unsafe.
-	# A teleport must stay above the player's floor level and out of tiles.
 	if not is_instance_valid(body_shape) or body_shape.shape == null:
 		return {"valid": false}
 	var half_height: float = 22.0
@@ -5689,16 +6207,11 @@ func _king_teleport_ground_safe(candidate: Vector2, view: Rect2) -> Dictionary:
 	var physics: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
 	var excluded: Array[RID] = _excluded_bodies()
 	var probe_bottom: float = maxf(view.end.y + 380.0, candidate.y + 380.0)
-	# Scan vertical positions on both sides of the proposed perch.
-	# This allows room below an overhead platform, while never placing the
-	# physical body inside it. No solid-terrain exemption is introduced.
 	var offsets: Array[float] = [0.0, -35.0, 35.0, -70.0, 70.0, -110.0, 105.0, -155.0]
 	for offset: float in offsets:
 		var probe: Vector2 = Vector2(candidate.x, clampf(candidate.y + offset, min_y, max_y))
 		if is_instance_valid(target) and probe.distance_to(target.global_position) < 82.0:
 			continue
-		# Find the first REAL floor surface BELOW this body, not the ceiling
-		# above it. Keep the King's collider and most of his art clear of it.
 		var next_floor_y: float = INF
 		for dx: float in [-half_width * 0.55, 0.0, half_width * 0.55]:
 			var ray: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(
@@ -5713,15 +6226,10 @@ func _king_teleport_ground_safe(candidate: Vector2, view: Rect2) -> Dictionary:
 		if next_floor_y != INF:
 			var floor_clearance: float = maxf(half_height + 12.0, minf(visual_bottom + 8.0, 120.0))
 			probe.y = minf(probe.y, next_floor_y - floor_clearance)
-		# The player could be on the arena floor and the ray could miss a
-		# one-way platform. Never put the King below the player's feet.
 		if is_instance_valid(target):
 			probe.y = minf(probe.y, target.global_position.y - maxf(half_height + 28.0, 48.0))
 		if probe.y < min_y - 25.0:
 			continue
-		# This test uses the physics geometry at the proposed WORLD position.
-		# Even though his movement collision mask is zero, solid tiles still
-		# reject the teleport. No blind fallback into the ground.
 		var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
 		query.shape = body_shape.shape
 		var proposed: Transform2D = body_shape.global_transform
@@ -5732,7 +6240,6 @@ func _king_teleport_ground_safe(candidate: Vector2, view: Rect2) -> Dictionary:
 		query.margin = 1.0
 		if not physics.intersect_shape(query, 1).is_empty():
 			continue
-		# No teleport may put the King's physical hitbox inside bosscolider.
 		if _king_spawn_overlaps_zone(probe, true):
 			continue
 		return {"valid": true, "position": probe}
@@ -5747,9 +6254,6 @@ func _king_pick_teleport_destination(view: Rect2, guard_active: bool) -> Diction
 	var right_x: float = view.end.x - margin_x
 	if right_x - left_x < 70.0:
 		return best
-	# Several horizontal and vertical candidates, including an upper perch
-	# and positions just below raised platforms/ceilings. All get the SAME
-	# actual terrain overlap validation.
 	var y_ratios: Array[float] = [-0.14, 0.04, 0.19, 0.35, 0.50]
 	if guard_active:
 		y_ratios = [-0.18, -0.06, 0.07, 0.18, 0.30]
@@ -5783,8 +6287,6 @@ func _king_pick_teleport_destination(view: Rect2, guard_active: bool) -> Diction
 					if guard.has_method(&"is_dead") and bool(guard.call(&"is_dead")):
 						continue
 					score += minf(330.0, pos.distance_to(guard.global_position)) * 1.6
-			# Prefer at least some sprite visible; never turn this into a hard
-			# requirement because the roof in Level 5 may block every high spot.
 			var art_center_y: float = pos.y + sprite.position.y
 			if art_center_y < view.position.y - 40.0:
 				score -= (view.position.y - 40.0 - art_center_y) * 1.4
@@ -5804,8 +6306,6 @@ func _begin_king_teleport(view: Rect2, guard_active: bool) -> bool:
 		" | guard=", guard_active)
 	king_tp_phase = 1
 	king_tp_elapsed = 0.0
-	# Keep all attacks and their warning geometry active in WORLD coordinates.
-	# Only the King's body/appearance is relocating.
 	_king_set_teleport_death_frame(0.0)
 	if is_instance_valid(king_crown_root):
 		king_crown_root.visible = false
@@ -5832,12 +6332,9 @@ func _update_king_teleport_animation(delta: float) -> void:
 		var t: float = clampf(king_tp_elapsed / maxf(0.12, king_teleport_vanish_seconds), 0.0, 1.0)
 		_king_set_teleport_death_frame(t)
 		if t >= 1.0:
-			# The last death frame is the invisible/vanished state.
-			# Only after it finishes do we change the King's position.
 			if level6_mode and level6_stage == Level6Stage.PHASE_TWO:
 				_level6_secure_second_marker()
 			global_position = king_tp_destination
-			# Keep physics interpolation from drawing a one-frame flight path.
 			reset_physics_interpolation()
 			sprite.reset_physics_interpolation()
 			king_tp_phase = 2
@@ -5863,12 +6360,8 @@ func _update_barrage(delta: float) -> void:
 	if is_king and (king_shield_phase in [KingShieldPhase.SHIELDED, KingShieldPhase.BREAKING]
 		or _king_active_purple_count() > 0 or king_last_stand_intro_timer > 0.0
 		or (king_shield_phase == KingShieldPhase.EXPOSED and king_total_resurrections == 0)):
-		# The King does not fire skulls while a purple guard is reanimating
-		# or attacking the player.
 		return
 	if is_king:
-		# Slow, infrequent skull volleys. Last Stand is slash-focused;
-		# never mix these volleys with an active Royal Slash pattern.
 		if king_skull_spawns_remaining <= 0:
 			king_skull_volley_timer -= delta
 			if (king_skull_volley_timer <= 0.0
@@ -5889,7 +6382,6 @@ func _update_barrage(delta: float) -> void:
 				king_skull_spawns_remaining -= 1
 				if king_skull_spawns_remaining == 0:
 					king_post_attack_timer = maxf(king_post_attack_timer, king_post_attack_pause)
-				# 1.35s minimum, even if Level 5's Inspector serialized 0.85s.
 				king_skull_interval_timer = maxf(1.35, king_skull_spawn_interval)
 		return
 	barrage_timer -= delta
@@ -5906,8 +6398,6 @@ func _update_barrage(delta: float) -> void:
 
 
 func _begin_descent() -> void:
-	# King's reanimation is remote, keeping him above the guards.
-	# Ground descent is only for legacy non-King NPC logic.
 	if is_king:
 		state = State.GUARDED
 		return
@@ -5921,7 +6411,6 @@ func _begin_descent() -> void:
 		if revive_slot == null or global_position.distance_squared_to(slot.floor_position) < global_position.distance_squared_to(revive_slot.floor_position):
 			revive_slot = slot
 	if revive_slot == null:
-		# Do not access a null revival slot when a platform prevented a cast.
 		state = State.GUARDED
 		return
 	revive_destination = _revive_position()
@@ -5936,8 +6425,6 @@ func _revive_position() -> Vector2:
 	var floor_position: Vector2 = revive_slot.floor_position
 	var side: float = -1.0 if global_position.x < floor_position.x else 1.0
 	for direction in [side, -side]:
-		# Probe from the DEAD skeleton's actual platform elevation, not home.y.
-		# Another platform below it is not a valid replacement landing spot.
 		var ground: Dictionary = _ground_at(
 			floor_position.x + float(direction) * 40.0,
 			floor_position.y - 54.0
@@ -5952,16 +6439,12 @@ func _revive_position() -> Vector2:
 
 func _update_descent(delta: float) -> void:
 	var destination: Vector2 = revive_destination
-	# If the corpse is on a raised platform, approach ABOVE that platform
-	# before dropping onto it, rather than visually rising through its underside.
 	if absf(global_position.x - destination.x) > 5.0:
 		var approach_y: float = minf(global_position.y, destination.y - 44.0)
 		_fly_toward(Vector2(destination.x, approach_y), hover_speed, delta)
 	else:
 		_fly_toward(destination, hover_speed, delta)
 	if global_position.distance_to(destination) <= 6.0:
-		# Land EXACTLY above the raycast floor. Restore solid collision only now,
-		# otherwise a wall can block the descent before he reaches the corpse.
 		global_position = destination
 		velocity = Vector2.ZERO
 		state = State.REVIVING
@@ -5979,8 +6462,6 @@ func _update_revive(delta: float) -> void:
 			revive_preview.modulate.a = _revive_progress()
 		return
 	_clear_revive_preview()
-	# The King never enters this legacy ground-revival state. Ordinary
-	# skeleton revival is retained for non-King compatibility only.
 	if not is_king:
 		_spawn_skeleton(revive_slot, true)
 	revive_slot = null
@@ -6066,8 +6547,6 @@ func _fly_toward(destination: Vector2, speed: float, delta: float) -> void:
 		maxf(0.0, speed) * delta
 	)
 	if phase_through_walls_while_flying:
-		# Flying movement is intangible; physics still detects the actual platform
-		# with _ground_at(), and revival re-enables ground collision when landed.
 		global_position += movement
 		velocity = Vector2.ZERO
 	else:
@@ -6115,10 +6594,8 @@ func _launch_skull(
 
 
 func _spawn_king_spectral_skull() -> void:
-	# Level 6 no longer uses skull attacks; all salvos are Light Spears.
 	if level6_mode:
 		return
-	# Level 6: no more than four spectral skulls active at once.
 	if level6_mode and skulls.size() >= LEVEL6_SKULL_MAX:
 		return
 	if king_shield_phase == KingShieldPhase.BREAKING:
@@ -6132,7 +6609,6 @@ func _spawn_king_spectral_skull() -> void:
 	visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	visual.modulate = Color(1.0, 1.0, 1.0, 0.0) if level6_mode else Color(0.82, 0.34, 1.0, 0.0)
 	visual.top_level = true
-	# The skull texture stays visible, but becomes a white/ink void skull.
 	if level6_mode:
 		visual.material = level6_void_shader.duplicate() as ShaderMaterial
 		var aura: Sprite2D = Sprite2D.new()
@@ -6143,22 +6619,16 @@ func _spawn_king_spectral_skull() -> void:
 		aura.show_behind_parent = true
 		visual.add_child(aura)
 	var texture_size: Vector2 = SKULL_TEXTURE.get_size()
-	# Minimum size overrides older Level 5 Inspector values (formerly 44px).
 	var size_multiplier: float = maxf(60.0, king_spectral_skull_size) / maxf(texture_size.x, texture_size.y)
 	skull.base_scale = Vector2.ONE * size_multiplier
 	visual.scale = skull.base_scale * 0.10
 	add_child(visual)
-	# Spawn at a meaningful distance from the player. If the camera is too
-	# small to fit the requested distance, choose the farthest valid position.
 	var safe_view: Rect2 = view.grow(-50.0)
 	if safe_view.size.x < 20.0 or safe_view.size.y < 20.0:
 		safe_view = view
 	var chosen: Vector2 = Vector2.ZERO
 	var found_safe_spawn: bool = false
 	var best_distance: float = -1.0
-	# Level 6: rotate through eight separated screen sectors rather than
-	# selecting whichever nearby point is encountered first. Volley skulls
-	# consequently appear ABOVE, BELOW, LEFT and RIGHT in different orders.
 	if level6_mode:
 		var sectors: Array[Vector2i] = [
 			Vector2i(0, 0), Vector2i(2, 2), Vector2i(2, 0), Vector2i(0, 2),
@@ -6185,8 +6655,6 @@ func _spawn_king_spectral_skull() -> void:
 				break
 			if found_safe_spawn:
 				break
-	# Fallback for a tiny camera, or an exclusion zone covering many sectors.
-	# Previous levels retain their ordinary random skull origins.
 	if not found_safe_spawn:
 		for attempt: int in range(90):
 			var candidate: Vector2 = Vector2(
@@ -6214,8 +6682,6 @@ func _spawn_king_spectral_skull() -> void:
 	skull.visual = visual
 	skull.spectral = true
 	skull.cruise_speed = king_skull_flight_speed
-	# Charge first, then begin moving at 55% speed. The skull rapidly accelerates
-	# while tracking; sharp turns force it to brake and carve a visible curve.
 	skull.speed = king_skull_flight_speed * (0.55 if level6_mode else 1.0)
 	skull.velocity = skull.direction * skull.speed
 	skull.damage = skull_damage
@@ -6236,23 +6702,17 @@ func _update_skulls(delta: float) -> void:
 			skulls.remove_at(index)
 			continue
 		if skull.spectral and skull.charge_elapsed < king_skull_charge_duration:
-			# Appear stationary, growing and fading in over precisely half a second.
 			skull.charge_elapsed = minf(king_skull_charge_duration, skull.charge_elapsed + delta)
 			var t: float = clampf(skull.charge_elapsed / maxf(0.01, king_skull_charge_duration), 0.0, 1.0)
 			var eased: float = t * t * (3.0 - 2.0 * t)
 			skull.visual.scale = skull.base_scale * lerpf(0.10, 1.0, eased)
 			skull.visual.modulate.a = eased
-			# Keep the launch direction telegraphed during the charge. The skull
-			# won't snap its facing to the player's newest position every frame.
 			skull.visual.rotation = skull.direction.angle() + PI
 			continue
 		var start: Vector2 = skull.visual.global_position
 		if skull.spectral:
 			skull.flight_elapsed += delta
 			if level6_mode:
-				# V48: No straight-flight tracking delay. Homing begins IMMEDIATELY
-				# after the stationary skull has spent 0.5s visibly charging.
-				# Steering has finite angular speed, so dodging produces wide curves.
 				var wanted_direction: Vector2 = start.direction_to(target.global_position)
 				var turn_error: float = 0.0
 				if wanted_direction.length_squared() > 0.0001:
@@ -6261,8 +6721,6 @@ func _update_skulls(delta: float) -> void:
 					skull.direction = skull.direction.rotated(
 						clampf(turn_error, -maximum_rotation, maximum_rotation)
 					).normalized()
-				# Turning sharply costs momentum. It does NOT teleport toward the
-				# target or turn 180 degrees instantly. Once aligned, it accelerates.
 				var brake: float = clampf((absf(turn_error) - 0.30) / 1.60, 0.0, 1.0)
 				var cruise: float = maxf(1.0, skull.cruise_speed)
 				var wanted_speed: float = cruise * (1.0 - 0.52 * brake)
@@ -6270,7 +6728,6 @@ func _update_skulls(delta: float) -> void:
 				skull.speed = move_toward(skull.speed, wanted_speed, acceleration * delta)
 				skull.velocity = skull.direction * skull.speed
 			else:
-				# Preserve the original pre-Level-6 spectral skull tracking.
 				var tracking_age: float = skull.flight_elapsed - king_skull_tracking_delay
 				if tracking_age > 0.0:
 					var tracking_factor: float = clampf(
@@ -6292,9 +6749,6 @@ func _update_skulls(delta: float) -> void:
 			skull.visual.rotation = skull.direction.angle() + PI
 		var displacement: Vector2 = skull.velocity if (level6_mode and skull.spectral) else skull.direction * skull.speed
 		var finish: Vector2 = start + displacement * delta
-		# Exact noclip window starts AFTER the charge, not at spawn.
-		# Completely bypass physics raycasts for 1.5 s in Level 6.
-		# This is necessary even if TileMap physics layers share player bits.
 		skull.lifetime -= delta
 		var phase_time: float = 1.5 if level6_mode else king_skull_terrain_phase_time
 		if skull.spectral and skull.flight_elapsed < phase_time:
@@ -6310,8 +6764,6 @@ func _update_skulls(delta: float) -> void:
 			else:
 				skull.visual.global_position = finish
 			continue
-		# Noclip has expired. Now ALL terrain and ordinary solid geometry
-		# destroy the skull on contact, while player contact still hurts.
 		var collision_bits: int = 0x7FFFFFFF if level6_mode else (target.collision_layer | terrain_mask)
 		var query := PhysicsRayQueryParameters2D.create(start, finish, collision_bits, excluded)
 		query.hit_from_inside = true
@@ -6342,9 +6794,6 @@ func _king_purple_ward_active() -> bool:
 
 
 func _king_repel_player_from_ward() -> void:
-	# Triggered by a genuine player sword hit, not simply by being nearby.
-	# Push with the player's own CharacterBody2D collision, so we won't
-	# teleport them into a wall or through a floor. No health damage.
 	if king_ward_repel_timer > 0.0 or not is_instance_valid(target):
 		return
 	if global_position.distance_to(target.global_position) > 135.0:
@@ -6360,9 +6809,6 @@ func _king_repel_player_from_ward() -> void:
 
 
 func can_receive_player_hit() -> bool:
-	# King can be hurt throughout the encounter, including while hovering.
-	# A first legitimate sword hit can also wake a dormant King. Before this,
-	# a visually connecting strike was silently ignored until activation.
 	if level6_mode:
 		return level6_stage in [Level6Stage.PHASE_ONE, Level6Stage.PHASE_TWO, Level6Stage.PHASE_THREE]
 	return state != State.DEAD
@@ -6381,8 +6827,6 @@ func attack_shape_hits_hurtbox(attack_shape: CollisionShape2D) -> bool:
 		return false
 	if attack_shape.disabled or attack_shape.shape == null or not is_instance_valid(sprite):
 		return false
-	# The King intentionally phases through terrain, so his physics movement
-	# collision mask cannot also be his weapon hurtbox. Use the visual body.
 	var texture: Texture2D = null
 	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(sprite.animation):
 		var count: int = sprite.sprite_frames.get_frame_count(sprite.animation)
@@ -6406,8 +6850,6 @@ func tomar_dano(amount: int, _origin: Vector2 = Vector2.ZERO) -> void:
 	if amount <= 0 or not can_receive_player_hit():
 		return
 	if level6_mode:
-		# A single physical sword strike must not count twice through the
-		# Player's handler and the new boss-side fallback in one physics tick.
 		if level6_hit_lock > 0.0:
 			return
 		if level6_stage == Level6Stage.PHASE_ONE:
@@ -6419,18 +6861,17 @@ func tomar_dano(amount: int, _origin: Vector2 = Vector2.ZERO) -> void:
 					_level6_accepted_hit(previous_hp_one)
 					health_changed.emit(hp, max_hp)
 				if hp <= 1:
-					_level6_begin_guard() # Exactly one Void Menacing at 1 HP.
+					_level6_begin_guard()
 			elif king_shield_phase == KingShieldPhase.SHIELDED:
 				king_shield_hit_fx = maxf(king_shield_hit_fx, king_shield_hit_pulse_duration)
 			elif king_shield_phase == KingShieldPhase.EXPOSED:
 				var previous_hp_last: int = hp
-				hp = 0 # One final hit after the guard has died.
+				hp = 0
 				level6_hit_lock = 0.12
 				_level6_accepted_hit(previous_hp_last)
 				health_changed.emit(hp, max_hp)
 				_level6_start_dissolving(true)
 		elif level6_stage == Level6Stage.PHASE_THREE:
-			# The finale counts successful sword strikes, not raw damage.
 			var prior_final_hp: int = hp
 			hp = maxi(0, hp - 1)
 			level6_hit_lock = 0.32
@@ -6456,7 +6897,6 @@ func tomar_dano(amount: int, _origin: Vector2 = Vector2.ZERO) -> void:
 		_begin_encounter()
 	match king_shield_phase:
 		KingShieldPhase.SOLO:
-			# Ordinary damage, no hurt animation or stagger. Blink BLACK only.
 			var old_hp: int = hp
 			hp = maxi(1, hp - amount)
 			king_black_flash_timer = maxf(0.22, king_black_hit_flash_duration)
@@ -6464,27 +6904,20 @@ func tomar_dano(amount: int, _origin: Vector2 = Vector2.ZERO) -> void:
 			sprite.modulate = Color.BLACK
 			print("KING NECROMANCER HIT: -", old_hp - hp, " HP | ", hp, "/", max_hp)
 			health_changed.emit(hp, max_hp)
-			# The shield is TIME-triggered, not HP-triggered.
-			# Leave 1 HP until the guards are defeated so the finale remains playable.
 			_update_king_hp_label()
 		KingShieldPhase.SHIELDED:
-			# The elite protects the King. Attacks ripple on the shield only.
 			king_shield_hit_fx = maxf(0.1, king_shield_hit_pulse_duration)
-			# Shield breaks automatically when BOTH guards die, without needing a hit.
 			if king_shield_elite_spawned and not _king_elite_is_alive():
 				_begin_king_shield_break()
 		KingShieldPhase.BREAKING:
-			# The shield is visibly shattering; damage resumes afterward.
 			pass
 		KingShieldPhase.EXPOSED:
-			# During Last Stand intro the King has a brief transformation window.
 			if king_last_stand_intro_timer > 0.0:
 				return
 			var purple_alive: bool = _king_active_purple_count() > 0
 			var hp_floor: int = (_king_purple_hp_floor() if purple_alive
 				else (0 if king_last_stand_started else 1))
 			if purple_alive and hp <= hp_floor:
-				# One-percent last-chance ward: no damage while the purple guard lives.
 				king_shield_hit_fx = maxf(0.1, king_shield_hit_pulse_duration)
 				_king_repel_player_from_ward()
 				_update_king_hp_label()
@@ -6505,8 +6938,26 @@ func tomar_dano(amount: int, _origin: Vector2 = Vector2.ZERO) -> void:
 
 
 func _exit_tree() -> void:
-	# Title screen is attached to SceneTree.root. The atmosphere belongs to
-	# current_scene, so it is also cleaned up when Level 6 unloads.
+	_collapse_restore_tilemaps()
+	if is_instance_valid(target) and bool(target.get_meta(&"king_final_cinematic_active", false)):
+		target.collision_mask = _collapse_player_mask
+		target.set_physics_process(_collapse_player_physics)
+		target.set_process(_collapse_player_process)
+		target.remove_meta(&"king_final_cinematic_active")
+	if is_instance_valid(_collapse_flash) and not _collapse_level7_transition_started:
+		_collapse_flash.queue_free()
+	if is_instance_valid(_collapse_ui):
+		_collapse_ui.queue_free()
+	for artifact: AnimatedSprite2D in _collapse_relics:
+		if is_instance_valid(artifact):
+			artifact.queue_free()
+	for smoke: CPUParticles2D in _collapse_emitters:
+		if is_instance_valid(smoke):
+			smoke.queue_free()
+	if _level6_artifact_rescue_active and is_inside_tree():
+		get_tree().paused = _level6_artifact_prev_tree_paused
+	if is_instance_valid(_level6_artifact_overlay):
+		_level6_artifact_overlay.queue_free()
 	if is_instance_valid(level6_title_layer):
 		level6_title_layer.queue_free()
 	if level6_mode:
@@ -6517,9 +6968,6 @@ func _exit_tree() -> void:
 			level6_screen_layer.queue_free()
 		if is_instance_valid(level6_void_visual_layer):
 			level6_void_visual_layer.queue_free()
-		# V73: the six-method visual lab also creates ROOT CanvasLayers.
-		# Free ALL of them when changing/reloading Level6. Previous versions
-		# leaked these nodes, potentially leaving an old blackout over new FX.
 		if is_instance_valid(level6_dark_test_test_layer):
 			level6_dark_test_test_layer.queue_free()
 		if is_instance_valid(level6_dark_test_layout_layer):
@@ -6546,8 +6994,6 @@ func _exit_tree() -> void:
 		if is_instance_valid(cam):
 			cam.offset = level6_original_cam_offset
 			cam.zoom = level6_camera_base_zoom
-	# CanvasLayer is parented to SceneTree.root, so explicitly dispose it
-	# when the level is reloaded; otherwise old HUDs can cover the new one.
 	if is_instance_valid(king_hud):
 		king_hud.queue_free()
 
@@ -6566,7 +7012,6 @@ func _die_king_v9() -> void:
 		king_hud.queue_free()
 	if is_instance_valid(king_crown_root):
 		king_crown_root.queue_free()
-	# A royal summon cannot continue attacking after its monarch dies.
 	for royal_guard: CharacterBody2D in king_elite_guards:
 		if is_instance_valid(royal_guard) and not royal_guard.is_queued_for_deletion():
 			royal_guard.queue_free()
@@ -6584,10 +7029,7 @@ func _die_king_v9() -> void:
 		queue_free()
 
 func _play(animation: StringName, restart: bool = false) -> void:
-	# Void King's casting frames contain the giant white flame staff.
-	# Never show these frames as part of an offensive phase 1/2 attack.
 	if level6_mode and animation == &"spawnenemies2":
-		# This specific channel contains the unwanted giant white orb.
 		animation = &"idle"
 	if not sprite.sprite_frames.has_animation(animation):
 		return
@@ -6611,11 +7053,8 @@ func _draw() -> void:
 			var mote: Vector2 = body_shape.position + Vector2.RIGHT.rotated(theta) * radius
 			draw_circle(mote, 2.0 + float(orbit_i % 3), Color(0.02, 0.02, 0.027, 0.37))
 	if is_king:
-		# Giant aura behind the sprite. Crown is an actual foreground child.
-		# Aura has no collision geometry.
 		var center: Vector2 = body_shape.position
 		var pulse: float = 0.5 + 0.5 * sin(hover_time * 3.0)
-		# Ambient aura is a subtle fill, never a permanent WARNING ring.
 		if not level6_mode:
 			draw_circle(center, 72.0 + 4.0 * pulse, Color(0.45, 0.08, 0.80, 0.055))
 		if not level6_mode and king_gravefall_active and king_special_kind == 3:
@@ -6633,22 +7072,20 @@ func _draw() -> void:
 			var radius: float = (125.0 + 75.0 * b) if b < 0.25 else (145.0 - 50.0 * (b - 0.25) / 0.75)
 			draw_arc(center, radius, 0.0, TAU, 60,
 				Color(0.97, 0.72, 1.0, pow(1.0 - b, 1.25)), maxf(0.5, 18.0 * (1.0 - b)), true)
-		# V9.7 shield appears 10 seconds after encounter start; both normal and
-		# breaking-state animation are drawn without new textures or nodes.
 		var shield_origin: Vector2 = body_shape.position
 		if king_shield_phase == KingShieldPhase.SHIELDED:
 			var wave: float = 0.5 + 0.5 * sin(king_shield_animation_time * 4.6)
 			var shield_impact_pulse: float = king_shield_hit_fx / maxf(0.01, king_shield_hit_pulse_duration)
 			var radius: float = 83.0 + 5.0 * wave + 12.0 * shield_impact_pulse
-			draw_circle(shield_origin, radius, Color(0.22, 0.06, 0.62, 0.12 + 0.13 * shield_impact_pulse))
+			draw_circle(shield_origin, radius, Color(0.012, 0.014, 0.019, 0.27 + 0.13 * shield_impact_pulse) if level6_mode else Color(0.22, 0.06, 0.62, 0.12 + 0.13 * shield_impact_pulse))
 			draw_arc(shield_origin, radius, 0.0, TAU, 72,
-				Color(0.78, 0.53, 1.0, 0.76 + 0.23 * shield_impact_pulse), 6.0 + shield_impact_pulse * 8.0, true)
+				Color(0.09, 0.095, 0.11, 0.85 + 0.14 * shield_impact_pulse) if level6_mode else Color(0.78, 0.53, 1.0, 0.76 + 0.23 * shield_impact_pulse), 6.0 + shield_impact_pulse * 8.0, true)
 			draw_arc(shield_origin, radius - 11.0, 0.0, TAU, 64,
-				Color(0.95, 0.80, 1.0, 0.45 + 0.40 * shield_impact_pulse), 2.0, true)
+				Color(0.22, 0.23, 0.25, 0.46 + 0.36 * shield_impact_pulse) if level6_mode else Color(0.95, 0.80, 1.0, 0.45 + 0.40 * shield_impact_pulse), 2.0, true)
 			for rune_i: int in range(8):
 				var angle: float = float(rune_i) * TAU / 8.0 + king_shield_animation_time * 0.45
 				var mark: Vector2 = shield_origin + Vector2.RIGHT.rotated(angle) * radius
-				draw_circle(mark, 4.0 + shield_impact_pulse * 2.0, Color(0.90, 0.69, 1.0, 0.85))
+				draw_circle(mark, 4.0 + shield_impact_pulse * 2.0, Color(0.18, 0.19, 0.22, 0.88) if level6_mode else Color(0.90, 0.69, 1.0, 0.85))
 		elif king_shield_phase == KingShieldPhase.BREAKING:
 			var t: float = 1.0 - king_shield_break_fx / maxf(0.01, king_shield_break_duration)
 			var alpha: float = maxf(0.0, 1.0 - t)
@@ -6658,23 +7095,21 @@ func _draw() -> void:
 				var middle: Vector2 = shield_origin + tangent * (85.0 + 70.0 * t)
 				draw_line(middle - tangent.rotated(PI / 2.0) * (13.0 - t * 10.0),
 					middle + tangent.rotated(PI / 2.0) * (13.0 - t * 10.0),
-					Color(0.93, 0.74, 1.0, alpha), maxf(0.6, 7.0 * alpha), true)
+					Color(0.12, 0.13, 0.15, alpha) if level6_mode else Color(0.93, 0.74, 1.0, alpha), maxf(0.6, 7.0 * alpha), true)
 		elif _king_purple_ward_active():
-			# Only visible at the final 1% HP while a purple Menacing guards him.
 			var ward_pulse: float = 0.5 + 0.5 * sin(king_shield_animation_time * 6.0)
 			var ward_hit: float = king_shield_hit_fx / maxf(0.01, king_shield_hit_pulse_duration)
 			var ward_radius: float = 75.0 + 5.0 * ward_pulse + 10.0 * ward_hit
-			draw_circle(shield_origin, ward_radius, Color(0.34, 0.06, 0.56, 0.15))
+			draw_circle(shield_origin, ward_radius, Color(0.012, 0.014, 0.019, 0.30) if level6_mode else Color(0.34, 0.06, 0.56, 0.15))
 			draw_arc(shield_origin, ward_radius, 0.0, TAU, 64,
-				Color(0.92, 0.52, 1.0, 0.72 + 0.26 * ward_hit), 5.0 + 7.0 * ward_hit, true)
+				Color(0.09, 0.10, 0.12, 0.78 + 0.20 * ward_hit) if level6_mode else Color(0.92, 0.52, 1.0, 0.72 + 0.26 * ward_hit), 5.0 + 7.0 * ward_hit, true)
 			draw_arc(shield_origin, ward_radius - 8.0, 0.0, TAU, 64,
-				Color(0.64, 0.18, 0.95, 0.35 + 0.28 * ward_hit), 2.0, true)
+				Color(0.21, 0.22, 0.24, 0.39 + 0.23 * ward_hit) if level6_mode else Color(0.64, 0.18, 0.95, 0.35 + 0.28 * ward_hit), 2.0, true)
 		_draw_king_royal_slashes()
 		if level6_mode:
 			_level6_draw_extra_attacks()
 			_level6_draw_falling_lasers()
 			_level6_draw_final_implosion()
-		# A short, non-damaging Last Stand eruption, not a permanent warning.
 		if king_last_stand_intro_timer > 0.0:
 			var last_stand_progress: float = clampf(
 				1.0 - king_last_stand_intro_timer / maxf(0.1, king_last_stand_intro_seconds),
@@ -6703,19 +7138,10 @@ func _draw() -> void:
 		for index in range(3):
 			var point := start.lerp(finish, fposmod(flow + float(index) / 3.0, 1.0))
 			draw_circle(point, 2.0, Color(1.0, 0.85, 0.92))
-	# No 24/7 circular warning in the neutral GUARDED state.
 	if (state == State.GUARDED or state == State.OPENING) and shots_left > 0:
 		draw_arc(body_shape.position, 13.0, 0.0, TAU, 24, Color(1.0, 0.23, 0.30, 0.85), 2.0)
 
 
-# -----------------------------------------------------------------------------
-
-
-# -----------------------------------------------------------------------------
-# V70: VOID ATMOSPHERE. Visuals only; all boss combat remains untouched.
-# This CanvasLayer (100) uses the exact ColorRect color-alpha rendering route
-# that worked with key 4 in V69. No manually placed particle node is required.
-# -----------------------------------------------------------------------------
 func _level6_void_make_particle_texture(pixel_size: int, core_color: Color) -> Texture2D:
 	var image: Image = Image.create(pixel_size, pixel_size, false, Image.FORMAT_RGBA8)
 	var center: Vector2 = Vector2(float(pixel_size - 1), float(pixel_size - 1)) * 0.5
@@ -6729,8 +7155,6 @@ func _level6_void_make_particle_texture(pixel_size: int, core_color: Color) -> T
 
 
 func _level6_void_make_fog_texture() -> Texture2D:
-	# One low-resolution, translucent, organic cloud image, generated ONCE.
-	# No shader compilation and no manually imported textures required.
 	var width: int = 256
 	var height: int = 128
 	var image_data: Image = Image.create(width, height, false, Image.FORMAT_RGBA8)
@@ -6747,8 +7171,6 @@ func _level6_void_make_fog_texture() -> Texture2D:
 			var fx: float = (float(x) + 0.5) / float(width)
 			var side_mask: float = smoothstep(0.0, 0.15, fx) * (1.0 - smoothstep(0.85, 1.0, fx))
 			var n: float = noise.get_noise_2d(float(x), float(y))
-			# Dense black cores with irregular, feathered edges. Color is
-			# LITERALLY (0,0,0); shape comes only from alpha/noise, not grey RGB.
 			var density: float = smoothstep(-0.33, 0.24, n)
 			var streak: float = 0.13 + 0.87 * pow(density, 0.72)
 			var ribbons: float = 0.86 + 0.14 * sin(fy * 30.0 + n * 2.9 + fx * 6.0)
@@ -6785,7 +7207,6 @@ func _level6_void_fx_panel(texture: Texture2D, label: String) -> TextureRect:
 
 
 func _level6_void_world_seed_v76(cx: int, cy: int, salt: float) -> float:
-	# Pure deterministic cell seed, independent of player/camera coordinates.
 	return fposmod(sin(float(cx) * 127.1 + float(cy) * 311.7 + salt) * 43758.5453, 1.0)
 
 
@@ -6797,8 +7218,6 @@ func _level6_create_void_atmosphere() -> void:
 	if not is_instance_valid(level6_dark_test_ui_layer):
 		return
 
-	# CRITICAL: same parent/CanvasLayer and TextureRect technology as V74.
-	# The screenshot proved this parent really draws fog, ash and status text.
 	_level6_keep_hud_above_darkness()
 	var fx_host: Node = level6_player_hud_layer if is_instance_valid(level6_player_hud_layer) else level6_dark_test_ui_layer
 	level6_fx_root_v73 = Control.new()
@@ -6807,11 +7226,10 @@ func _level6_create_void_atmosphere() -> void:
 	level6_fx_root_v73.position = Vector2.ZERO
 	level6_fx_root_v73.size = get_viewport_rect().size
 	level6_fx_root_v73.clip_contents = false
-	fx_host.add_child(level6_fx_root_v73)
-	fx_host.move_child(level6_fx_root_v73, 0)
+	fx_host.add_child.call_deferred(level6_fx_root_v73)
+	fx_host.move_child.call_deferred(level6_fx_root_v73, 0)
 	level6_fx_parent_is_hud_v74 = is_instance_valid(level6_player_hud_layer)
 
-	# Fog is regenerated only once. All fog banks share ONE texture.
 	var fog_texture: Texture2D = _level6_void_make_fog_texture()
 	level6_fog_panels_v73.clear()
 	for i: int in range(LEVEL6_FOG_COLS_V76 * LEVEL6_FOG_ROWS_V76):
@@ -6819,10 +7237,8 @@ func _level6_create_void_atmosphere() -> void:
 		bank.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		level6_fog_panels_v73.append(bank)
 
-	# Vignette is the one visual that SHOULD stay attached to the screen.
 	level6_vignette_v73 = _level6_void_fx_panel(_level6_void_make_vignette_texture(), "VoidEdgeVignetteV76")
 
-	# Both textures are pure black. Their transparency supplies soft edges.
 	var dot_texture: Texture2D = _level6_void_make_particle_texture(20, Color(0.0, 0.0, 0.0, 1.0))
 	var smoke_texture: Texture2D = _level6_void_make_particle_texture(36, Color(0.0, 0.0, 0.0, 1.0))
 	level6_ash_motes_v73.clear()
@@ -6839,7 +7255,7 @@ func _level6_create_void_atmosphere() -> void:
 
 	level6_void_viewport_size = get_viewport_rect().size
 	level6_void_atmosphere_ready = true
-	print("VOID KING V79: TRUE BLACK WORLD FOG READY; host=", fx_host.get_path(),
+	print("VOID KING V79: TRUE BLACK WORLD FOG READY; host=", fx_host.get_path() if fx_host.is_inside_tree() else fx_host.name,
 		" fog=", level6_fog_panels_v73.size(), " ash=", level6_ash_motes_v73.size(),
 		" camera=", get_viewport().get_camera_2d())
 
@@ -6855,9 +7271,6 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 		level6_void_viewport_size = screen
 		level6_fx_root_v73.size = screen
 
-	# V79: The visual strength is no longer derived from the black overlay's
-	# opacity. That made fog appear at the wrong times and look too heavy.
-	# The skeleton's HP and the King's LAST TEN hits now drive the two climaxes.
 	var fog_target: float = 0.0
 	var vignette_target: float = 0.0
 	if level6_stage == Level6Stage.PHASE_ONE:
@@ -6866,14 +7279,12 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 			vignette_target = 0.13 + 0.17 * clampf(first_danger, 0.0, 1.0)
 		elif king_shield_phase == KingShieldPhase.SHIELDED:
 			var guard_danger: float = 1.0 - _level6_guard_hp_ratio()
-			# Fog begins below ~60% guard HP and peaks near the final 10%.
 			fog_target = smoothstep(0.40, 0.90, guard_danger)
 			vignette_target = 0.26 + fog_target * 0.58
 			if fog_target >= 0.45 and not level6_void_guard_cue_logged_v79:
 				level6_void_guard_cue_logged_v79 = true
 				print("VOID KING V79: dying skeleton activated BLACK FOG + VIGNETTE")
 		else:
-			# The guard just died; let the ominous effect linger until phase 2.
 			fog_target = 0.65
 			vignette_target = 0.79
 	elif level6_stage == Level6Stage.PHASE_TWO:
@@ -6883,14 +7294,12 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 		fog_target = 0.30
 		vignette_target = 0.54
 	elif level6_stage == Level6Stage.DISSOLVE_TWO:
-		# Begin the final fog transition before the climb, rather than reset it.
 		fog_target = 0.27
 		vignette_target = 0.40
 	elif level6_stage == Level6Stage.PHASE_THREE_PENDING:
 		fog_target = 0.34
 		vignette_target = 0.42
 	elif level6_stage == Level6Stage.PHASE_THREE_CLIMB:
-		# The Abyss is already breathing around the player during the climb.
 		fog_target = 0.42
 		vignette_target = 0.44
 	elif level6_stage == Level6Stage.THIRD_REVEAL:
@@ -6898,8 +7307,6 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 		vignette_target = 0.52
 	elif level6_stage == Level6Stage.PHASE_THREE:
 		var final_danger: float = clampf(1.0 - float(hp) / maxf(1.0, float(max_hp)), 0.0, 1.0)
-		# ALWAYS PRESENT at full HP. Each hit raises density continuously,
-		# with a stronger final-three-hit crescendo. Never drop to zero.
 		fog_target = lerpf(level6_phase3_fog_floor_v80, 1.0,
 			pow(final_danger, 1.15))
 		vignette_target = 0.46 + 0.48 * smoothstep(0.0, 1.0, final_danger)
@@ -6907,14 +7314,9 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 			level6_void_final_cue_logged_v79 = true
 			print("VOID KING V80: final-three-hit fog and vignette crescendo")
 	elif level6_stage == Level6Stage.THIRD_DEATH:
-		var death_progress: float = level6_third_fx_timer / maxf(0.1,
-			level6_final_animation_seconds)
-		var death_fade: float = 1.0 - smoothstep(0.65, 1.0, death_progress)
-		fog_target = 0.90 * death_fade
-		vignette_target = 0.94 * death_fade
+		fog_target = 0.75
+		vignette_target = 0.67
 
-	# Fast enough to show up between hits; slower decay is intentional so the
-	# fog doesn't blink out when the skeleton dies or a phase transitions.
 	var dt: float = maxf(0.0, get_physics_process_delta_time())
 	var fog_rate: float = 0.86 if fog_target > level6_void_auto_fog_power_v79 else 0.42
 	var vignette_rate: float = 1.15 if vignette_target > level6_void_auto_vignette_power_v79 else 0.65
@@ -6929,8 +7331,6 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 	if level6_stage == Level6Stage.PHASE_THREE and hp <= 3:
 		pulse = 0.96 + 0.04 * sin(level6_void_fog_time * 1.35)
 
-	# V76/V78 PROVEN RENDERER: fixed WORLD coordinates are transformed into
-	# the visible HUD canvas. Fog scrolls past the player, never follows them.
 	var world_to_screen: Transform2D = get_viewport().get_canvas_transform()
 	var screen_to_world: Transform2D = world_to_screen.affine_inverse()
 	var world_center: Vector2 = screen_to_world * (screen * 0.5)
@@ -6938,7 +7338,6 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 	var zoom_y: float = maxf(0.15, world_to_screen.y.length())
 
 	var show_fog: bool = level6_test_fog or power > 0.025
-	# True-black texture retained. Lower opacity than V78 but keep dense cores.
 	var fog_alpha: float = (level6_void_manual_fog_alpha_v79 if level6_test_fog
 		else lerpf(0.23, level6_void_max_auto_fog_alpha_v79, power)) * pulse
 	var grid_x: int = floori(world_center.x / LEVEL6_FOG_SPACING_V76.x)
@@ -6954,8 +7353,6 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 		var jitter: Vector2 = Vector2(
 			(_level6_void_world_seed_v76(cx, cy, 31.0) - 0.5) * 190.0,
 			(_level6_void_world_seed_v76(cx, cy, 67.0) - 0.5) * 95.0)
-		# V78 only drifted ~2px/sec. This is roughly 10x faster but still
-		# smooth, with different currents for each cloud bank.
 		var drift: Vector2 = Vector2(
 			sin(level6_void_fog_time * (0.39 + 0.11 * seeded) + seeded * TAU) * 68.0
 				+ sin(level6_void_fog_time * 0.17 + seeded * 4.3) * 27.0,
@@ -6972,7 +7369,6 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 		bank.modulate = Color(1.0, 1.0, 1.0,
 			fog_alpha * (0.84 + 0.16 * seeded))
 
-	# Black ash/smoke rises through world-space cells, with periodic respawns.
 	var show_ash: bool = level6_test_particles or power > 0.055
 	var ash_alpha: float = 0.78 if level6_test_particles else lerpf(0.23, 0.64, power)
 	var ash_x: int = floori(world_center.x / LEVEL6_ASH_SPACING_V76.x)
@@ -7002,8 +7398,6 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 		mote.modulate = Color(1.0, 1.0, 1.0,
 			ash_alpha * (0.55 if smoke else 0.95) * (0.83 + 0.17 * seeded))
 
-	# Unlike world fog, the vignette follows the view so the center remains
-	# readable. Present in BOTH boss phases, strongest near the two climaxes.
 	if is_instance_valid(level6_vignette_v73):
 		level6_vignette_v73.position = Vector2.ZERO
 		level6_vignette_v73.size = screen
@@ -7015,11 +7409,6 @@ func _level6_update_void_atmosphere(_darkness: float) -> void:
 	if is_instance_valid(level6_particle_test_signal_v73):
 		level6_particle_test_signal_v73.visible = false
 
-# V71: keep tested original darkness methods separate from V70 atmosphere.
-# V71 / DARKNESS METHOD AND ATMOSPHERE LAB
-# The modes are deliberately separate implementations, not aliases for the
-# same draw function. They use the previous versions' actual rendering styles.
-# -----------------------------------------------------------------------------
 func _input(event: InputEvent) -> void:
 	if not level6_mode or not (event is InputEventKey):
 		return
@@ -7027,9 +7416,17 @@ func _input(event: InputEvent) -> void:
 	if not key_event.pressed or key_event.echo:
 		return
 	var keycode: int = key_event.physical_keycode
+	if keycode in [KEY_3, KEY_KP_3] or key_event.keycode in [KEY_3, KEY_KP_3]:
+		if level6_stage not in [Level6Stage.THIRD_DEATH, Level6Stage.COMPLETE]:
+			if not is_instance_valid(target):
+				target = get_tree().get_first_node_in_group(&"player") as CharacterBody2D
+			if is_instance_valid(target):
+				print("KING FINAL V88 DEBUG 3: começando morte, colapso e queda")
+				_level6_begin_final_death()
+		get_viewport().set_input_as_handled()
+		return
 	match keycode:
 		KEY_0:
-			# Exit all manual tests; restore automatic V70 atmosphere.
 			level6_test_fog = false
 			level6_test_particles = false
 			level6_test_vignette = false
@@ -7074,8 +7471,6 @@ func _input(event: InputEvent) -> void:
 			return
 	var next_mode: int = -1
 	match keycode:
-		KEY_3:
-			next_mode = 3
 		KEY_4:
 			next_mode = 4
 		KEY_5:
@@ -7099,33 +7494,11 @@ func _level6_dark_test_setup() -> void:
 	if is_instance_valid(level6_dark_test_ui_layer):
 		return
 	_level6_keep_hud_above_darkness()
-	# The fallback is intentionally lower than the existing HUD layer 930.
 	level6_dark_test_ui_layer = CanvasLayer.new()
 	level6_dark_test_ui_layer.name = "V76_ATMOSPHERE_LAB_FALLBACK"
 	level6_dark_test_ui_layer.layer = 850
 	level6_dark_test_ui_layer.follow_viewport_enabled = false
-	get_tree().root.add_child(level6_dark_test_ui_layer)
-	var visible_ui_parent: Node = level6_player_hud_layer if is_instance_valid(level6_player_hud_layer) else level6_dark_test_ui_layer
-
-	level6_dark_test_backing_v74 = ColorRect.new()
-	level6_dark_test_backing_v74.name = "V76_StatusBacking"
-	level6_dark_test_backing_v74.color = Color(0.035, 0.035, 0.070, 0.81)
-	level6_dark_test_backing_v74.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	level6_dark_test_backing_v74.position = Vector2(400.0, 8.0)
-	level6_dark_test_backing_v74.size = Vector2(742.0, 112.0)
-	visible_ui_parent.add_child(level6_dark_test_backing_v74)
-
-	level6_dark_test_label = Label.new()
-	level6_dark_test_label.name = "V76_DarknessFogParticleReadout"
-	level6_dark_test_label.position = Vector2(411.0, 14.0)
-	level6_dark_test_label.size = Vector2(722.0, 104.0)
-	level6_dark_test_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	level6_dark_test_label.add_theme_color_override("font_color", Color(0.93, 0.91, 1.0, 1.0))
-	level6_dark_test_label.add_theme_font_size_override("font_size", 13)
-	visible_ui_parent.add_child(level6_dark_test_label)
-	_level6_dark_test_label_update()
-	print("VOID KING V79 LOADED: 3-8=darkness; 9=FOG; P=particles; V=vignette; B=all; 0=reset")
-	print("VOID KING V79: LAB UI host=", visible_ui_parent.get_path(), " boss script=", get_script().resource_path)
+	get_tree().root.add_child.call_deferred(level6_dark_test_ui_layer)
 
 
 func _level6_dark_test_select(next_mode: int) -> void:
@@ -7145,8 +7518,6 @@ func _level6_dark_test_select(next_mode: int) -> void:
 
 func _level6_dark_test_mode_name() -> String:
 	match level6_dark_test_mode:
-		3:
-			return "V55 original: black ColorRect + modulate.a, layer 30"
 		4:
 			return "V62: black ColorRect + color.a, layer 100"
 		5:
@@ -7163,8 +7534,6 @@ func _level6_dark_test_mode_name() -> String:
 
 func _level6_dark_test_canvas_number() -> int:
 	match level6_dark_test_mode:
-		3:
-			return level6_screen_layer.layer if is_instance_valid(level6_screen_layer) else -1
 		4:
 			return level6_dark_test_test_layer.layer if is_instance_valid(level6_dark_test_test_layer) else -1
 		5:
@@ -7179,8 +7548,6 @@ func _level6_dark_test_canvas_number() -> int:
 
 func _level6_dark_test_active_rect() -> ColorRect:
 	match level6_dark_test_mode:
-		3:
-			return level6_screen_shadow
 		4:
 			return level6_dark_test_test_rect
 		5:
@@ -7194,7 +7561,6 @@ func _level6_dark_test_active_rect() -> ColorRect:
 
 
 func _level6_dark_test_clear_all() -> void:
-	# Reset V70's automatic root overlay; never leave modulation at zero.
 	if is_instance_valid(level6_screen_shadow):
 		level6_screen_shadow.modulate.a = 1.0
 		level6_screen_shadow.color = Color(0.0, 0.0, 0.0, 0.0)
@@ -7219,23 +7585,12 @@ func _level6_dark_test_tick() -> void:
 		return
 	var vp_size: Vector2 = get_viewport_rect().size
 	match level6_dark_test_mode:
-		3:
-			# Exact V55 setup: draw opaque black, animate modulate alpha.
-			_level6_create_screen_darkness()
-			if is_instance_valid(level6_screen_shadow):
-				level6_screen_layer.visible = true
-				level6_screen_shadow.visible = true
-				level6_screen_shadow.color = Color.BLACK
-				level6_screen_shadow.modulate.a = 0.83
-				if not level6_screen_shadow.size.is_equal_approx(vp_size):
-					level6_screen_shadow.size = vp_size
 		4:
-			# V62 setup: ColorRect's actual color alpha, no anchors to fight.
 			if not is_instance_valid(level6_dark_test_test_rect):
 				level6_dark_test_test_layer = CanvasLayer.new()
 				level6_dark_test_test_layer.name = "V71_Method4_V62_ColorAlpha"
 				level6_dark_test_test_layer.layer = 100
-				get_tree().root.add_child(level6_dark_test_test_layer)
+				get_tree().root.add_child.call_deferred(level6_dark_test_test_layer)
 				level6_dark_test_test_rect = ColorRect.new()
 				level6_dark_test_test_rect.name = "ColorAlphaTest"
 				level6_dark_test_test_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -7247,12 +7602,11 @@ func _level6_dark_test_tick() -> void:
 			if not level6_dark_test_test_rect.size.is_equal_approx(vp_size):
 				level6_dark_test_test_rect.size = vp_size
 		5:
-			# V64: separate fixed-size Control parent, anchored ColorRect child.
 			if not is_instance_valid(level6_dark_test_layout_rect):
 				level6_dark_test_layout_layer = CanvasLayer.new()
 				level6_dark_test_layout_layer.name = "V71_Method5_V64_ViewportControl"
 				level6_dark_test_layout_layer.layer = 160
-				get_tree().root.add_child(level6_dark_test_layout_layer)
+				get_tree().root.add_child.call_deferred(level6_dark_test_layout_layer)
 				level6_dark_test_layout_root = Control.new()
 				level6_dark_test_layout_root.name = "ViewportRoot"
 				level6_dark_test_layout_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -7269,7 +7623,6 @@ func _level6_dark_test_tick() -> void:
 			if not level6_dark_test_layout_root.size.is_equal_approx(vp_size):
 				level6_dark_test_layout_root.size = vp_size
 		6:
-			# V65: RGB multiplication, not a separate ColorRect.
 			if not is_instance_valid(level6_world_darkness):
 				var scene_root: Node = get_tree().current_scene
 				if not is_instance_valid(scene_root):
@@ -7290,13 +7643,12 @@ func _level6_dark_test_tick() -> void:
 				level6_world_darkness.visible = true
 				level6_world_darkness.color = Color(0.17, 0.17, 0.17, 1.0)
 		7:
-			# V66: highest-level plain rectangle, above HUD and parallax.
 			if not is_instance_valid(level6_dark_test_high_rect):
 				level6_dark_test_high_layer = CanvasLayer.new()
 				level6_dark_test_high_layer.name = "V71_Method7_V66_HighCanvas"
 				level6_dark_test_high_layer.layer = 800
 				level6_dark_test_high_layer.follow_viewport_enabled = false
-				get_tree().root.add_child(level6_dark_test_high_layer)
+				get_tree().root.add_child.call_deferred(level6_dark_test_high_layer)
 				level6_dark_test_high_rect = ColorRect.new()
 				level6_dark_test_high_rect.name = "HighCanvasBlackout"
 				level6_dark_test_high_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -7308,7 +7660,6 @@ func _level6_dark_test_tick() -> void:
 			if not level6_dark_test_high_rect.size.is_equal_approx(vp_size):
 				level6_dark_test_high_rect.size = vp_size
 		8:
-			# V67: use the same canvas as the already-functioning VOID/KING title.
 			if not is_instance_valid(level6_title_layer):
 				_level6_create_title_overlay()
 			if is_instance_valid(level6_title_layer):
@@ -7319,7 +7670,6 @@ func _level6_dark_test_tick() -> void:
 					level6_title_layer.add_child(level6_dark_test_title_rect)
 					level6_title_layer.move_child(level6_dark_test_title_rect, 0)
 				level6_title_layer.visible = true
-				# Never interrupt intro-title choreography while testing.
 				if level6_stage != Level6Stage.INTRO_TITLE:
 					level6_title_layer.layer = 520
 					if is_instance_valid(level6_title_black):
@@ -7354,7 +7704,7 @@ func _level6_dark_test_label_update() -> void:
 		if is_instance_valid(mote) and mote.is_visible_in_tree():
 			ash_visible += 1
 	level6_dark_test_label.text = (
-        "VOID KING V79 MOVING BLACK FOG + AUTO CLIMAXES  3-8=dark  9=FOG  P=ash  V=vignette  B=ALL  0=reset\n"
+        "VOID KING V79 MOVING BLACK FOG + AUTO CLIMAXES  3=ENDING  4-8=dark  9=FOG  P=ash  V=vignette  B=ALL  0=reset\n"
 		+ "DARK " + str(level6_dark_test_mode) + " " + _level6_dark_test_mode_name() + " | " + draw_status + "\n"
 		+ "FOG=" + str(level6_test_fog) + " PARTICLES=" + str(level6_test_particles)
 		+ " VIGNETTE=" + str(level6_test_vignette) + " | stage=" + str(level6_stage) + "\n"
