@@ -1,11 +1,6 @@
 
 extends Area2D
 
-# THE DESERT CHALLENGE
-# Pergaminho dos artefatos.
-# Preserva as animacoes e o texto educativo.
-# Atualiza o pressagio do quinto artefato.
-
 @export_group("Tamanho do Pergaminho")
 @export_range(0.5, 0.95, 0.01) var largura_tela: float = 0.86
 @export_range(0.3, 0.85, 0.01) var altura_tela: float = 0.58
@@ -27,6 +22,8 @@ enum Estado {
 var estado: Estado = Estado.ABRINDO
 var artefato_id: String = ""
 
+var pagina_habilidade: bool = false
+
 var pausa_anterior: bool = false
 var pausa_aplicada: bool = false
 
@@ -40,84 +37,45 @@ var aviso: Label
 var tempo_letras: float = 0.0
 var total_letras: int = 0
 
-
 const DADOS: Dictionary = {
 	"escaravelho": {
 		"titulo": "Escaravelho de Khepri",
-		"descricao": (
-			"No Egito Antigo, escaravelhos eram usados "
-			+ "como amuletos de proteção e renascimento. "
-			+ "Khepri, deus associado ao sol nascente, "
-			+ "simbolizava a renovação diária da vida."
-		),
-		"dica": (
-			"* O escaravelho parece vibrar entre seus dedos. "
-			+ "Por um instante, você sente que algo sob as "
-			+ "ruínas acaba de mudar."
-		)
+		"descricao": "No Egito Antigo, escaravelhos eram usados como amuletos de proteção e renascimento. Khepri, deus associado ao sol nascente, simbolizava a renovação diária da vida.",
+		"dica": "* Talvez este símbolo abra algo esquecido nas areias...",
+		"habilidade": "ESCALADA",
+		"texto_habilidade": "Agora você pode se agarrar às paredes!\n\nUse essa habilidade para alcançar lugares altos e atravessar partes das ruínas que antes pareciam impossíveis."
 	},
 
 	"calice": {
 		"titulo": "Cálice de Lótus",
-		"descricao": (
-			"Encontrado na tumba de Tutancâmon, o Cálice "
-			+ "de Lótus é um objeto de alabastro. A flor "
-			+ "de lótus representava o renascimento e a "
-			+ "renovação da vida no Egito Antigo."
-		),
-		"dica": (
-			"* O cálice fica inexplicavelmente frio. "
-			+ "Muito abaixo de você, algo parece ter cedido."
-		)
+		"descricao": "Encontrado na tumba de Tutancâmon, o Cálice de Lótus é um objeto de alabastro. A flor de lótus representava o renascimento e a renovação da vida no Egito Antigo.",
+		"dica": "* Talvez este cálice tenha outra finalidade...",
+		"habilidade": "ESCUDO",
+		"texto_habilidade": "Agora você pode se proteger dos ataques inimigos!\n\nO poder do cálice permite que você se defenda durante os combates."
 	},
 
 	"ankh": {
 		"titulo": "Ankh da Vida",
-		"descricao": (
-			"O Ankh era um dos principais símbolos do "
-			+ "Egito Antigo. Representava a vida e aparecia "
-			+ "frequentemente nas mãos dos deuses em "
-			+ "pinturas e relevos religiosos."
-		),
-		"dica": (
-			"* Três relíquias reunidas. Você se pergunta "
-			+ "se elas foram escondidas para serem "
-			+ "encontradas... ou para nunca serem tocadas."
-		)
+		"descricao": "O Ankh era um dos principais símbolos do Egito Antigo. Representava a vida e aparecia frequentemente nas mãos dos deuses em pinturas e relevos religiosos.",
+		"dica": "* Uma antiga porta talvez reconheça este símbolo...",
+		"habilidade": "DASH",
+		"texto_habilidade": "Agora você pode realizar um dash!\n\nAvance rapidamente na direção desejada para atravessar obstáculos e melhorar sua movimentação."
 	},
 
 	"mascara": {
 		"titulo": "Máscara Funerária",
-		"descricao": (
-			"Máscaras funerárias cobriam os rostos de "
-			+ "algumas múmias egípcias. Estavam associadas "
-			+ "à identidade do falecido e às crenças "
-			+ "sobre a vida após a morte."
-		),
-		"dica": (
-			"* A máscara parece encará-lo de volta. "
-			+ "Pela primeira vez, você pensa em abandonar "
-			+ "a procura."
-		)
+		"descricao": "Máscaras funerárias cobriam os rostos de algumas múmias egípcias. Estavam associadas à identidade do falecido e às crenças sobre a vida após a morte.",
+		"dica": "* Talvez os mortos ainda guardem algum segredo...",
+		"habilidade": "PULO DUPLO",
+		"texto_habilidade": "Agora você pode pular duas vezes!\n\nEnquanto estiver no ar, realize outro salto para alcançar plataformas mais distantes ou mais altas."
 	},
 
 	"lapislazulidofarao": {
 		"titulo": "Lápis-Lazúli dos Faraós",
-		"descricao": (
-			"O lápis-lazúli era uma pedra muito valorizada "
-			+ "pelos egípcios. Importada de regiões distantes, "
-			+ "era usada em joias, amuletos e objetos religiosos."
-		),
-		"dica": (
-			"* Você viu a escuridão consumir o Necromancer "
-			+ "até ele desaparecer sem deixar vestígios.\n\n"
-			+ "A última pedra pulsa em sua mão. "
-			+ "As outras quatro relíquias parecem responder.\n\n"
-			+ "Agora você entende por que algo tentou "
-			+ "impedir sua passagem.\n\n"
-			+ "Talvez essas cinco peças nunca tenham "
-			+ "sido uma chave. Talvez fossem um selo."
-		)
+		"descricao": "O lápis-lazúli era uma pedra muito valorizada pelos egípcios. Importada de regiões distantes, era usada em joias, amuletos e objetos religiosos.",
+		"dica": "* Esta parece ser a última peça de algo maior...",
+		"habilidade": "OS CINCO ARTEFATOS",
+		"texto_habilidade": "Você reuniu os cinco artefatos!\n\nAgora pode abrir o portão final das ruínas.\n\nMas algo parece errado... Como se esses objetos não devessem ter sido reunidos."
 	}
 }
 
@@ -171,13 +129,18 @@ func _criar_interface() -> bool:
 
 	fundo = ColorRect.new()
 	fundo.size = tamanho_tela
-	fundo.color = Color(0.02, 0.015, 0.03, 0.0)
+	fundo.color = Color(
+		0.02, 0.015, 0.03, 0.0
+	)
 	fundo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	raiz_ui.add_child(fundo)
 
 	var fade_fundo: Tween = create_tween()
 	fade_fundo.tween_property(
-		fundo, "color:a", escurecimento, 0.35
+		fundo,
+		"color:a",
+		escurecimento,
+		0.35
 	)
 
 	if not sprite_original.sprite_frames.has_animation(
@@ -200,8 +163,10 @@ func _criar_interface() -> bool:
 	if ultimo_frame < 0:
 		return false
 
-	var textura: Texture2D = frames.get_frame_texture(
-		"abrindo", ultimo_frame
+	var textura: Texture2D = (
+		frames.get_frame_texture(
+			"abrindo", ultimo_frame
+		)
 	)
 
 	if textura == null:
@@ -229,10 +194,7 @@ func _criar_interface() -> bool:
 	if imagem != null:
 		var area_usada: Rect2i = imagem.get_used_rect()
 
-		if (
-			area_usada.size.x > 0
-			and area_usada.size.y > 0
-		):
+		if area_usada.size.x > 0 and area_usada.size.y > 0:
 			area_visivel = area_usada
 
 	var tamanho_visivel: Vector2 = Vector2(
@@ -298,8 +260,13 @@ func _criar_interface() -> bool:
 	texto.hide()
 
 	aviso = Label.new()
-	aviso.text = "E / ENTER / ESPAÇO ou clique para fechar"
-	aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	aviso.text = (
+		"E / ENTER / ESPAÇO ou clique para continuar"
+	)
+
+	aviso.horizontal_alignment = (
+		HORIZONTAL_ALIGNMENT_CENTER
+	)
 
 	aviso.size = Vector2(
 		tamanho_tela.x * 0.85,
@@ -311,7 +278,9 @@ func _criar_interface() -> bool:
 		centro.y + altura_final * 0.5 + 15.0
 	)
 
-	aviso.add_theme_font_size_override("font_size", 16)
+	aviso.add_theme_font_size_override(
+		"font_size", 16
+	)
 
 	aviso.add_theme_color_override(
 		"font_color",
@@ -351,6 +320,7 @@ func _configurar_texto() -> void:
 		)
 	)
 
+	# Primeira pagina: texto educativo original.
 	texto.text = (
 		"[center]"
 		+ "[font_size=23][b]"
@@ -366,6 +336,56 @@ func _configurar_texto() -> void:
 	)
 
 	total_letras = texto.get_total_character_count()
+
+
+func _mostrar_pagina_habilidade() -> void:
+	var dados: Dictionary = DADOS.get(
+		artefato_id, {}
+	)
+
+	pagina_habilidade = true
+
+	var habilidade: String = str(
+		dados.get(
+			"habilidade",
+			"ARTEFATO DESCOBERTO"
+		)
+	)
+
+	var descricao_habilidade: String = str(
+		dados.get(
+			"texto_habilidade",
+			"Uma nova descoberta foi feita."
+		)
+	)
+
+	# Substitui o texto anterior.
+	# Nada e adicionado abaixo dele.
+	texto.text = (
+		"[center]"
+		+ "[font_size=19][b]"
+		+ "NOVA DESCOBERTA"
+		+ "[/b][/font_size]\n\n"
+		+ "[font_size=23][b]"
+		+ habilidade
+		+ "[/b][/font_size]\n\n"
+		+ "[font_size=17]"
+		+ descricao_habilidade
+		+ "[/font_size]"
+		+ "[/center]"
+	)
+
+	total_letras = texto.get_total_character_count()
+
+	# Reinicia a escrita nesta segunda pagina.
+	tempo_letras = 0.0
+	texto.visible_characters = 0
+	estado = Estado.ESCREVENDO
+
+	aviso.text = (
+		"E / ENTER / ESPAÇO ou clique para fechar"
+	)
+	aviso.hide()
 
 
 func _ao_terminar_animacao() -> void:
@@ -393,7 +413,10 @@ func _process(delta: float) -> void:
 	if estado != Estado.ESCREVENDO:
 		return
 
-	tempo_letras += delta * letras_por_segundo
+	tempo_letras += (
+		delta * letras_por_segundo
+	)
+
 	var quantidade: int = int(tempo_letras)
 
 	if quantidade > 0:
@@ -410,10 +433,8 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if (
-		estado != Estado.ESCREVENDO
-		and estado != Estado.PRONTO
-	):
+	if estado != Estado.ESCREVENDO \
+	and estado != Estado.PRONTO:
 		return
 
 	var confirmar: bool = false
@@ -438,6 +459,8 @@ func _input(event: InputEvent) -> void:
 
 	get_viewport().set_input_as_handled()
 
+	# Durante a escrita, o primeiro aperto
+	# apenas revela o restante da pagina.
 	if estado == Estado.ESCREVENDO:
 		texto.visible_characters = total_letras
 		estado = Estado.PRONTO
@@ -445,6 +468,14 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if estado == Estado.PRONTO:
+		# Depois da parte educativa,
+		# troca pelo texto da habilidade.
+		if not pagina_habilidade:
+			_mostrar_pagina_habilidade()
+			return
+
+		# Depois da habilidade,
+		# fecha o pergaminho normalmente.
 		_fechar_pergaminho()
 
 
@@ -453,11 +484,11 @@ func _fechar_pergaminho() -> void:
 		return
 
 	estado = Estado.FECHANDO
+
 	texto.hide()
 	aviso.hide()
 
 	var fade_fundo: Tween = create_tween()
-
 	fade_fundo.tween_property(
 		fundo,
 		"color:a",
